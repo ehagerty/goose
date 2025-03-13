@@ -2,11 +2,38 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://block.github.io/goose/blog</id>
     <title>codename goose Blog</title>
-    <updated>2025-03-10T00:00:00.000Z</updated>
+    <updated>2025-03-12T00:00:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://block.github.io/goose/blog"/>
     <subtitle>codename goose Blog</subtitle>
     <icon>https://block.github.io/goose/img/favicon.ico</icon>
+    <entry>
+        <title type="html"><![CDATA[Turn Figma Designs Into Code With Goose]]></title>
+        <id>https://block.github.io/goose/blog/2025/03/12/goose-figma-mcp</id>
+        <link href="https://block.github.io/goose/blog/2025/03/12/goose-figma-mcp"/>
+        <updated>2025-03-12T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Give Goose the ability to turn Figma designs into code with the Figma extension.]]></summary>
+        <content type="html"><![CDATA[<p><img decoding="async" loading="lazy" alt="blog cover" src="https://block.github.io/goose/assets/images/goosefigma-e6f84a734bd56cb431bb02452331a5d5.png" width="1206" height="633" class="img_ev3q"></p>
+<p>In our previous episode of <a href="https://www.youtube.com/playlist?list=PLyMFt_U2IX4s1pMaidir5P4lSfjUK6Nzm" target="_blank" rel="noopener noreferrer">Goose Flight School</a>, our host <a href="https://www.linkedin.com/in/acekyd/" target="_blank" rel="noopener noreferrer">Adewale Abati</a> showed us how to use Goose to take a Figma design and transform it into a functional Nuxt application. In this stream he covered the entire process, from initial setup to final implementation, highlighting how Goose can help developers bridge the gap between design and development.</p>
+<p><a href="https://block.github.io/goose/docs/getting-started/using-extensions" target="_blank" rel="noopener noreferrer">Extensions</a> enhance Goose's functionality by connecting with your existing tools and workflows. They add new features, access external data resources, and integrate with other systems. Learn how multiple extensions, including Figma and Developer, worked together seamlessly to dramatically accelerate development.</p>
+<h1>Live Tutorial: Goose Builds Live</h1>
+<p>During the livestream, Adewale demonstrated step-by-step how Goose handled each development phase, from creating the basic application structure to generating responsive layouts using Tailwind CSS. Adewale also highlighted how Goose addresses potential limitations as you go, showcasing the powerful balance between the Goose's automation and developer control.</p>
+<iframe class="aspect-ratio" src="https://www.youtube.com/embed/_9t_N9zKwKM?si=r3e1MkrjS-f2AvkI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+<p>Throughout the stream, Adewale shared valuable tips to prepare your design for Goose. His key recommendations include:</p>
+<ul>
+<li>start with a well-structured Figma design</li>
+<li>use Goose to make targeted improvements after the initial generation</li>
+<li>fine-tune specific elements as needed</li>
+<li>make sure you thoroughly test for functionality and responsiveness</li>
+</ul>
+<h1>Getting Started with Goose and Figma</h1>
+<p>Whether you're a designer wanting to rapidly turn concepts into working code or a developer curious about streamlining design implementation, you can download Goose with its built-in <a href="https://block.github.io/goose/docs/getting-started/installation" target="_blank" rel="noopener noreferrer">Developer extension</a> and add the <a href="https://block.github.io/goose/v1/extensions/" target="_blank" rel="noopener noreferrer">Figma extension</a>.</p>
+<p>For step-by-step instructions, check out the <a href="https://block.github.io/goose/docs/tutorials/figma-mcp" target="_blank" rel="noopener noreferrer">Figma tutorial</a>.</p>
+]]></content>
+        <author>
+            <name>Tania Chakraborty</name>
+        </author>
+    </entry>
     <entry>
         <title type="html"><![CDATA[Automating Phone Calls with Goose]]></title>
         <id>https://block.github.io/goose/blog/2025/03/10/goose-calls-vyop</id>
