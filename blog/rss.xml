@@ -4,10 +4,42 @@
         <title>codename goose Blog</title>
         <link>https://block.github.io/goose/blog</link>
         <description>codename goose Blog</description>
-        <lastBuildDate>Fri, 14 Mar 2025 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Tue, 18 Mar 2025 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
+        <item>
+            <title><![CDATA[How Goose Catches AI Errors with Langfuse]]></title>
+            <link>https://block.github.io/goose/blog/2025/03/18/goose-langfuse</link>
+            <guid>https://block.github.io/goose/blog/2025/03/18/goose-langfuse</guid>
+            <pubDate>Tue, 18 Mar 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[Get detailed insights into Goose's behavior with Langfuse's observability tools.]]></description>
+            <content:encoded><![CDATA[<p><img decoding="async" loading="lazy" alt="blog cover" src="https://block.github.io/goose/assets/images/goose_aierrors-22154af884db86789ce1a12a72897e8e.png" width="1206" height="633" class="img_ev3q"></p>
+<p>How do we debug AI agents like Goose? In the <a href="https://youtube.com/playlist?list=PLyMFt_U2IX4uFFhd_2TD9-tlJkgHMMb6F&amp;feature=shared" target="_blank" rel="noopener noreferrer">Goosing Around</a> stream series, host <a href="https://www.linkedin.com/in/rizel-bobb-semple/" target="_blank" rel="noopener noreferrer">Rizel Scarlett</a> invited <a href="https://www.linkedin.com/in/marcklingen/" target="_blank" rel="noopener noreferrer">Marc Klingen</a>, Co-Founder at Langfuse, and <a href="https://www.linkedin.com/in/alice-hau/" target="_blank" rel="noopener noreferrer">Alice Hau</a>, Machine Learning Engineer at Block, to demo how Langfuse enables observability into Goose's actions, letting you trace LLM behavior and catch errors.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="what-is-langfuse">What is Langfuse<a href="https://block.github.io/goose/blog/2025/03/18/goose-langfuse#what-is-langfuse" class="hash-link" aria-label="Direct link to What is Langfuse" title="Direct link to What is Langfuse">​</a></h2>
+<p><a href="https://langfuse.com/" target="_blank" rel="noopener noreferrer">Langfuse</a> is an open source observability platform specifically designed for LLM-powered apps. Mark revealed during stream that Langfuse wasn't originally an observability platform, it was born from early attempts to build an AI agent like Goose.</p>
+<p>While they were limited by the available models at the time, especially with multi-file edits, the team discovered the tooling they had built for debugging and monitoring their agent was more valuable to them than their agent.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="how-langfuse-works-with-goose">How Langfuse Works With Goose<a href="https://block.github.io/goose/blog/2025/03/18/goose-langfuse#how-langfuse-works-with-goose" class="hash-link" aria-label="Direct link to How Langfuse Works With Goose" title="Direct link to How Langfuse Works With Goose">​</a></h2>
+<p>Since traditional observability tools don't quite cut it when it comes to AI agents. Langfuse introduces 3 core concepts to make Goose's behavior more observable, and create logs that are easier to parse:</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="traces">Traces<a href="https://block.github.io/goose/blog/2025/03/18/goose-langfuse#traces" class="hash-link" aria-label="Direct link to Traces" title="Direct link to Traces">​</a></h3>
+<p>Each interaction with Goose creates a trace to capture the full story of what happened. These traces include key information, from the initial prompt and user messages to tool calls and their responses. They also store valuable metadata about model outputs and timing information, giving developers a complete picture of each interaction.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="timeline-view">Timeline View<a href="https://block.github.io/goose/blog/2025/03/18/goose-langfuse#timeline-view" class="hash-link" aria-label="Direct link to Timeline View" title="Direct link to Timeline View">​</a></h3>
+<p>The timeline view takes these complex interactions and transforms it into a digestible format. Developers can see parallel task execution in real-time, understand the dependencies between different actions, and measure the actual duration of each opersation. This can be super helpful when debugging a complex sequence of actions taken by Goose, or to help optimize performance.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="structured-data">Structured Data<a href="https://block.github.io/goose/blog/2025/03/18/goose-langfuse#structured-data" class="hash-link" aria-label="Direct link to Structured Data" title="Direct link to Structured Data">​</a></h3>
+<p>Alice explained, "Goose sessions can be really long... we have log files, but you'll just see a massive log of JSON."</p>
+<p>Rather than rangle raw JSON log, Langfuse helps organize this data to help make navigating longer sessions and their data more straightforward. This approach can help developers easily analyze tool usage patterns, monitor token consumption, and quickly identify any performance bottlenecks and where they may happen.</p>
+<p>With this integration, you can instead better understand the sequence of actions taken by Goose, and analyze track token usage and model behavior across LLMs.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="practical-benefits">Practical Benefits<a href="https://block.github.io/goose/blog/2025/03/18/goose-langfuse#practical-benefits" class="hash-link" aria-label="Direct link to Practical Benefits" title="Direct link to Practical Benefits">​</a></h2>
+<p>The observability the Goose and Langfuse integration brings is great for anyone who wants clear insight into what Goose is doing behind the scenes. Alice and Marc discussed the different ways this integration can help you debug faster.</p>
+<p>Developers can dive deeper into detailed session logs and identify the root cause to a reported issue and ensure Goose is operating as efficiently as possible. Like checking why certain commands may not be working as expected, or seeing exactly how Goose is processing information for a given task with a specific LLM.</p>
+<p>As developers focus on operational efficiency, researchers can use the analytical capabilities of this integration to better understand which models best suit their needs. Through comprehensive model evaluations, they can analyze how different models handle tool calling, understand decision-making patterns across LLMs, and establish a systematic approach to understanding and improving AI systems.</p>
+<h1>The Future of AI Observability</h1>
+<p>These powerful debugging and analysis capabilities are only the beginning. This integration between Goose and Langfuse represents a significant step forward in making AI agents as transparent and debuggable as traditional code.</p>
+<p>To keep up with the exciting developments as they release, you can check out both of the <a href="https://github.com/block/goose" target="_blank" rel="noopener noreferrer">Goose</a> and <a href="https://github.com/langfuse/langfuse" target="_blank" rel="noopener noreferrer">Langfuse</a> repositories on GitHub.</p>
+<p>You can also watch the <a href="https://www.youtube.com/live/W39BQjsTS9E?feature=shared" target="_blank" rel="noopener noreferrer">livestream discussing the Goose and Langfuse integration</a>.</p>
+<p>Also, be sure to subscribe to our <a href="https://calget.com/c/t7jszrie" target="_blank" rel="noopener noreferrer">events calendar</a> to catch upcoming events.</p>
+]]></content:encoded>
+        </item>
         <item>
             <title><![CDATA[AI, But Make It Local With Goose and Ollama]]></title>
             <link>https://block.github.io/goose/blog/2025/03/14/goose-ollama</link>
