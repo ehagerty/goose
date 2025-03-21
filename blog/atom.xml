@@ -31,7 +31,7 @@
 <p>Goose then estimates how long each task will take, the complexity of the task, and any deadlines. If I need to manually adjust something, I can, but it’s usually pretty spot on.</p>
 <p>With my tasks organized and estimated, Goose finds open time slots in my Google Calendar and automatically schedules them. It avoids my meetings and ensures I’m not overloading any single day.</p>
 <p>Within the first few minutes of the start of my week, my schedule is already mapped out, optimized for focus.</p>
-<p>This has been so extremly helpful in increasing my productivity. Thanks, Goose! 🚀</p>
+<p>This has been so extremely helpful in increasing my productivity. Thanks, Goose! 🚀</p>
 ]]></content>
         <author>
             <name>Angie Jones</name>
@@ -66,7 +66,7 @@
 <h1>The Future of AI Observability</h1>
 <p>These powerful debugging and analysis capabilities are only the beginning. This integration between Goose and Langfuse represents a significant step forward in making AI agents as transparent and debuggable as traditional code.</p>
 <p>To keep up with the exciting developments as they release, you can check out both of the <a href="https://github.com/block/goose" target="_blank" rel="noopener noreferrer">Goose</a> and <a href="https://github.com/langfuse/langfuse" target="_blank" rel="noopener noreferrer">Langfuse</a> repositories on GitHub.</p>
-<p>You can also watch the <a href="https://www.youtube.com/live/W39BQjsTS9E?feature=shared" target="_blank" rel="noopener noreferrer">livestream discussing the Goose and Langfuse integration</a>.</p>
+<p>You can also watch the <a href="https://www.youtube.com/live/W39BQjsTS9E?feature=shared" target="_blank" rel="noopener noreferrer">livestream discussing the Goose and Langfuse integration</a>, and follow the <a href="https://block.github.io/goose/docs/tutorials/langfuse" target="_blank" rel="noopener noreferrer">tutorial showing you how to integrate Langfuse with Goose</a>.</p>
 <p>Also, be sure to subscribe to our <a href="https://calget.com/c/t7jszrie" target="_blank" rel="noopener noreferrer">events calendar</a> to catch upcoming events.</p>
 ]]></content>
         <author>
