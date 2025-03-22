@@ -87,6 +87,42 @@
 ]]></content:encoded>
         </item>
         <item>
+            <title><![CDATA[Cracking the Code with VS Code MCP]]></title>
+            <link>https://block.github.io/goose/blog/2025/03/21/goose-vscode</link>
+            <guid>https://block.github.io/goose/blog/2025/03/21/goose-vscode</guid>
+            <pubDate>Fri, 21 Mar 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[Connect Goose directly to your code editor with this Visual Studio Code MCP.]]></description>
+            <content:encoded><![CDATA[<p><img decoding="async" loading="lazy" alt="blog cover" src="https://block.github.io/goose/assets/images/vscodestream-74eafa34e7ae10cfb738feddecc98519.png" width="1206" height="633" class="img_ev3q"></p>
+<p>Want to use Goose in VS Code? On the recent <a href="https://www.youtube.com/watch?v=hG7AnTw-GLU&amp;ab_channel=BlockOpenSource" target="_blank" rel="noopener noreferrer">Wild Goose Case livestream</a>, hosts <a href="https://www.linkedin.com/in/ebonylouis/" target="_blank" rel="noopener noreferrer">Ebony Louis</a> and <a href="https://www.linkedin.com/in/acekyd/" target="_blank" rel="noopener noreferrer">Adewale Abati</a> were joined by <a href="https://www.linkedin.com/in/andrewgertig/" target="_blank" rel="noopener noreferrer">Andrew Gertig</a>, Engineering Lead at Cash App, as he demonstrated the new VSCode MCP and how it brings powerful Goose-assisted coding capabilities directly into VS Code.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="what-is-the-vscode-mcp">What is the VSCode MCP?<a href="https://block.github.io/goose/blog/2025/03/21/goose-vscode#what-is-the-vscode-mcp" class="hash-link" aria-label="Direct link to What is the VSCode MCP?" title="Direct link to What is the VSCode MCP?">​</a></h2>
+<p>The <a href="https://github.com/block/vscode-mcp" target="_blank" rel="noopener noreferrer">VSCode MCP Server</a> and its companion <a href="https://marketplace.visualstudio.com/items?itemName=block.vscode-mcp-extension" target="_blank" rel="noopener noreferrer">VSCode Extension</a> enable AI agents like Goose to interact with VS Code through the Model Context Protocol.</p>
+<p>As Andrew explained during the stream, an MCP (<a href="https://modelcontextprotocol.io/introduction" target="_blank" rel="noopener noreferrer">Model Context Protocol</a>) server acts as a proxy between a Large Language Model (LLM) and whatever applications or tools you want to access to, in this case, VS Code. Extensions are add-ons based on this protocol that provide a way to extend Goose's functionality for your workflow.</p>
+<div class="codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">vscode-mcp/</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">├── server/    # MCP server implementation</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">└── extension/ # VS Code extension</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="key-features">Key Features<a href="https://block.github.io/goose/blog/2025/03/21/goose-vscode#key-features" class="hash-link" aria-label="Direct link to Key Features" title="Direct link to Key Features">​</a></h2>
+<p>VSCode MCP and VSCode Extension offer several powerful features for you to explore:</p>
+<p><strong>Intelligent Context Awareness</strong></p>
+<p>The extension maintains synchronization between Goose and your VS Code environment to understand your project structure and make contextually relevant suggestions. During the live demo, this came in handy as Goose navigated complex codebases with precision.</p>
+<p><strong>Interactive Code Modifications</strong></p>
+<p>Rather than making direct changes, the extension presents modifications through VS Code's diff tool. This ensures that no code changes happen without your explicit approval, allowing you to keep control over your codebase.</p>
+<p><strong>Progressive Complexity Handling</strong></p>
+<p>During the demo, the VSCode MCP seamlessly handled tasks ranging in complexity, from basic text modifications to implementing interactive features like animated emojis with mouse interactions.</p>
+<p><strong>Real-time Visual Feedback</strong></p>
+<p>Developers can see proposed changes in real-time with the diff view, making it easy to understand exactly what modifications Goose is suggesting before accepting them. This was demonstrated when an emoji's sizes visually while preserving existing functionality.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="whats-next-for-vscode-mcp">What's Next for VSCode MCP?<a href="https://block.github.io/goose/blog/2025/03/21/goose-vscode#whats-next-for-vscode-mcp" class="hash-link" aria-label="Direct link to What's Next for VSCode MCP?" title="Direct link to What's Next for VSCode MCP?">​</a></h2>
+<p>The features don't end here. The team is actively exploring several exciting features to take VSCode MCP to the next level:</p>
+<ul>
+<li><strong>Custom diff tool for granular control</strong> - This means you will be able to be selective on specific parts of changes you want to accept or reject.</li>
+<li><strong>Smart navigation to specific code locations</strong> - Imagine being able to ask Goose to take you directly to a function definition or a specific implementation.</li>
+<li><strong>Enhanced linting integration</strong> - To help maintain code quality standards automatically, making it way easier to fix issues before production.</li>
+<li><strong>Terminal integration for command execution</strong> - This would allow Goose to execute commands and display results right in your development environment.</li>
+<li><strong>Potential VS Code sidebar integration for Goose chat</strong> - Andrew showed a quick preview of an early prototype showing Goose running directly inside VS Code.</li>
+</ul>
+<h1>Community and Contributing</h1>
+<p>The project is open source, and welcomes contributions from the community. If you'd like to support the project or directly contribute to it, you can check out <a href="https://github.com/block/vscode-mcp" target="_blank" rel="noopener noreferrer">the VSCode MCP repo on GitHub</a>, or <a href="https://discord.gg/block-opensource" target="_blank" rel="noopener noreferrer">join the Block Open Source Discord</a> if you'd like to ask the team any questions or start discussions.</p>
+<p>You can also follow the <a href="https://block.github.io/goose/docs/tutorials/vscode-mcp" target="_blank" rel="noopener noreferrer">tutorial showing you how to integrate VS Code with Goose</a>.</p>
+]]></content:encoded>
+        </item>
+        <item>
             <title><![CDATA[How I Use Goose to Plan My Week with Asana and Google Calendar MCPs]]></title>
             <link>https://block.github.io/goose/blog/2025/03/20/asana-calendar-mcp</link>
             <guid>https://block.github.io/goose/blog/2025/03/20/asana-calendar-mcp</guid>
