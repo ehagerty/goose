@@ -1,5 +1,6 @@
 import {
   app,
+  session,
   BrowserWindow,
   dialog,
   globalShortcut,
@@ -46,28 +47,12 @@ app.on('open-url', async (event, url) => {
 
   // Parse the URL to determine the type
   const parsedUrl = new URL(url);
-  let botConfig = null;
-
-  // Extract bot config if it's a bot URL
-  if (parsedUrl.pathname === '/bot') {
-    const configParam = parsedUrl.searchParams.get('config');
-    if (configParam) {
-      try {
-        botConfig = JSON.parse(Buffer.from(configParam, 'base64').toString('utf-8'));
-      } catch (e) {
-        console.error('Failed to parse bot config:', e);
-      }
-    }
-  }
 
   const recentDirs = loadRecentDirs();
   const openDir = recentDirs.length > 0 ? recentDirs[0] : null;
 
-  // Always create a new window for bot URLs only
-  if (parsedUrl.pathname === '/bot') {
-    firstOpenWindow = await createChat(app, undefined, openDir, undefined, undefined, botConfig);
-  } else {
-    // For other URL types, reuse existing window if available
+  if (parsedUrl.hostname !== 'bot') {
+    // For non URL types, reuse existing window if available
     const existingWindows = BrowserWindow.getAllWindows();
     if (existingWindows.length > 0) {
       firstOpenWindow = existingWindows[0];
@@ -78,9 +63,27 @@ app.on('open-url', async (event, url) => {
     }
   }
 
-  // Handle extension install links
+  // Handle extension install links and sessions
   if (parsedUrl.hostname === 'extension') {
     firstOpenWindow.webContents.send('add-extension', pendingDeepLink);
+  } else if (parsedUrl.hostname === 'sessions') {
+    firstOpenWindow.webContents.send('open-shared-session', pendingDeepLink);
+  } else if (parsedUrl.hostname === 'bot') {
+    let botConfig = null;
+
+    // Extract bot config if it's a bot (miniagent) URL
+    if (parsedUrl.hostname === 'bot') {
+      const configParam = parsedUrl.searchParams.get('config');
+      if (configParam) {
+        try {
+          botConfig = JSON.parse(Buffer.from(configParam, 'base64').toString('utf-8'));
+        } catch (e) {
+          console.error('Failed to parse bot config:', e);
+        }
+      }
+    }
+
+    firstOpenWindow = await createChat(app, undefined, openDir, undefined, undefined, botConfig);
   }
 });
 
@@ -119,7 +122,17 @@ const generateSecretKey = () => {
   return key;
 };
 
+const getSharingUrl = () => {
+  // checks app env for sharing url
+  loadShellEnv(app.isPackaged); // will try to take it from the zshrc file
+  // if GOOSE_BASE_URL_SHARE is found, we will set process.env.GOOSE_BASE_URL_SHARE, otherwise we return what it is set
+  // to in the env at bundle time
+  return process.env.GOOSE_BASE_URL_SHARE;
+};
+
 let [provider, model] = getGooseProvider();
+
+let sharingUrl = getSharingUrl();
 
 let appConfig = {
   GOOSE_PROVIDER: provider,
@@ -167,6 +180,7 @@ const createChat = async (
           GOOSE_PORT: port,
           GOOSE_WORKING_DIR: working_dir,
           REQUEST_DIR: dir,
+          GOOSE_BASE_URL_SHARE: sharingUrl,
           botConfig: botConfig,
         }),
       ],
@@ -221,36 +235,22 @@ const createChat = async (
     });
   }
 
-  // DevTools shortcut management
-  const registerDevToolsShortcut = (window: BrowserWindow) => {
-    globalShortcut.register('Alt+Command+I', () => {
-      window.webContents.openDevTools();
-    });
-  };
-
-  const unregisterDevToolsShortcut = () => {
-    globalShortcut.unregister('Alt+Command+I');
-  };
-
-  // Register shortcuts when window is focused
-  mainWindow.on('focus', () => {
-    registerDevToolsShortcut(mainWindow);
-    // Register reload shortcut
-    globalShortcut.register('CommandOrControl+R', () => {
+  // Set up local keyboard shortcuts that only work when the window is focused
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.key === 'r' && input.meta) {
       mainWindow.reload();
-    });
-  });
+      event.preventDefault();
+    }
 
-  // Unregister shortcuts when window loses focus
-  mainWindow.on('blur', () => {
-    unregisterDevToolsShortcut();
-    globalShortcut.unregister('CommandOrControl+R');
+    if (input.key === 'i' && input.alt && input.meta) {
+      mainWindow.webContents.openDevTools();
+      event.preventDefault();
+    }
   });
 
   windowMap.set(windowId, mainWindow);
   mainWindow.on('closed', () => {
     windowMap.delete(windowId);
-    unregisterDevToolsShortcut();
     goosedProcess.kill();
   });
   return mainWindow;
@@ -363,11 +363,15 @@ ipcMain.on('react-ready', (event) => {
     console.log('Processing pending deep link:', pendingDeepLink);
     const parsedUrl = new URL(pendingDeepLink);
 
+    // Handle different deep link types
     if (parsedUrl.hostname === 'extension') {
       console.log('Sending add-extension event');
       firstOpenWindow.webContents.send('add-extension', pendingDeepLink);
+    } else if (parsedUrl.hostname === 'sessions') {
+      console.log('Sending open-shared-session event');
+      firstOpenWindow.webContents.send('open-shared-session', pendingDeepLink);
     }
-    // Bot URLs are now handled directly through botConfig in additionalArguments
+    // Bot URLs are handled directly through botConfig in additionalArguments
     pendingDeepLink = null;
   } else {
     console.log('No pending deep link to process');
@@ -423,6 +427,11 @@ ipcMain.handle('get-binary-path', (event, binaryName) => {
 });
 
 app.whenReady().then(async () => {
+  session.defaultSession.webRequest.onBeforeSendHeaders((details, callback) => {
+    details.requestHeaders['Origin'] = 'http://localhost:5173';
+    callback({ cancel: false, requestHeaders: details.requestHeaders });
+  });
+
   // Test error feature - only enabled with GOOSE_TEST_ERROR=true
   if (process.env.GOOSE_TEST_ERROR === 'true') {
     console.log('Test error feature enabled, will throw error in 5 seconds');

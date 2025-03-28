@@ -162,12 +162,6 @@ export default function MoreMenu({
     }
   };
 
-  const handleVersionSelect = (version: string) => {
-    setOpen(false);
-    setShowVersions(false);
-    window.electron.createChatWindow(undefined, undefined, version);
-  };
-
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -218,7 +212,7 @@ export default function MoreMenu({
 
               <MenuButton
                 onClick={() => setView('sessions')}
-                subtitle="View previous sessions and their contents"
+                subtitle="View and share previous sessions"
                 icon={<Time className="w-4 h-4" />}
               >
                 Session history

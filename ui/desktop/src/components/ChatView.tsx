@@ -27,7 +27,6 @@ import {
   getTextContent,
   createAssistantMessage,
 } from '../types/message';
-import { ToastSuccess } from './settings/models/toasts';
 
 export interface ChatType {
   id: string;
@@ -379,6 +378,7 @@ export default function ChatView({
       <div className="relative flex items-center h-[36px] w-full">
         <MoreMenuLayout setView={setView} setIsGoosehintsModalOpen={setIsGoosehintsModalOpen} />
       </div>
+
       <Card className="flex flex-col flex-1 rounded-none h-[calc(100vh-95px)] w-full bg-bgApp mt-0 border-none relative">
         {messages.length === 0 ? (
           <Splash
@@ -386,26 +386,28 @@ export default function ChatView({
             activities={botConfig?.activities || null}
           />
         ) : (
-          <ScrollArea ref={scrollRef} className="flex-1 px-4" autoScroll>
-            {filteredMessages.map((message, index) => (
-              <div key={message.id || index} className="mt-[16px]">
-                {isUserMessage(message) ? (
-                  <UserMessage message={message} />
-                ) : (
-                  <GooseMessage
-                    messageHistoryIndex={chat?.messageHistoryIndex}
-                    message={message}
-                    messages={messages}
-                    metadata={messageMetadata[message.id || '']}
-                    append={(text) => append(createUserMessage(text))}
-                    appendMessage={(newMessage) => {
-                      const updatedMessages = [...messages, newMessage];
-                      setMessages(updatedMessages);
-                    }}
-                  />
-                )}
-              </div>
-            ))}
+          <ScrollArea ref={scrollRef} className="flex-1" autoScroll>
+            <div className="px-4">
+              {filteredMessages.map((message, index) => (
+                <div key={message.id || index} className="mt-[16px]">
+                  {isUserMessage(message) ? (
+                    <UserMessage message={message} />
+                  ) : (
+                    <GooseMessage
+                      messageHistoryIndex={chat?.messageHistoryIndex}
+                      message={message}
+                      messages={messages}
+                      metadata={messageMetadata[message.id || '']}
+                      append={(text) => append(createUserMessage(text))}
+                      appendMessage={(newMessage) => {
+                        const updatedMessages = [...messages, newMessage];
+                        setMessages(updatedMessages);
+                      }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
             {error && (
               <div className="flex flex-col items-center justify-center p-4">
                 <div className="text-red-700 dark:text-red-300 bg-red-400/50 p-3 rounded-lg mb-2">

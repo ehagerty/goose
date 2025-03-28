@@ -1,3 +1,19 @@
+// Default extension timeout in seconds
+// TODO: keep in sync with rust better
+export const DEFAULT_EXTENSION_TIMEOUT = 300;
+
+/**
+ * Converts an extension name to a key format
+ * TODO: need to keep this in sync better with `name_to_key` on the rust side
+ */
+export function nameToKey(name: string): string {
+  return name
+    .split('')
+    .filter((char) => !char.match(/\s/))
+    .join('')
+    .toLowerCase();
+}
+
 import { FixedExtensionEntry } from '../../ConfigContext';
 import { ExtensionConfig } from '../../../api/types.gen';
 
@@ -110,4 +126,20 @@ export function combineCmdAndArgs(cmd: string, args: string[]): string {
 export function extractExtensionConfig(fixedEntry: FixedExtensionEntry): ExtensionConfig {
   const { enabled, ...extensionConfig } = fixedEntry;
   return extensionConfig;
+}
+
+export async function replaceWithShims(cmd: string) {
+  const binaryPathMap: Record<string, string> = {
+    goosed: await window.electron.getBinaryPath('goosed'),
+    jbang: await window.electron.getBinaryPath('jbang'),
+    npx: await window.electron.getBinaryPath('npx'),
+    uvx: await window.electron.getBinaryPath('uvx'),
+  };
+
+  if (binaryPathMap[cmd]) {
+    console.log('--------> Replacing command with shim ------>', cmd, binaryPathMap[cmd]);
+    cmd = binaryPathMap[cmd];
+  }
+
+  return cmd;
 }
