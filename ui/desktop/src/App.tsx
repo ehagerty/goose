@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { addExtensionFromDeepLink } from './extensions';
+import { openSharedSessionFromDeepLink } from './sessionLinks';
 import { getStoredModel } from './utils/providerUtils';
 import { getStoredProvider, initializeSystem } from './utils/providerUtils';
 import { useModel } from './components/settings/models/ModelContext';
@@ -9,9 +10,12 @@ import { getDefaultModel } from './components/settings/models/hardcoded_stuff';
 import ErrorScreen from './components/ErrorScreen';
 import { ConfirmationModal } from './components/ui/ConfirmationModal';
 import { ToastContainer } from 'react-toastify';
+import { toastService } from './toasts';
+import { settingsV2Enabled } from './flags';
 import { extractExtensionName } from './components/settings/extensions/utils';
 import { GoosehintsModal } from './components/GoosehintsModal';
-import { SessionDetails, fetchSessionDetails } from './sessions';
+import { SessionDetails } from './sessions';
+import { SharedSessionDetails } from './sharedSessions';
 
 import WelcomeView from './components/WelcomeView';
 import ChatView from './components/ChatView';
@@ -20,18 +24,13 @@ import SettingsViewV2 from './components/settings_v2/SettingsView';
 import MoreModelsView from './components/settings/models/MoreModelsView';
 import ConfigureProvidersView from './components/settings/providers/ConfigureProvidersView';
 import SessionsView from './components/sessions/SessionsView';
+import SharedSessionView from './components/sessions/SharedSessionView';
 import ProviderSettings from './components/settings_v2/providers/ProviderSettingsPage';
 import { useChat } from './hooks/useChat';
 
 import 'react-toastify/dist/ReactToastify.css';
-import { FixedExtensionEntry, useConfig } from './components/ConfigContext';
-import {
-  initializeBuiltInExtensions,
-  syncBuiltInExtensions,
-  addExtensionFromDeepLink as addExtensionFromDeepLinkV2,
-  addToAgentOnStartup,
-} from './components/settings_v2/extensions';
-import { extractExtensionConfig } from './components/settings_v2/extensions/utils';
+import { useConfig } from './components/ConfigContext';
+import { addExtensionFromDeepLink as addExtensionFromDeepLinkV2 } from './components/settings_v2/extensions';
 
 // Views and their options
 export type View =
@@ -43,7 +42,8 @@ export type View =
   | 'configPage'
   | 'ConfigureProviders'
   | 'settingsV2'
-  | 'sessions';
+  | 'sessions'
+  | 'sharedSession';
 
 export type ViewConfig = {
   view: View;
@@ -64,7 +64,7 @@ export default function App() {
     view: 'welcome',
     viewOptions: {},
   });
-  const { getExtensions, addExtension, read } = useConfig();
+  const { getExtensions, addExtension, read, upsert } = useConfig();
   const initAttemptedRef = useRef(false);
 
   // Utility function to extract the command from the link
@@ -75,119 +75,61 @@ export default function App() {
     return `${cmd} ${args.join(' ')}`.trim();
   }
 
-  // this is all settings v2 stuff
-  // Modified version of the alpha initialization flow for App.tsx
-
   useEffect(() => {
-    // Skip if feature flag is not enabled
-    if (!process.env.ALPHA) {
+    if (!settingsV2Enabled) {
       return;
     }
 
-    console.log('Alpha flow initializing...');
+    // Guard against multiple initialization attempts
+    if (initAttemptedRef.current) {
+      console.log('Initialization already attempted, skipping...');
+      return;
+    }
+    initAttemptedRef.current = true;
 
-    // First quickly check if we have model and provider to set chat view
-    const checkRequiredConfig = async () => {
+    console.log(`Initializing app with settings v2`);
+
+    const initializeApp = async () => {
       try {
-        console.log('Reading GOOSE_PROVIDER and GOOSE_MODEL from config...');
-        const provider = (await read('GOOSE_PROVIDER', false)) as string;
-        const model = (await read('GOOSE_MODEL', false)) as string;
+        const config = window.electron.getConfig();
+
+        const provider = config.GOOSE_PROVIDER ?? (await read('GOOSE_PROVIDER', false));
+        const model = config.GOOSE_MODEL ?? (await read('GOOSE_MODEL', false));
 
         if (provider && model) {
-          // We have all needed configuration, set chat view immediately
-          console.log(`Found provider: ${provider}, model: ${model}, setting chat view`);
+          console.log(`Using provider: ${provider}, model: ${model}`);
           setView('chat');
 
-          // Initialize the system in background
-          initializeSystem(provider, model)
-            .then(() => console.log('System initialization successful'))
-            .catch((error) => {
-              console.error('Error initializing system:', error);
-              setFatalError(`System initialization error: ${error.message || 'Unknown error'}`);
-              setView('welcome');
+          try {
+            await initializeSystem(provider, model, {
+              getExtensions,
+              addExtension,
             });
+          } catch (error) {
+            console.error('Error in alpha initialization:', error);
+            setFatalError(`System initialization error: ${error.message || 'Unknown error'}`);
+            setView('welcome');
+          }
         } else {
-          // Missing configuration, show onboarding
-          console.log('Missing configuration, showing onboarding');
-          if (!provider) console.log('Missing provider');
-          if (!model) console.log('Missing model');
+          console.log('Missing required configuration, showing onboarding');
           setView('welcome');
         }
       } catch (error) {
-        console.error('Error checking configuration:', error);
-        setFatalError(`Configuration check error: ${error.message || 'Unknown error'}`);
+        console.error('Error in alpha config check:', error);
+        setFatalError(`Configuration error: ${error.message || 'Unknown error'}`);
         setView('welcome');
       }
+
+      // Reset toast service after initialization
+      toastService.configure({ silent: false });
     };
 
-    // Setup extensions in parallel
-    const setupExtensions = async () => {
-      // Set the ref immediately to prevent duplicate runs
-      initAttemptedRef.current = true;
-
-      let refreshedExtensions: FixedExtensionEntry[] = [];
-      try {
-        // Force refresh extensions from the backend to ensure we have the latest
-        console.log('Getting extensions from backend...');
-        refreshedExtensions = await getExtensions(true);
-        console.log(`Retrieved ${refreshedExtensions.length} extensions`);
-      } catch (error) {
-        console.log('Error getting extensions list');
-        return; // Exit early if we can't get the extensions list
-      }
-
-      // built-in extensions block -- just adds them to config if missing
-      try {
-        console.log('Setting up built-in extensions...');
-
-        if (refreshedExtensions.length === 0) {
-          // If we still have no extensions, this is truly a first-time setup
-          console.log('First-time setup: Adding all built-in extensions...');
-          await initializeBuiltInExtensions(addExtension);
-          console.log('Built-in extensions initialization complete');
-
-          // Refresh the extensions list after initialization
-          refreshedExtensions = await getExtensions(true);
-        } else {
-          // Extensions exist, check for any missing built-ins
-          console.log('Checking for missing built-in extensions...');
-          console.log('Current extensions:', refreshedExtensions);
-          await syncBuiltInExtensions(refreshedExtensions, addExtension);
-          console.log('Built-in extensions sync complete');
-        }
-      } catch (error) {
-        console.error('Error setting up extensions:', error);
-        // We don't set fatal error here since the app might still work without extensions
-      }
-
-      // now try to add to agent
-      console.log('Adding enabled extensions to agent...');
-      for (const extensionEntry of refreshedExtensions) {
-        if (extensionEntry.enabled) {
-          console.log(`Adding extension to agent: ${extensionEntry.name}`);
-          // need to convert to config because that's what the endpoint expects
-          const extensionConfig = extractExtensionConfig(extensionEntry);
-          // will handle toasts and also set failures to enabled = false
-          await addToAgentOnStartup({ addToConfig: addExtension, extensionConfig });
-        } else {
-          console.log(`Skipping disabled extension: ${extensionEntry.name}`);
-        }
-      }
-
-      console.log('Extensions setup complete');
-    };
-
-    // Execute the two flows in parallel for speed
-    checkRequiredConfig().catch((error) => {
-      console.error('Unhandled error in checkRequiredConfig:', error);
-      setFatalError(`Config check error: ${error.message || 'Unknown error'}`);
+    initializeApp().catch((error) => {
+      console.error('Unhandled error in initialization:', error);
+      setFatalError(`Initialization error: ${error.message || 'Unknown error'}`);
     });
+  }, []);
 
-    setupExtensions().catch((error) => {
-      console.error('Unhandled error in setupExtensions:', error);
-      // Not setting fatal error here since extensions are optional
-    });
-  }, []); // Empty dependency array since we're using initAttemptedRef
   const setView = (view: View, viewOptions: Record<any, any> = {}) => {
     console.log(`Setting view to: ${view}`, viewOptions);
     setInternalView({ view, viewOptions });
@@ -195,6 +137,9 @@ export default function App() {
 
   const [isGoosehintsModalOpen, setIsGoosehintsModalOpen] = useState(false);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
+  const [sharedSession, setSharedSession] = useState<SharedSessionDetails | null>(null);
+  const [sharedSessionError, setSharedSessionError] = useState<string | null>(null);
+  const [isLoadingSharedSession, setIsLoadingSharedSession] = useState(false);
   const { chat, setChat } = useChat({ setView, setIsLoadingSession });
 
   useEffect(() => {
@@ -205,6 +150,31 @@ export default function App() {
       console.error('Error sending reactReady:', error);
       setFatalError(`React ready notification failed: ${error.message}`);
     }
+  }, []);
+
+  // Handle shared session deep links
+  useEffect(() => {
+    const handleOpenSharedSession = async (_: any, link: string) => {
+      window.electron.logInfo(`Opening shared session from deep link ${link}`);
+      setIsLoadingSharedSession(true);
+      setSharedSessionError(null);
+
+      try {
+        await openSharedSessionFromDeepLink(link, setView);
+        // No need to handle errors here as openSharedSessionFromDeepLink now handles them internally
+      } catch (error) {
+        // This should not happen, but just in case
+        console.error('Unexpected error opening shared session:', error);
+        setView('sessions'); // Fallback to sessions view
+      } finally {
+        setIsLoadingSharedSession(false);
+      }
+    };
+
+    window.electron.on('open-shared-session', handleOpenSharedSession);
+    return () => {
+      window.electron.off('open-shared-session', handleOpenSharedSession);
+    };
   }, []);
 
   // Keyboard shortcut handler
@@ -296,7 +266,7 @@ export default function App() {
       console.log(`Confirming installation of extension from: ${pendingLink}`);
       setModalVisible(false); // Dismiss modal immediately
       try {
-        if (process.env.ALPHA) {
+        if (settingsV2Enabled) {
           await addExtensionFromDeepLinkV2(pendingLink, addExtension, setView);
         } else {
           await addExtensionFromDeepLink(pendingLink, setView);
@@ -323,11 +293,11 @@ export default function App() {
   const { addRecentModel } = useRecentModels(); // TODO: remove
 
   useEffect(() => {
-    if (process.env.ALPHA) {
+    if (settingsV2Enabled) {
       return;
     }
 
-    console.log('Non-alpha flow initializing...');
+    console.log(`Initializing app with settings v1`);
 
     // Attempt to detect config for a stored provider
     const detectStoredProvider = () => {
@@ -436,7 +406,7 @@ export default function App() {
         <div className="titlebar-drag-region" />
         <div>
           {view === 'welcome' &&
-            (process.env.ALPHA ? (
+            (settingsV2Enabled ? (
               <ProviderSettings onClose={() => setView('chat')} isOnboarding={true} />
             ) : (
               <WelcomeView
@@ -446,7 +416,7 @@ export default function App() {
               />
             ))}
           {view === 'settings' &&
-            (process.env.ALPHA ? (
+            (settingsV2Enabled ? (
               <SettingsViewV2
                 onClose={() => {
                   setView('chat');
@@ -490,6 +460,30 @@ export default function App() {
             />
           )}
           {view === 'sessions' && <SessionsView setView={setView} />}
+          {view === 'sharedSession' && (
+            <SharedSessionView
+              session={viewOptions.sessionDetails}
+              isLoading={isLoadingSharedSession}
+              error={viewOptions.error || sharedSessionError}
+              onBack={() => setView('sessions')}
+              onRetry={async () => {
+                if (viewOptions.shareToken && viewOptions.baseUrl) {
+                  setIsLoadingSharedSession(true);
+                  try {
+                    await openSharedSessionFromDeepLink(
+                      `goose://sessions/${viewOptions.shareToken}`,
+                      setView,
+                      viewOptions.baseUrl
+                    );
+                  } catch (error) {
+                    console.error('Failed to retry loading shared session:', error);
+                  } finally {
+                    setIsLoadingSharedSession(false);
+                  }
+                }
+              }}
+            />
+          )}
         </div>
       </div>
       {isGoosehintsModalOpen && (

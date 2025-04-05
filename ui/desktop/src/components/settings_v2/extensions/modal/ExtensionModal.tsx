@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
 import { Button } from '../../../ui/button';
 import Modal from '../../../Modal';
-import { Input } from '../../../ui/input';
-import Select from 'react-select';
-import { createDarkSelectStyles, darkSelectTheme } from '../../../ui/select-styles';
 import { ExtensionFormData } from '../utils';
 import EnvVarsSection from './EnvVarsSection';
 import ExtensionConfigFields from './ExtensionConfigFields';
 import { PlusIcon, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import ExtensionInfoFields from './ExtensionInfoFields';
+import ExtensionTimeoutField from './ExtensionTimeoutField';
 
 interface ExtensionModalProps {
   title: string;
@@ -33,10 +31,10 @@ export default function ExtensionModal({
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
-  const handleAddEnvVar = () => {
+  const handleAddEnvVar = (key: string, value: string) => {
     setFormData({
       ...formData,
-      envVars: [...formData.envVars, { key: '', value: '' }],
+      envVars: [...formData.envVars, { key, value }],
     });
   };
 
@@ -87,9 +85,23 @@ export default function ExtensionModal({
     );
   };
 
+  const isTimeoutValid = () => {
+    // Check if timeout is not undefined, null, or empty string
+    if (formData.timeout === undefined || formData.timeout === null) {
+      return false;
+    }
+
+    // Convert to number if it's a string
+    const timeoutValue =
+      typeof formData.timeout === 'string' ? Number(formData.timeout) : formData.timeout;
+
+    // Check if it's a valid number (not NaN) and is a positive number
+    return !isNaN(timeoutValue) && timeoutValue > 0;
+  };
+
   // Form validation
   const isFormValid = () => {
-    return isNameValid() && isConfigValid() && isEnvVarsValid();
+    return isNameValid() && isConfigValid() && isEnvVarsValid() && isTimeoutValid();
   };
 
   // Handle submit with validation
@@ -97,7 +109,19 @@ export default function ExtensionModal({
     setSubmitAttempted(true);
 
     if (isFormValid()) {
-      onSubmit(formData);
+      const dataToSubmit = { ...formData };
+
+      // Convert the timeout to a number if it's a string
+      if (typeof dataToSubmit.timeout === 'string') {
+        dataToSubmit.timeout = Number(dataToSubmit.timeout);
+      }
+
+      // Submit the data with converted timeout
+      onSubmit(dataToSubmit);
+      onClose(); // Only close the modal if the form is valid
+    } else {
+      // Optional: Add some feedback that validation failed (like a toast notification)
+      console.log('Form validation failed');
     }
   };
 
@@ -111,7 +135,12 @@ export default function ExtensionModal({
         </p>
       </div>
       <Button
-        onClick={() => onDelete && onDelete(formData.name)}
+        onClick={() => {
+          if (onDelete) {
+            onDelete(formData.name);
+            onClose(); // Add this line to close the modal after deletion
+          }
+        }}
         className="w-full h-[60px] rounded-none border-b border-borderSubtle bg-transparent hover:bg-red-900/20 text-red-500 font-medium text-md"
       >
         <Trash2 className="h-4 w-4 mr-2" /> Confirm Delete
@@ -183,7 +212,7 @@ export default function ExtensionModal({
           />
 
           {/* Divider */}
-          <hr className="border-t border-borderSubtle mb-6" />
+          <hr className="border-t border-borderSubtle mb-4" />
 
           {/* Command */}
           <div className="mb-6">
@@ -195,10 +224,16 @@ export default function ExtensionModal({
               submitAttempted={submitAttempted}
               isValid={isConfigValid()}
             />
+            <div className="mb-4" />
+            <ExtensionTimeoutField
+              timeout={formData.timeout}
+              onChange={(key, value) => setFormData({ ...formData, [key]: value })}
+              submitAttempted={submitAttempted}
+            />
           </div>
 
           {/* Divider */}
-          <hr className="border-t border-borderSubtle mb-6" />
+          <hr className="border-t border-borderSubtle mb-4" />
 
           {/* Environment Variables */}
           <div className="mb-6">
@@ -208,7 +243,6 @@ export default function ExtensionModal({
               onRemove={handleRemoveEnvVar}
               onChange={Object.assign(handleEnvVarChange, { setSubmitAttempted })}
               submitAttempted={submitAttempted}
-              isValid={isEnvVarsValid()}
             />
           </div>
         </>

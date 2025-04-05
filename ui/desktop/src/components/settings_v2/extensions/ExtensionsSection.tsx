@@ -48,13 +48,22 @@ export default function ExtensionsSection() {
     // If extension is enabled, we are trying to toggle if off, otherwise on
     const toggleDirection = extension.enabled ? 'toggleOff' : 'toggleOn';
     const extensionConfig = extractExtensionConfig(extension);
-    await toggleExtension({
-      toggle: toggleDirection,
-      extensionConfig: extensionConfig,
-      addToConfig: addExtension,
-      removeFromConfig: removeExtension,
-    });
-    await fetchExtensions(); // Refresh the list after toggling
+
+    try {
+      await toggleExtension({
+        toggle: toggleDirection,
+        extensionConfig: extensionConfig,
+        addToConfig: addExtension,
+        toastOptions: { silent: false },
+      });
+
+      await fetchExtensions(); // Refresh the list after successful toggle
+      return true; // Indicate success
+    } catch (error) {
+      // Don't refresh the extension list on failure - this allows our visual state rollback to work
+      // The actual state in the config hasn't changed anyway
+      throw error; // Re-throw to let the ExtensionItem component know it failed
+    }
   };
 
   const handleConfigureClick = (extension: FixedExtensionEntry) => {
@@ -64,8 +73,6 @@ export default function ExtensionsSection() {
 
   const handleAddExtension = async (formData: ExtensionFormData) => {
     const extensionConfig = createExtensionConfig(formData);
-    // TODO: replace activateExtension in index
-    // TODO: make sure error handling works
     await activateExtension({ addToConfig: addExtension, extensionConfig: extensionConfig });
     handleModalClose();
     await fetchExtensions();
@@ -79,8 +86,12 @@ export default function ExtensionsSection() {
       extensionConfig: extensionConfig,
       addToConfig: addExtension,
     });
-    handleModalClose();
+
+    // First refresh the extensions list
     await fetchExtensions();
+
+    // Then close the modal after data is refreshed
+    handleModalClose();
   };
 
   const handleDeleteExtension = async (name: string) => {
