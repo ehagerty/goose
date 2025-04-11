@@ -24,6 +24,10 @@ export type Envs = {
  * Represents the different types of MCP extensions that can be added to the manager
  */
 export type ExtensionConfig = {
+    /**
+     * Whether this extension is bundled with Goose
+     */
+    bundled?: boolean | null;
     description?: string | null;
     envs?: Envs;
     /**
@@ -35,6 +39,10 @@ export type ExtensionConfig = {
     uri: string;
 } | {
     args: Array<string>;
+    /**
+     * Whether this extension is bundled with Goose
+     */
+    bundled?: boolean | null;
     cmd: string;
     description?: string | null;
     envs?: Envs;
@@ -45,6 +53,10 @@ export type ExtensionConfig = {
     timeout?: number | null;
     type: 'stdio';
 } | {
+    /**
+     * Whether this extension is bundled with Goose
+     */
+    bundled?: boolean | null;
     display_name?: string | null;
     /**
      * The name used to identify this extension
@@ -52,6 +64,24 @@ export type ExtensionConfig = {
     name: string;
     timeout?: number | null;
     type: 'builtin';
+} | {
+    /**
+     * Whether this extension is bundled with Goose
+     */
+    bundled?: boolean | null;
+    /**
+     * Instructions for how to use these tools
+     */
+    instructions?: string | null;
+    /**
+     * The name used to identify this extension
+     */
+    name: string;
+    /**
+     * The tools provided by the frontend
+     */
+    tools: Array<Tool>;
+    type: 'frontend';
 };
 
 export type ExtensionEntry = ExtensionConfig & {
@@ -69,6 +99,11 @@ export type ExtensionQuery = {
 export type ExtensionResponse = {
     extensions: Array<ExtensionEntry>;
 };
+
+/**
+ * Enum representing the possible permission levels for a tool.
+ */
+export type PermissionLevel = 'always_allow' | 'ask_before' | 'never_allow';
 
 export type ProviderDetails = {
     /**
@@ -121,11 +156,126 @@ export type ProvidersResponse = {
     providers: Array<ProviderDetails>;
 };
 
+/**
+ * A tool that can be used by a model.
+ */
+export type Tool = {
+    annotations?: ToolAnnotations | null;
+    /**
+     * A description of what the tool does
+     */
+    description: string;
+    /**
+     * A JSON Schema object defining the expected parameters for the tool
+     */
+    inputSchema: unknown;
+    /**
+     * The name of the tool
+     */
+    name: string;
+};
+
+/**
+ * Additional properties describing a tool to clients.
+ *
+ * NOTE: all properties in ToolAnnotations are **hints**.
+ * They are not guaranteed to provide a faithful description of
+ * tool behavior (including descriptive properties like `title`).
+ *
+ * Clients should never make tool use decisions based on ToolAnnotations
+ * received from untrusted servers.
+ */
+export type ToolAnnotations = {
+    /**
+     * If true, the tool may perform destructive updates to its environment.
+     * If false, the tool performs only additive updates.
+     *
+     * (This property is meaningful only when `read_only_hint == false`)
+     *
+     * Default: true
+     */
+    destructiveHint?: boolean;
+    /**
+     * If true, calling the tool repeatedly with the same arguments
+     * will have no additional effect on its environment.
+     *
+     * (This property is meaningful only when `read_only_hint == false`)
+     *
+     * Default: false
+     */
+    idempotentHint?: boolean;
+    /**
+     * If true, this tool may interact with an "open world" of external
+     * entities. If false, the tool's domain of interaction is closed.
+     * For example, the world of a web search tool is open, whereas that
+     * of a memory tool is not.
+     *
+     * Default: true
+     */
+    openWorldHint?: boolean;
+    /**
+     * If true, the tool does not modify its environment.
+     *
+     * Default: false
+     */
+    readOnlyHint?: boolean;
+    /**
+     * A human-readable title for the tool.
+     */
+    title?: string | null;
+};
+
+/**
+ * Information about the tool used for building prompts
+ */
+export type ToolInfo = {
+    description: string;
+    name: string;
+    parameters: Array<string>;
+    permission?: PermissionLevel | null;
+};
+
 export type UpsertConfigQuery = {
     is_secret: boolean;
     key: string;
     value: unknown;
 };
+
+export type GetToolsData = {
+    body?: never;
+    path?: never;
+    query?: {
+        /**
+         * Optional extension name to filter tools
+         */
+        extension_name?: string | null;
+    };
+    url: '/agent/tools';
+};
+
+export type GetToolsErrors = {
+    /**
+     * Unauthorized - invalid secret key
+     */
+    401: unknown;
+    /**
+     * Agent not initialized
+     */
+    424: unknown;
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type GetToolsResponses = {
+    /**
+     * Tools retrieved successfully
+     */
+    200: Array<Tool>;
+};
+
+export type GetToolsResponse = GetToolsResponses[keyof GetToolsResponses];
 
 export type ReadAllConfigData = {
     body?: never;
@@ -179,6 +329,10 @@ export type AddExtensionErrors = {
      */
     400: unknown;
     /**
+     * Could not serialize config.yaml
+     */
+    422: unknown;
+    /**
      * Internal server error
      */
     500: unknown;
@@ -221,6 +375,29 @@ export type RemoveExtensionResponses = {
 };
 
 export type RemoveExtensionResponse = RemoveExtensionResponses[keyof RemoveExtensionResponses];
+
+export type InitConfigData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/config/init';
+};
+
+export type InitConfigErrors = {
+    /**
+     * Internal server error
+     */
+    500: unknown;
+};
+
+export type InitConfigResponses = {
+    /**
+     * Config initialization check completed
+     */
+    200: string;
+};
+
+export type InitConfigResponse = InitConfigResponses[keyof InitConfigResponses];
 
 export type ProvidersData = {
     body?: never;

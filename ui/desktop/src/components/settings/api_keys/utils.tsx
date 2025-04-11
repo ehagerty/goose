@@ -5,6 +5,7 @@ import { default_key_value, required_keys } from '../models/hardcoded_stuff'; //
 export function isSecretKey(keyName: string): boolean {
   // Endpoints and hosts should not be stored as secrets
   const nonSecretKeys = [
+    'ANTHROPIC_HOST',
     'DATABRICKS_HOST',
     'OLLAMA_HOST',
     'OPENAI_HOST',
@@ -100,8 +101,18 @@ export async function getProvidersList(): Promise<Provider[]> {
 
   const data = await response.json();
 
+  interface ProviderItem {
+    id: string;
+    details?: {
+      name?: string;
+      description?: string;
+      models?: string[];
+      required_keys?: string[];
+    };
+  }
+
   // Format the response into an array of providers
-  return data.map((item: any) => ({
+  return data.map((item: ProviderItem) => ({
     id: item.id, // Root-level ID
     name: item.details?.name || 'Unknown Provider', // Nested name in details
     description: item.details?.description || 'No description available.', // Nested description

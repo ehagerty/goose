@@ -1,15 +1,15 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { Button } from './ui/button';
 import Stop from './ui/Stop';
 import { Attach, Send } from './icons';
+import { debounce } from 'lodash';
 
 interface InputProps {
   handleSubmit: (e: React.FormEvent) => void;
   isLoading?: boolean;
   onStop?: () => void;
   commandHistory?: string[];
-  value?: string;
-  onValueChange?: (value: string) => void;
+  initialValue?: string;
 }
 
 export default function Input({
@@ -17,19 +17,19 @@ export default function Input({
   isLoading = false,
   onStop,
   commandHistory = [],
-  value: controlledValue,
-  onValueChange,
+  initialValue = '',
 }: InputProps) {
-  const [internalValue, setInternalValue] = useState('');
-  // Use controlled value if provided, otherwise use internal state
-  const value = controlledValue !== undefined ? controlledValue : internalValue;
-  const setValue = (newValue: string) => {
-    if (controlledValue !== undefined && onValueChange) {
-      onValueChange(newValue);
-    } else {
-      setInternalValue(newValue);
+  const [_value, setValue] = useState(initialValue);
+  const [displayValue, setDisplayValue] = useState(initialValue); // For immediate visual feedback
+
+  // Update internal value when initialValue changes
+  useEffect(() => {
+    if (initialValue) {
+      setValue(initialValue);
+      setDisplayValue(initialValue);
     }
-  };
+  }, [initialValue]);
+
   // State to track if the IME is composing (i.e., in the middle of Japanese IME input)
   const [isComposing, setIsComposing] = useState(false);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -40,34 +40,56 @@ export default function Input({
     if (textAreaRef.current) {
       textAreaRef.current.focus();
     }
-  }, [value]);
-
-  const useAutosizeTextArea = (textAreaRef: HTMLTextAreaElement | null, value: string) => {
-    useEffect(() => {
-      if (textAreaRef) {
-        textAreaRef.style.height = '0px'; // Reset height
-        const scrollHeight = textAreaRef.scrollHeight;
-        textAreaRef.style.height = Math.min(scrollHeight, maxHeight) + 'px';
-      }
-    }, [textAreaRef, value]);
-  };
+  }, []);
 
   const minHeight = '1rem';
   const maxHeight = 10 * 24;
 
-  useAutosizeTextArea(textAreaRef.current, value);
+  // Debounced function to update actual value
+  const debouncedSetValue = useCallback((val: string) => {
+    debounce((value: string) => {
+      setValue(value);
+    }, 150)(val);
+  }, []);
+
+  // Debounced autosize function
+  const debouncedAutosize = useCallback(
+    (textArea: HTMLTextAreaElement) => {
+      debounce((element: HTMLTextAreaElement) => {
+        element.style.height = '0px'; // Reset height
+        const scrollHeight = element.scrollHeight;
+        element.style.height = Math.min(scrollHeight, maxHeight) + 'px';
+      }, 150)(textArea);
+    },
+    [maxHeight]
+  );
+
+  useEffect(() => {
+    if (textAreaRef.current) {
+      debouncedAutosize(textAreaRef.current);
+    }
+  }, [debouncedAutosize, displayValue]);
 
   const handleChange = (evt: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = evt.target.value;
-    setValue(val);
+    setDisplayValue(val); // Update display immediately
+    debouncedSetValue(val); // Debounce the actual state update
   };
 
+  // Cleanup debounced functions on unmount
+  useEffect(() => {
+    return () => {
+      debouncedSetValue.cancel?.();
+      debouncedAutosize.cancel?.();
+    };
+  }, [debouncedSetValue, debouncedAutosize]);
+
   // Handlers for composition events, which are crucial for proper IME behavior
-  const handleCompositionStart = (evt: React.CompositionEvent<HTMLTextAreaElement>) => {
+  const handleCompositionStart = () => {
     setIsComposing(true);
   };
 
-  const handleCompositionEnd = (evt: React.CompositionEvent<HTMLTextAreaElement>) => {
+  const handleCompositionEnd = () => {
     setIsComposing(false);
   };
 
@@ -76,7 +98,7 @@ export default function Input({
 
     // Save current input if we're just starting to navigate history
     if (historyIndex === -1) {
-      setSavedInput(value);
+      setSavedInput(displayValue);
     }
 
     // Calculate new history index
@@ -93,12 +115,18 @@ export default function Input({
       }
     }
 
+    if (newIndex === historyIndex) {
+      return;
+    }
+
     // Update index and value
     setHistoryIndex(newIndex);
     if (newIndex === -1) {
       // Restore saved input when going past the end of history
+      setDisplayValue(savedInput);
       setValue(savedInput);
     } else {
+      setDisplayValue(commandHistory[newIndex] || '');
       setValue(commandHistory[newIndex] || '');
     }
   };
@@ -111,9 +139,15 @@ export default function Input({
     }
 
     if (evt.key === 'Enter') {
-      // should not trigger submit on Enter if it's composing (IME input in progress) or shift is pressed
+      // should not trigger submit on Enter if it's composing (IME input in progress) or shift/alt(option) is pressed
       if (evt.shiftKey || isComposing) {
-        // Allow line break for Shift+Enter or during IME composition
+        // Allow line break for Shift+Enter, or during IME composition
+        return;
+      }
+      if (evt.altKey) {
+        const newValue = displayValue + '\n';
+        setDisplayValue(newValue);
+        setValue(newValue);
         return;
       }
 
@@ -122,8 +156,9 @@ export default function Input({
       evt.preventDefault();
 
       // Only submit if not loading and has content
-      if (!isLoading && value.trim()) {
-        handleSubmit(new CustomEvent('submit', { detail: { value } }));
+      if (!isLoading && displayValue.trim()) {
+        handleSubmit(new CustomEvent('submit', { detail: { value: displayValue } }));
+        setDisplayValue('');
         setValue('');
         setHistoryIndex(-1);
         setSavedInput('');
@@ -133,8 +168,9 @@ export default function Input({
 
   const onFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (value.trim() && !isLoading) {
-      handleSubmit(new CustomEvent('submit', { detail: { value } }));
+    if (displayValue.trim() && !isLoading) {
+      handleSubmit(new CustomEvent('submit', { detail: { value: displayValue } }));
+      setDisplayValue('');
       setValue('');
       setHistoryIndex(-1);
       setSavedInput('');
@@ -145,10 +181,9 @@ export default function Input({
     const path = await window.electron.selectFileOrDirectory();
     if (path) {
       // Append the path to existing text, with a space if there's existing text
-      setValue((prev) => {
-        const currentText = prev.trim();
-        return currentText ? `${currentText} ${path}` : path;
-      });
+      const newValue = displayValue.trim() ? `${displayValue.trim()} ${path}` : path;
+      setDisplayValue(newValue);
+      setValue(newValue);
       textAreaRef.current?.focus();
     }
   };
@@ -162,7 +197,7 @@ export default function Input({
         autoFocus
         id="dynamic-textarea"
         placeholder="What can goose help with?   ⌘↑/⌘↓"
-        value={value}
+        value={displayValue}
         onChange={handleChange}
         onCompositionStart={handleCompositionStart}
         onCompositionEnd={handleCompositionEnd}
@@ -193,7 +228,7 @@ export default function Input({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            onStop();
+            onStop?.();
           }}
           className="absolute right-2 top-1/2 -translate-y-1/2 [&_svg]:size-5 text-textSubtle hover:text-textStandard"
         >
@@ -204,9 +239,9 @@ export default function Input({
           type="submit"
           size="icon"
           variant="ghost"
-          disabled={!value.trim()}
+          disabled={!displayValue.trim()}
           className={`absolute right-2 top-1/2 -translate-y-1/2 text-textSubtle hover:text-textStandard ${
-            !value.trim() ? 'text-textSubtle cursor-not-allowed' : ''
+            !displayValue.trim() ? 'text-textSubtle cursor-not-allowed' : ''
           }`}
         >
           <Send />

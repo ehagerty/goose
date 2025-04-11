@@ -77,14 +77,14 @@ lazy_static::lazy_static! {
 
 /// Generic test harness for any Provider implementation
 struct ProviderTester {
-    provider: Box<dyn Provider + Send + Sync>,
+    provider: Arc<dyn Provider>,
     name: String,
 }
 
 impl ProviderTester {
     fn new<T: Provider + Send + Sync + 'static>(provider: T, name: String) -> Self {
         Self {
-            provider: Box::new(provider),
+            provider: Arc::new(provider),
             name,
         }
     }
@@ -127,6 +127,7 @@ impl ProviderTester {
                     }
                 }
             }),
+            None,
         );
 
         let message = Message::user().with_text("What's the weather like in San Francisco?");

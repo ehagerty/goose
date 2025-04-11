@@ -1,5 +1,3 @@
-import { Model } from './ModelContext';
-
 export const openai_models = ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'o1'];
 
 export const anthropic_models = [
@@ -34,6 +32,7 @@ export const gcp_vertex_ai_models = [
   'gemini-1.5-pro-002',
   'gemini-2.0-flash-001',
   'gemini-2.0-pro-exp-02-05',
+  'gemini-2.5-pro-exp-03-25',
 ];
 
 export const default_models = {
@@ -57,7 +56,7 @@ export const short_list = ['gpt-4o', 'claude-3-5-sonnet-latest'];
 
 export const required_keys = {
   OpenAI: ['OPENAI_API_KEY', 'OPENAI_HOST', 'OPENAI_BASE_PATH'],
-  Anthropic: ['ANTHROPIC_API_KEY'],
+  Anthropic: ['ANTHROPIC_API_KEY', 'ANTHROPIC_HOST'],
   Databricks: ['DATABRICKS_HOST'],
   Groq: ['GROQ_API_KEY'],
   Ollama: ['OLLAMA_HOST'],
@@ -74,6 +73,7 @@ export const required_keys = {
 };
 
 export const default_key_value = {
+  ANTHROPIC_HOST: 'https://api.anthropic.com',
   OPENAI_HOST: 'https://api.openai.com',
   OPENAI_BASE_PATH: 'v1/chat/completions',
   OLLAMA_HOST: 'localhost',

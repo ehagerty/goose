@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { ViewConfig } from '../../App';
+import { View, ViewOptions } from '../../App';
 import { fetchSessionDetails, type SessionDetails } from '../../sessions';
 import SessionListView from './SessionListView';
 import SessionHistoryView from './SessionHistoryView';
+import { toastError } from '../../toasts';
 
 interface SessionsViewProps {
-  setView: (view: ViewConfig['view'], viewOptions?: Record<any, any>) => void;
+  setView: (view: View, viewOptions?: ViewOptions) => void;
 }
 
 const SessionsView: React.FC<SessionsViewProps> = ({ setView }) => {
@@ -28,6 +29,12 @@ const SessionsView: React.FC<SessionsViewProps> = ({ setView }) => {
       setError('Failed to load session details. Please try again later.');
       // Keep the selected session null if there's an error
       setSelectedSession(null);
+
+      toastError({
+        title: 'Failed to load session. The file may be corrupted.',
+        msg: 'Please try again later.',
+        traceback: err,
+      });
     } finally {
       setIsLoadingSession(false);
     }
@@ -70,7 +77,7 @@ const SessionsView: React.FC<SessionsViewProps> = ({ setView }) => {
   };
 
   // If a session is selected, show the session history view
-  // Otherwise, show the sessions list view
+  // Otherwise, show the sessions list view with a button to test shared sessions
   return selectedSession ? (
     <SessionHistoryView
       session={selectedSession}
@@ -81,7 +88,9 @@ const SessionsView: React.FC<SessionsViewProps> = ({ setView }) => {
       onRetry={handleRetryLoadSession}
     />
   ) : (
-    <SessionListView setView={setView} onSelectSession={handleSelectSession} />
+    <>
+      <SessionListView setView={setView} onSelectSession={handleSelectSession} />
+    </>
   );
 };
 

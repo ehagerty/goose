@@ -1,7 +1,9 @@
 use etcetera::AppStrategyArgs;
 use once_cell::sync::Lazy;
+pub mod cli;
 pub mod commands;
 pub mod logging;
+pub mod recipe;
 pub mod session;
 
 // Re-export commonly used types

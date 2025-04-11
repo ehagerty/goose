@@ -3,17 +3,17 @@ import { FixedExtensionEntry } from '../../../ConfigContext';
 import { ExtensionConfig } from '../../../../api/types.gen';
 import ExtensionItem from './ExtensionItem';
 import builtInExtensionsData from '../../../../built-in-extensions.json';
-import { combineCmdAndArgs } from '../utils';
+import { combineCmdAndArgs, removeShims } from '../utils';
 
 interface ExtensionListProps {
   extensions: FixedExtensionEntry[];
-  onToggle: (extension: FixedExtensionEntry) => void;
+  onToggle: (extension: FixedExtensionEntry) => Promise<boolean | void>;
   onConfigure: (extension: FixedExtensionEntry) => void;
 }
 
 export default function ExtensionList({ extensions, onToggle, onConfigure }: ExtensionListProps) {
   return (
-    <div className="grid grid-cols-2 gap-6">
+    <div className="grid grid-cols-2 gap-2 mb-2">
       {extensions.map((extension) => (
         <ExtensionItem
           key={extension.name}
@@ -25,7 +25,6 @@ export default function ExtensionList({ extensions, onToggle, onConfigure }: Ext
     </div>
   );
 }
-
 // Helper functions
 // Helper function to get a friendly title from extension name
 export function getFriendlyTitle(extension: FixedExtensionEntry): string {
@@ -58,7 +57,8 @@ export function getSubtitle(config: ExtensionConfig): string {
     return 'Built-in extension';
   }
   if (config.type === 'stdio') {
-    const full_command = combineCmdAndArgs(config.cmd, config.args);
+    // remove shims for displaying
+    const full_command = combineCmdAndArgs(removeShims(config.cmd), config.args);
     return `STDIO extension${config.description ? `: ${config.description}` : ''}${full_command ? `\n${full_command}` : ''}`;
   }
   if (config.type === 'sse') {

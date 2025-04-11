@@ -1,14 +1,22 @@
 import React, { useEffect, useState } from 'react';
-import { ViewConfig } from '../../App';
-import { MessageSquare, Loader, AlertCircle, Calendar, ChevronRight, Folder } from 'lucide-react';
+import {
+  MessageSquareText,
+  Target,
+  LoaderCircle,
+  AlertCircle,
+  Calendar,
+  ChevronRight,
+  Folder,
+} from 'lucide-react';
 import { fetchSessions, type Session } from '../../sessions';
 import { Card } from '../ui/card';
 import { Button } from '../ui/button';
 import BackButton from '../ui/BackButton';
 import { ScrollArea } from '../ui/scroll-area';
+import { View, ViewOptions } from '../../App';
 
 interface SessionListViewProps {
-  setView: (view: ViewConfig['view'], viewOptions?: Record<any, any>) => void;
+  setView: (view: View, viewOptions?: ViewOptions) => void;
   onSelectSession: (sessionId: string) => void;
 }
 
@@ -39,7 +47,7 @@ const SessionListView: React.FC<SessionListViewProps> = ({ setView, onSelectSess
 
   // Format date to be more readable
   // eg. "10:39 PM, Feb 28, 2025"
-  const formatDate = (dateString: string) => {
+  const formatDateString = (dateString: string) => {
     try {
       const date = new Date(dateString);
       const time = new Intl.DateTimeFormat('en-US', {
@@ -80,7 +88,7 @@ const SessionListView: React.FC<SessionListViewProps> = ({ setView, onSelectSess
           <div className="flex-1 overflow-y-auto p-4">
             {isLoading ? (
               <div className="flex justify-center items-center h-full">
-                <Loader className="h-8 w-8 animate-spin text-textPrimary" />
+                <LoaderCircle className="h-8 w-8 animate-spin text-textPrimary" />
               </div>
             ) : error ? (
               <div className="flex flex-col items-center justify-center h-full text-textSubtle">
@@ -107,7 +115,7 @@ const SessionListView: React.FC<SessionListViewProps> = ({ setView, onSelectSess
                         <div className="flex gap-3">
                           <div className="flex items-center text-textSubtle text-sm">
                             <Calendar className="w-3 h-3 mr-1 flex-shrink-0" />
-                            <span className="truncate">{formatDate(session.modified)}</span>
+                            <span className="truncate">{formatDateString(session.modified)}</span>
                           </div>
                           <div className="flex items-center text-textSubtle text-sm">
                             <Folder className="w-3 h-3 mr-1 flex-shrink-0" />
@@ -123,12 +131,13 @@ const SessionListView: React.FC<SessionListViewProps> = ({ setView, onSelectSess
                           </div>
                           <div className="flex items-center mt-1 space-x-3 text-sm text-textSubtle">
                             <div className="flex items-center">
-                              <MessageSquare className="w-3 h-3 mr-1" />
+                              <MessageSquareText className="w-3 h-3 mr-1" />
                               <span>{session.metadata.message_count}</span>
                             </div>
                             {session.metadata.total_tokens !== null && (
                               <div className="flex items-center">
-                                <span>{session.metadata.total_tokens.toLocaleString()} tokens</span>
+                                <Target className="w-3 h-3 mr-1" />
+                                <span>{session.metadata.total_tokens.toLocaleString()}</span>
                               </div>
                             )}
                           </div>
@@ -141,7 +150,7 @@ const SessionListView: React.FC<SessionListViewProps> = ({ setView, onSelectSess
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center h-full text-textSubtle">
-                <MessageSquare className="h-12 w-12 mb-4" />
+                <MessageSquareText className="h-12 w-12 mb-4" />
                 <p className="text-lg mb-2">No chat sessions found</p>
                 <p className="text-sm">Your chat history will appear here</p>
               </div>

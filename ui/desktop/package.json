@@ -1,10 +1,14 @@
 {
   "name": "goose-app",
   "productName": "Goose",
-  "version": "1.0.15",
+  "version": "1.0.17",
   "description": "Goose App",
+  "engines": {
+    "node": "^23.0.0"
+  },
   "main": ".vite/build/main.js",
   "scripts": {
+    "typecheck": "tsc --noEmit",
     "generate-api": "openapi-ts",
     "start-gui": "npm run generate-api && electron-forge start",
     "start": "cd ../.. && just run-ui",
@@ -12,12 +16,15 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "bundle:default": "npm run make && cd out/Goose-darwin-arm64 && ditto -c -k --sequesterRsrc --keepParent Goose.app Goose.zip",
-    "bundle:windows": "node scripts/build-main.js && npm run make -- --platform=win32 --arch=x64 && node scripts/copy-windows-dlls.js",
+    "bundle:windows": "node scripts/build-main.js && node scripts/prepare-platform.js && npm run make -- --platform=win32 --arch=x64 && node scripts/copy-windows-dlls.js",
     "bundle:intel": "npm run make -- --arch=x64 && cd out/Goose-darwin-x64 && ditto -c -k --sequesterRsrc --keepParent Goose.app Goose_intel_mac.zip",
     "debug": "echo 'run --remote-debugging-port=8315' && lldb out/Goose-darwin-arm64/Goose.app",
-    "test-e2e": "electron-forge start > /tmp/out.txt & ELECTRON_PID=$! && sleep 12 && if grep -q 'renderer: ChatWindow loaded' /tmp/out.txt; then echo 'process is running'; pkill -f electron; else echo 'not starting correctly'; cat /tmp/out.txt; pkill -f electron; exit 1; fi",
-    "lint": "eslint \"src/**/*.{ts,tsx}\" --fix",
-    "lint:check": "eslint \"src/**/*.{ts,tsx}\"",
+    "test-e2e": "npm run generate-api && playwright test",
+    "test-e2e:ui": "npm run generate-api && playwright test --ui",
+    "test-e2e:debug": "npm run generate-api && playwright test --debug",
+    "test-e2e:report": "playwright show-report",
+    "lint": "eslint \"src/**/*.{ts,tsx}\" --fix --no-warn-ignored",
+    "lint:check": "eslint \"src/**/*.{ts,tsx}\" --max-warnings 0 --no-warn-ignored",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,json}\"",
     "prepare": "cd ../.. && husky install",
@@ -33,11 +40,15 @@
     "@electron-forge/plugin-fuses": "^7.5.0",
     "@electron-forge/plugin-vite": "^7.5.0",
     "@electron/fuses": "^1.8.0",
+    "@electron/remote": "^2.1.2",
     "@eslint/js": "^8.56.0",
     "@hey-api/openapi-ts": "^0.64.4",
+    "@modelcontextprotocol/sdk": "^1.8.0",
+    "@playwright/test": "^1.51.1",
     "@tailwindcss/typography": "^0.5.15",
     "@types/cors": "^2.8.17",
     "@types/electron-squirrel-startup": "^1.0.2",
+    "@types/electron-window-state": "^2.0.34",
     "@types/express": "^5.0.0",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
@@ -52,13 +63,13 @@
     "postcss": "^8.4.47",
     "prettier": "^3.4.2",
     "tailwindcss": "^3.4.14",
-    "vite": "^5.0.12"
+    "vite": "^5.4.18"
   },
   "keywords": [],
   "license": "Apache-2.0",
   "lint-staged": {
     "src/**/*.{ts,tsx}": [
-      "eslint --fix",
+      "eslint --fix --max-warnings 0 --no-warn-ignored",
       "prettier --write"
     ],
     "src/**/*.{css,json}": [
@@ -80,6 +91,7 @@
     "@radix-ui/react-slot": "^1.1.1",
     "@radix-ui/react-tabs": "^1.1.1",
     "@radix-ui/themes": "^3.1.5",
+    "@types/lodash": "^4.17.16",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@types/react-syntax-highlighter": "^15.5.13",
@@ -92,6 +104,7 @@
     "electron-squirrel-startup": "^1.0.1",
     "express": "^4.21.1",
     "framer-motion": "^11.11.11",
+    "lodash": "^4.17.21",
     "lucide-react": "^0.454.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
