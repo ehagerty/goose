@@ -124,16 +124,13 @@ impl Provider for AnthropicProvider {
             "Anthropic",
             "Claude and other models from Anthropic",
             ANTHROPIC_DEFAULT_MODEL,
-            ANTHROPIC_KNOWN_MODELS
-                .iter()
-                .map(|&s| s.to_string())
-                .collect(),
+            ANTHROPIC_KNOWN_MODELS.to_vec(),
             ANTHROPIC_DOC_URL,
             vec![
                 ConfigKey::new("ANTHROPIC_API_KEY", true, true, None),
                 ConfigKey::new(
                     "ANTHROPIC_HOST",
-                    false,
+                    true,
                     false,
                     Some("https://api.anthropic.com"),
                 ),

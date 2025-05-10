@@ -30,8 +30,13 @@ Here are the built-in extensions:
 #### Toggling Built-in Extensions
 
 <Tabs groupId="interface">
+  <TabItem value="ui" label="Goose Desktop" default>
+  1. Click `...` in the top right corner of the Goose Desktop.
+  2. Select `Advanced Settings` from the menu.
+  3. Under `Extensions`, you can toggle the built-in extensions on or off.
+  </TabItem>
 
-  <TabItem value="cli" label="Goose CLI" default>
+  <TabItem value="cli" label="Goose CLI">
     
     If you know the exact name of the extension you'd like to add, run:
 
@@ -46,7 +51,7 @@ Here are the built-in extensions:
     goose configure
     ```
     2. Select `Add Extension` from the menu.
-    3. Choose the type of extension you’d like to add:
+    3. Choose the type of extension you'd like to add:
         - `Built-In Extension`: Use an extension that comes pre-installed with Goose.
         - `Command-Line Extension`: Add a local command or script to run as an extension.
         - `Remote Extension`: Connect to a remote system via SSE (Server-Sent Events).
@@ -78,11 +83,6 @@ Here are the built-in extensions:
     └  Enabled jetbrains extension    
     ```
   </TabItem>
-  <TabItem value="ui" label="Goose Desktop">
-  1. Click `...` in the top right corner of the Goose Desktop.
-  2. Select `Settings` from the menu.
-  3. Under `Extensions`, you can toggle the built-in extensions on or off.
-  </TabItem>
 </Tabs>
 
 
@@ -112,7 +112,25 @@ See available servers in the **[MCP Server Directory](https://www.pulsemcp.com/s
 :::
 
 <Tabs groupId="interface">
-  <TabItem value="cli" label="Goose CLI" default>
+  <TabItem value="ui" label="Goose Desktop" default>
+ 
+  1. Click `...` in the top right corner of the Goose Desktop.
+  2. Select `Advanced Settings` from the menu.
+  3. Under `Extensions`, click `Add custom extension`.
+  4. On the `Add custom extension` modal, enter the necessary details
+     - If adding an environment variable, click `Add` button to the right of the variable
+     - The `Timeout` field lets you set how long Goose should wait for a tool call from this extension to complete
+  5. Click `Add` button
+  
+  #### Example of adding the [Knowledge Graph Memory MCP Server](https://github.com/modelcontextprotocol/servers/tree/main/src/memory):
+    * **Type**: `Standard IO`
+    * **ID**: `kgm-mcp` (_set this to whatever you want_)
+    * **Name**: `Knowledge Graph Memory` (_set this to whatever you want_)
+    * **Description**: `maps and stores complex relationships between concepts` (_set this to whatever you want_)
+    * **Command**: `npx -y @modelcontextprotocol/server-memory`
+  </TabItem>
+
+  <TabItem value="cli" label="Goose CLI">
   
   1. Run the following command: 
 
@@ -226,23 +244,6 @@ Note: Java and Kotlin extensions are only support on Linux and macOS
   </Tabs>
 
   </TabItem>
-  <TabItem value="ui" label="Goose Desktop">
- 
-  1. Click `...` in the top right corner of the Goose Desktop.
-  2. Select `Settings` from the menu.
-  3. Under `Extensions`, click `Add custom extension`.
-  4. On the `Add custom extension` modal, enter the necessary details
-     - If adding an environment variable, click `Add` button to the right of the variable
-     - The `Timeout` field lets you set how long Goose should wait for a tool call from this extension to complete
-  5. Click `Add` button
-  
-  #### Example of adding the [Knowledge Graph Memory MCP Server](https://github.com/modelcontextprotocol/servers/tree/main/src/memory):
-    * **Type**: `Standard IO`
-    * **ID**: `kgm-mcp` (_set this to whatever you want_)
-    * **Name**: `Knowledge Graph Memory` (_set this to whatever you want_)
-    * **Description**: `maps and stores complex relationships between concepts` (_set this to whatever you want_)
-    * **Command**: `npx -y @modelcontextprotocol/server-memory`
-  </TabItem>
 </Tabs>
 
 ### Config Entry
@@ -266,7 +267,14 @@ extensions:
 You can enable or disable installed extensions based on your workflow needs.
 
 <Tabs groupId="interface">
-  <TabItem value="cli" label="Goose CLI" default>
+  <TabItem value="ui" label="Goose Desktop" default>
+  1. Click the three dots in the top-right corner of the application.
+  2. Select `Advanced Settings` from the menu, scroll down to the `Extensions` section.
+  2. Use the toggle switch next to each extension to enable or disable it.
+
+  </TabItem>
+
+  <TabItem value="cli" label="Goose CLI">
     1. Run the following command to open up Goose's configurations:
     ```sh
     goose configure
@@ -289,21 +297,27 @@ You can enable or disable installed extensions based on your workflow needs.
     └   
     ```
   </TabItem>
-  <TabItem value="ui" label="Goose Desktop">
-  1. Click the three dots in the top-right corner of the application.
-  2. Select `Settings` from the menu, scroll down to the `Extensions` section.
-  2. Use the toggle switch next to each extension to enable or disable it.
-
-  </TabItem>
 </Tabs>
 
+:::tip
+Goose can automatically detect and suggest the right extensions for your tasks as you chat. Learn more about this smart feature in the [Smart Extension](/docs/guides/smart-extension-recommendation) guide.
+:::
 
 ## Removing Extensions
 
 You can remove installed extensions. 
 
 <Tabs groupId="interface">
-<TabItem value="cli" label="Config file" default>
+  <TabItem value="ui" label="Goose Desktop" default>
+
+  1. Click `...` in the top right corner of the Goose Desktop.
+  2. Select `Advanced Settings` from the menu.
+  3. Under `Extensions`, find the extension you'd like to remove and click on the settings icon beside it.
+  4. In the dialog that appears, click `Remove Extension`.
+
+  </TabItem>
+
+  <TabItem value="cli" label="Config file">
   :::info
   To remove an extension, you must [disable](#enablingdisabling-extensions) it first.
   :::
@@ -326,14 +340,6 @@ You can remove installed extensions.
     └  
     ```
     5. Press Enter to save
-  </TabItem>
-  <TabItem value="ui" label="Goose Desktop">
-
-  1. Click `...` in the top right corner of the Goose Desktop.
-  2. Select `Settings` from the menu.
-  3. Under `Extensions`, find the extension you'd like to remove and click on the settings icon beside it.
-  4. In the dialog that appears, click `Remove Extension`.
-
   </TabItem>
 </Tabs>
 
@@ -376,7 +382,7 @@ goose session --with-builtin developer --with-builtin computercontroller
 To enable an extension while starting a session, run the following command:
 
 ```bash
-goose session --with-extension "{extension command}" --with-extension "{antoher extension command}"
+goose session --with-extension "{extension command}" --with-extension "{another extension command}"
 ```
 
 For example, to start a session with the [Fetch extension](https://github.com/modelcontextprotocol/servers/tree/main/src/fetch), you'd run:
@@ -404,9 +410,22 @@ goose session --with-extension "GITHUB_PERSONAL_ACCESS_TOKEN=<YOUR_TOKEN> npx -y
 Note that you'll need [Node.js](https://nodejs.org/) installed on your system to run this command, as it uses `npx`.
 :::
 
+### Remote Extensions over SSE
+
+To enable a remote extension over SSE while starting a session, run the following command:
+
+```bash
+goose session --with-remote-extension "{extension URL}" --with-remote-extension "{another extension URL}"
+```
+
+For example, to start a session with a remote extension running on localhost on port 8080, you'd run:
+
+```bash
+goose session --with-remote-extension "http://localhost:8080/sse"
+```
 
 ## Developing Extensions
-Goose extensions are implemented with MCP, a standard protocol that allows AI models and agents to securely connect with local or remote resources. Learn how to build your own [extension as an MCP server](https://modelcontextprotocol.io/quickstart/server).
 
+Goose extensions are implemented with MCP, a standard protocol that allows AI models and agents to securely connect with local or remote resources. Learn how to build your own [extension as an MCP server](https://modelcontextprotocol.io/quickstart/server).
 
 [extensions-directory]: https://block.github.io/goose/v1/extensions

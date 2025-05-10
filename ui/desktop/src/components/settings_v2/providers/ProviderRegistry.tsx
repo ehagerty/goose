@@ -1,6 +1,4 @@
 import ProviderDetails from './interfaces/ProviderDetails';
-import OllamaForm from './modal/subcomponents/forms/OllamaForm';
-import OllamaSubmitHandler from './modal/subcomponents/handlers/OllamaSubmitHandler';
 
 export interface ProviderRegistry {
   name: string;
@@ -91,6 +89,11 @@ export const PROVIDER_REGISTRY: ProviderRegistry[] = [
           name: 'ANTHROPIC_API_KEY',
           is_secret: true,
         },
+        {
+          name: 'ANTHROPIC_HOST',
+          is_secret: false,
+          default: 'https://api.anthropic.com',
+        },
       ],
     },
   },
@@ -170,11 +173,13 @@ export const PROVIDER_REGISTRY: ProviderRegistry[] = [
     details: {
       id: 'azure_openai',
       name: 'Azure OpenAI',
-      description: 'Access Azure OpenAI models',
+      description:
+        'Access Azure OpenAI models using API key or Azure credentials. If no API key is provided, Azure credential chain will be used.',
       parameters: [
         {
           name: 'AZURE_OPENAI_API_KEY',
           is_secret: true,
+          required: false,
         },
         {
           name: 'AZURE_OPENAI_ENDPOINT',

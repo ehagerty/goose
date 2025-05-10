@@ -1,5 +1,3 @@
-import { Model } from './ModelContext';
-
 export const openai_models = ['gpt-4o-mini', 'gpt-4o', 'gpt-4-turbo', 'o1'];
 
 export const anthropic_models = [
@@ -16,6 +14,7 @@ export const google_models = [
   'gemini-2.0-flash-lite-preview-02-05',
   'gemini-2.0-flash-thinking-exp-01-21',
   'gemini-2.0-pro-exp-02-05',
+  'gemini-2.5-pro-exp-03-25',
 ];
 
 export const groq_models = ['llama-3.3-70b-versatile'];
@@ -34,6 +33,7 @@ export const gcp_vertex_ai_models = [
   'gemini-1.5-pro-002',
   'gemini-2.0-flash-001',
   'gemini-2.0-pro-exp-02-05',
+  'gemini-2.5-pro-exp-03-25',
 ];
 
 export const default_models = {
@@ -50,21 +50,20 @@ export const default_models = {
 };
 
 export function getDefaultModel(key: string): string | undefined {
-  return default_models[key] || undefined;
+  return default_models[key as keyof typeof default_models] || undefined;
 }
 
 export const short_list = ['gpt-4o', 'claude-3-5-sonnet-latest'];
 
 export const required_keys = {
   OpenAI: ['OPENAI_API_KEY', 'OPENAI_HOST', 'OPENAI_BASE_PATH'],
-  Anthropic: ['ANTHROPIC_API_KEY'],
+  Anthropic: ['ANTHROPIC_API_KEY', 'ANTHROPIC_HOST'],
   Databricks: ['DATABRICKS_HOST'],
   Groq: ['GROQ_API_KEY'],
   Ollama: ['OLLAMA_HOST'],
   Google: ['GOOGLE_API_KEY'],
   OpenRouter: ['OPENROUTER_API_KEY'],
   'Azure OpenAI': [
-    'AZURE_OPENAI_API_KEY',
     'AZURE_OPENAI_ENDPOINT',
     'AZURE_OPENAI_DEPLOYMENT_NAME',
     'AZURE_OPENAI_API_VERSION',
@@ -74,6 +73,7 @@ export const required_keys = {
 };
 
 export const default_key_value = {
+  ANTHROPIC_HOST: 'https://api.anthropic.com',
   OPENAI_HOST: 'https://api.openai.com',
   OPENAI_BASE_PATH: 'v1/chat/completions',
   OLLAMA_HOST: 'localhost',

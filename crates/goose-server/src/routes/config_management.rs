@@ -1,3 +1,4 @@
+use super::utils::verify_secret_key;
 use crate::routes::utils::check_provider_configured;
 use crate::state::AppState;
 use axum::{
@@ -5,31 +6,20 @@ use axum::{
     routing::{delete, get, post},
     Json, Router,
 };
-use goose::agents::ExtensionConfig;
-use goose::config::extensions::name_to_key;
+use etcetera::{choose_app_strategy, AppStrategy, AppStrategyArgs};
 use goose::config::Config;
-use goose::config::{ExtensionEntry, ExtensionManager};
+use goose::config::{extensions::name_to_key, PermissionManager};
+use goose::config::{ExtensionConfigManager, ExtensionEntry};
 use goose::providers::base::ProviderMetadata;
 use goose::providers::providers as get_providers;
+use goose::{agents::ExtensionConfig, config::permission::PermissionLevel};
 use http::{HeaderMap, StatusCode};
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
+use serde_yaml;
+use std::{collections::HashMap, sync::Arc};
 use utoipa::ToSchema;
-
-fn verify_secret_key(headers: &HeaderMap, state: &AppState) -> Result<StatusCode, StatusCode> {
-    // Verify secret key
-    let secret_key = headers
-        .get("X-Secret-Key")
-        .and_then(|value| value.to_str().ok())
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
-    if secret_key != state.secret_key {
-        Err(StatusCode::UNAUTHORIZED)
-    } else {
-        Ok(StatusCode::OK)
-    }
-}
 
 #[derive(Serialize, ToSchema)]
 pub struct ExtensionResponse {
@@ -77,6 +67,18 @@ pub struct ProvidersResponse {
     pub providers: Vec<ProviderDetails>,
 }
 
+#[derive(Debug, Serialize, Deserialize, ToSchema)]
+pub struct ToolPermission {
+    /// Unique identifier and name of the tool, format <extension_name>__<tool_name>
+    pub tool_name: String,
+    pub permission: PermissionLevel,
+}
+
+#[derive(Deserialize, ToSchema)]
+pub struct UpsertPermissionsQuery {
+    pub tool_permissions: Vec<ToolPermission>,
+}
+
 #[utoipa::path(
     post,
     path = "/config/upsert",
@@ -87,7 +89,7 @@ pub struct ProvidersResponse {
     )
 )]
 pub async fn upsert_config(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     headers: HeaderMap,
     Json(query): Json<UpsertConfigQuery>,
 ) -> Result<Json<Value>, StatusCode> {
@@ -114,7 +116,7 @@ pub async fn upsert_config(
     )
 )]
 pub async fn remove_config(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     headers: HeaderMap,
     Json(query): Json<ConfigKeyQuery>,
 ) -> Result<Json<String>, StatusCode> {
@@ -123,7 +125,14 @@ pub async fn remove_config(
 
     let config = Config::global();
 
-    match config.delete(&query.key) {
+    // Check if the secret flag is true and call the appropriate method
+    let result = if query.is_secret {
+        config.delete_secret(&query.key)
+    } else {
+        config.delete(&query.key)
+    };
+
+    match result {
         Ok(_) => Ok(Json(format!("Removed key {}", query.key))),
         Err(_) => Err(StatusCode::NOT_FOUND),
     }
@@ -139,7 +148,7 @@ pub async fn remove_config(
     )
 )]
 pub async fn read_config(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     headers: HeaderMap,
     Json(query): Json<ConfigKeyQuery>,
 ) -> Result<Json<Value>, StatusCode> {
@@ -171,14 +180,24 @@ pub async fn read_config(
     )
 )]
 pub async fn get_extensions(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     headers: HeaderMap,
 ) -> Result<Json<ExtensionResponse>, StatusCode> {
     verify_secret_key(&headers, &state)?;
 
-    match ExtensionManager::get_all() {
+    match ExtensionConfigManager::get_all() {
         Ok(extensions) => Ok(Json(ExtensionResponse { extensions })),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        Err(err) => {
+            // Return UNPROCESSABLE_ENTITY only for DeserializeError, INTERNAL_SERVER_ERROR for everything else
+            if err
+                .downcast_ref::<goose::config::base::ConfigError>()
+                .is_some_and(|e| matches!(e, goose::config::base::ConfigError::DeserializeError(_)))
+            {
+                Err(StatusCode::UNPROCESSABLE_ENTITY)
+            } else {
+                Err(StatusCode::INTERNAL_SERVER_ERROR)
+            }
+        }
     }
 }
 
@@ -189,24 +208,25 @@ pub async fn get_extensions(
     responses(
         (status = 200, description = "Extension added or updated successfully", body = String),
         (status = 400, description = "Invalid request"),
+        (status = 422, description = "Could not serialize config.yaml"),
         (status = 500, description = "Internal server error")
     )
 )]
 pub async fn add_extension(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     headers: HeaderMap,
     Json(extension_query): Json<ExtensionQuery>,
 ) -> Result<Json<String>, StatusCode> {
     verify_secret_key(&headers, &state)?;
 
     // Get existing extensions to check if this is an update
-    let extensions = ExtensionManager::get_all().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let extensions =
+        ExtensionConfigManager::get_all().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     let key = name_to_key(&extension_query.name);
 
     let is_update = extensions.iter().any(|e| e.config.key() == key);
 
-    // Use ExtensionManager to set the extension
-    match ExtensionManager::set(ExtensionEntry {
+    match ExtensionConfigManager::set(ExtensionEntry {
         enabled: extension_query.enabled,
         config: extension_query.config,
     }) {
@@ -231,15 +251,14 @@ pub async fn add_extension(
     )
 )]
 pub async fn remove_extension(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     headers: HeaderMap,
     axum::extract::Path(name): axum::extract::Path<String>,
 ) -> Result<Json<String>, StatusCode> {
     verify_secret_key(&headers, &state)?;
 
     let key = name_to_key(&name);
-    // Use ExtensionManager to remove the extension
-    match ExtensionManager::remove(&key) {
+    match ExtensionConfigManager::remove(&key) {
         Ok(_) => Ok(Json(format!("Removed extension {}", name))),
         Err(_) => Err(StatusCode::NOT_FOUND),
     }
@@ -253,7 +272,7 @@ pub async fn remove_extension(
     )
 )]
 pub async fn read_all_config(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     headers: HeaderMap,
 ) -> Result<Json<ConfigResponse>, StatusCode> {
     // Use the helper function to verify the secret key
@@ -262,7 +281,9 @@ pub async fn read_all_config(
     let config = Config::global();
 
     // Load values from config file
-    let values = config.load_values().unwrap_or_default();
+    let values = config
+        .load_values()
+        .map_err(|_| StatusCode::UNPROCESSABLE_ENTITY)?;
 
     Ok(Json(ConfigResponse { config: values }))
 }
@@ -276,7 +297,7 @@ pub async fn read_all_config(
     )
 )]
 pub async fn providers(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     headers: HeaderMap,
 ) -> Result<Json<Vec<ProviderDetails>>, StatusCode> {
     verify_secret_key(&headers, &state)?;
@@ -302,7 +323,150 @@ pub async fn providers(
     Ok(Json(providers_response))
 }
 
-pub fn routes(state: AppState) -> Router {
+#[utoipa::path(
+    post,
+    path = "/config/init",
+    responses(
+        (status = 200, description = "Config initialization check completed", body = String),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub async fn init_config(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+) -> Result<Json<String>, StatusCode> {
+    verify_secret_key(&headers, &state)?;
+
+    let config = Config::global();
+
+    // 200 if config already exists
+    if config.exists() {
+        return Ok(Json("Config already exists".to_string()));
+    }
+
+    // Find the workspace root (where the top-level Cargo.toml with [workspace] is)
+    let workspace_root = match std::env::current_exe() {
+        Ok(mut exe_path) => {
+            // Start from the executable's directory and traverse up
+            while let Some(parent) = exe_path.parent() {
+                let cargo_toml = parent.join("Cargo.toml");
+                if cargo_toml.exists() {
+                    // Read the Cargo.toml file
+                    if let Ok(content) = std::fs::read_to_string(&cargo_toml) {
+                        // Check if it contains [workspace]
+                        if content.contains("[workspace]") {
+                            exe_path = parent.to_path_buf();
+                            break;
+                        }
+                    }
+                }
+                exe_path = parent.to_path_buf();
+            }
+            exe_path
+        }
+        Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+    };
+
+    // Check if init-config.yaml exists at workspace root
+    let init_config_path = workspace_root.join("init-config.yaml");
+    if !init_config_path.exists() {
+        return Ok(Json(
+            "No init-config.yaml found, using default configuration".to_string(),
+        ));
+    }
+
+    // Read init-config.yaml and validate
+    let init_content = match std::fs::read_to_string(&init_config_path) {
+        Ok(content) => content,
+        Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+    };
+    let init_values: HashMap<String, Value> = match serde_yaml::from_str(&init_content) {
+        Ok(values) => values,
+        Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
+    };
+
+    // Save init-config.yaml to ~/.config/goose/config.yaml
+    match config.save_values(init_values) {
+        Ok(_) => Ok(Json("Config initialized successfully".to_string())),
+        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+    }
+}
+
+#[utoipa::path(
+    post,
+    path = "/config/permissions",
+    request_body = UpsertPermissionsQuery,
+    responses(
+        (status = 200, description = "Permission update completed", body = String),
+        (status = 400, description = "Invalid request"),
+    )
+)]
+pub async fn upsert_permissions(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    Json(query): Json<UpsertPermissionsQuery>,
+) -> Result<Json<String>, StatusCode> {
+    verify_secret_key(&headers, &state)?;
+
+    let mut permission_manager = PermissionManager::default();
+    // Iterate over each tool permission and update permissions
+    for tool_permission in &query.tool_permissions {
+        permission_manager.update_user_permission(
+            &tool_permission.tool_name,
+            tool_permission.permission.clone(),
+        );
+    }
+
+    Ok(Json("Permissions updated successfully".to_string()))
+}
+
+pub static APP_STRATEGY: Lazy<AppStrategyArgs> = Lazy::new(|| AppStrategyArgs {
+    top_level_domain: "Block".to_string(),
+    author: "Block".to_string(),
+    app_name: "goose".to_string(),
+});
+
+#[utoipa::path(
+    post,
+    path = "/config/backup",
+    responses(
+        (status = 200, description = "Config file backed up", body = String),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub async fn backup_config(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+) -> Result<Json<String>, StatusCode> {
+    verify_secret_key(&headers, &state)?;
+
+    let config_dir = choose_app_strategy(APP_STRATEGY.clone())
+        .expect("goose requires a home dir")
+        .config_dir();
+
+    let config_path = config_dir.join("config.yaml");
+
+    if config_path.exists() {
+        let file_name = config_path
+            .file_name()
+            .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+
+        // Append ".bak" to the file name
+        let mut backup_name = file_name.to_os_string();
+        backup_name.push(".bak");
+
+        // Construct the new path with the same parent directory
+        let backup = config_path.with_file_name(backup_name);
+        match std::fs::rename(&config_path, &backup) {
+            Ok(_) => Ok(Json(format!("Moved {:?} to {:?}", config_path, backup))),
+            Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
+        }
+    } else {
+        Err(StatusCode::INTERNAL_SERVER_ERROR)
+    }
+}
+
+pub fn routes(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/config", get(read_all_config))
         .route("/config/upsert", post(upsert_config))
@@ -312,5 +476,8 @@ pub fn routes(state: AppState) -> Router {
         .route("/config/extensions", post(add_extension))
         .route("/config/extensions/:name", delete(remove_extension))
         .route("/config/providers", get(providers))
+        .route("/config/init", post(init_config))
+        .route("/config/backup", post(backup_config))
+        .route("/config/permissions", post(upsert_permissions))
         .with_state(state)
 }

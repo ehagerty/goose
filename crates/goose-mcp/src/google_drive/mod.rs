@@ -4,6 +4,8 @@ pub mod storage;
 use anyhow::{Context, Error};
 use base64::Engine;
 use indoc::indoc;
+use lazy_static::lazy_static;
+use mcp_core::tool::ToolAnnotations;
 use oauth_pkce::PkceOAuth2Client;
 use regex::Regex;
 use serde_json::{json, Value};
@@ -22,10 +24,11 @@ use mcp_core::{
 use mcp_server::router::CapabilitiesBuilder;
 use mcp_server::Router;
 
+use google_docs1::{self, Docs};
 use google_drive3::common::ReadSeek;
 use google_drive3::{
     self,
-    api::{Comment, File, FileShortcutDetails, Reply, Scope},
+    api::{Comment, File, FileShortcutDetails, Permission, Reply, Scope},
     hyper_rustls::{self, HttpsConnector},
     hyper_util::{self, client::legacy::connect::HttpConnector},
     DriveHub,
@@ -51,12 +54,34 @@ enum PaginationState {
     Next(String),
     End,
 }
+const PERMISSIONTYPE: &[&str] = &["user", "group", "domain", "anyone"];
+const ROLES: &[&str] = &[
+    "owner",
+    "organizer",
+    "fileOrganizer",
+    "writer",
+    "commenter",
+    "reader",
+];
+
+lazy_static! {
+    static ref GOOGLE_DRIVE_ID_REGEX: Regex =
+        Regex::new(r"^(?:https:\/\/)(?:[\w-]+\.)?google\.com\/(?:[^\/]+\/)*d\/([a-zA-Z0-9_-]+)")
+            .unwrap();
+}
+
+fn extract_google_drive_id(url: &str) -> Option<&str> {
+    GOOGLE_DRIVE_ID_REGEX
+        .captures(url)
+        .and_then(|caps| caps.get(1).map(|m| m.as_str()))
+}
 
 pub struct GoogleDriveRouter {
     tools: Vec<Tool>,
     instructions: String,
     drive: DriveHub<HttpsConnector<HttpConnector>>,
     sheets: Sheets<HttpsConnector<HttpConnector>>,
+    docs: Docs<HttpsConnector<HttpConnector>>,
     credentials_manager: Arc<CredentialsManager>,
 }
 
@@ -64,6 +89,7 @@ impl GoogleDriveRouter {
     async fn google_auth() -> (
         DriveHub<HttpsConnector<HttpConnector>>,
         Sheets<HttpsConnector<HttpConnector>>,
+        Docs<HttpsConnector<HttpConnector>>,
         Arc<CredentialsManager>,
     ) {
         let keyfile_path_str = env::var("GOOGLE_DRIVE_OAUTH_PATH")
@@ -154,10 +180,11 @@ impl GoogleDriveRouter {
                 );
 
                 let drive_hub = DriveHub::new(client.clone(), auth.clone());
-                let sheets_hub = Sheets::new(client, auth);
+                let sheets_hub = Sheets::new(client.clone(), auth.clone());
+                let docs_hub = Docs::new(client, auth);
 
                 // Create and return the DriveHub, Sheets and our PKCE OAuth2 client
-                (drive_hub, sheets_hub, credentials_manager)
+                (drive_hub, sheets_hub, docs_hub, credentials_manager)
             }
             Err(e) => {
                 tracing::error!(
@@ -172,7 +199,7 @@ impl GoogleDriveRouter {
 
     pub async fn new() -> Self {
         // handle auth
-        let (drive, sheets, credentials_manager) = Self::google_auth().await;
+        let (drive, sheets, docs, credentials_manager) = Self::google_auth().await;
 
         let search_tool = Tool::new(
             "search".to_string(),
@@ -209,13 +236,27 @@ impl GoogleDriveRouter {
                 }
               },
             }),
+            Some(ToolAnnotations {
+                    title: Some("Search GDrive".to_string()),
+                    read_only_hint: true,
+                    destructive_hint: false,
+                    idempotent_hint: false,
+                    open_world_hint: false,
+                }),
         );
 
         let read_tool = Tool::new(
             "read".to_string(),
             indoc! {r#"
-                Read a file from google drive using the file uri.
+                Read a file from google drive using the file URI or the full google drive URL.
+                One of URI or URL MUST is required.
+
                 Optionally include base64 encoded images, false by default.
+
+                Example extracting URIs from URLs:
+                Given "https://docs.google.com/document/d/1QG8d8wtWe7ZfmG93sW-1h2WXDJDUkOi-9hDnvJLmWrc/edit?tab=t.0#heading=h.5v419d3h97tr"
+                Pass in "gdrive:///1QG8d8wtWe7ZfmG93sW-1h2WXDJDUkOi-9hDnvJLmWrc"
+                Do not include any other path parameters when using URI.
             "#}
             .to_string(),
             json!({
@@ -223,59 +264,31 @@ impl GoogleDriveRouter {
               "properties": {
                   "uri": {
                       "type": "string",
-                      "description": "google drive uri of the file to read",
+                      "description": "google drive uri of the file to read, use this when you have the file URI",
+                  },
+                  "url": {
+                      "type": "string",
+                      "description": "the full google drive URL to read the file from, use this when the user gives a full https url",
                   },
                   "includeImages": {
                       "type": "boolean",
                       "description": "Whether or not to include images as base64 encoded strings, defaults to false",
                   }
               },
-              "required": ["uri"],
             }),
-        );
-
-        let upload_tool = Tool::new(
-            "upload".to_string(),
-            indoc! {r#"
-                Upload a file to Google Drive.
-            "#}
-            .to_string(),
-            json!({
-              "type": "object",
-              "properties": {
-                  "name": {
-                      "type": "string",
-                      "description": "The desired filename to use for the uploaded file.",
-                  },
-                  "mimeType": {
-                      "type": "string",
-                      "description": "The MIME type of the file.",
-                  },
-                  "body": {
-                      "type": "string",
-                      "description": "Plain text body of the file to upload. Mutually exclusive with path.",
-                  },
-                  "path": {
-                      "type": "string",
-                      "description": "Path to the file to upload. Mutually exclusive with body.",
-                  },
-                  "parentId": {
-                      "type": "string",
-                      "description": "ID of the parent folder in which to create the file. (default: creates files in the root of 'My Drive')",
-                  },
-                  "allowSharedDrives": {
-                      "type": "boolean",
-                      "description": "Whether to allow access to shared drives or just your personal drive (default: false)",
-                  }
-              },
-              "required": ["name", "mimeType"],
+            Some(ToolAnnotations {
+                title: Some("Read GDrive".to_string()),
+                read_only_hint: true,
+                destructive_hint: false,
+                idempotent_hint: false,
+                open_world_hint: false,
             }),
         );
 
         let create_file_tool = Tool::new(
             "create_file".to_string(),
             indoc! {r#"
-                Create a Google file (Document, Spreadsheet, Slides, folder, or shortcut) in Google Drive.
+                Create a new file, including Document, Spreadsheet, Slides, folder, or shortcut, in Google Drive.
             "#}
             .to_string(),
             json!({
@@ -285,10 +298,9 @@ impl GoogleDriveRouter {
                       "type": "string",
                       "description": "Name of the file to create",
                   },
-                  "fileType": {
+                  "mimeType": {
                       "type": "string",
-                      "enum": ["document", "spreadsheet", "slides", "folder", "shortcut"],
-                      "description": "Type of Google file to create (document, spreadsheet, slides, folder, or shortcut)",
+                      "description": "The MIME type of the file.",
                   },
                   "body": {
                       "type": "string",
@@ -311,7 +323,14 @@ impl GoogleDriveRouter {
                       "description": "Whether to allow access to shared drives or just your personal drive (default: false)",
                   }
               },
-              "required": ["name", "fileType"],
+              "required": ["name", "mimeType"],
+            }),
+            Some(ToolAnnotations {
+                title: Some("Create new file in GDrive".to_string()),
+                read_only_hint: false,
+                destructive_hint: false,
+                idempotent_hint: false,
+                open_world_hint: false,
             }),
         );
 
@@ -339,12 +358,19 @@ impl GoogleDriveRouter {
               },
               "required": ["fileId", "currentFolderId", "newFolderId"],
             }),
+            Some(ToolAnnotations {
+                title: Some("Move file".to_string()),
+                read_only_hint: false,
+                destructive_hint: true,
+                idempotent_hint: false,
+                open_world_hint: false,
+            }),
         );
 
-        let update_tool = Tool::new(
-            "update".to_string(),
+        let update_file_tool = Tool::new(
+            "update_file".to_string(),
             indoc! {r#"
-                Update a Google Drive file with new content.
+                Update an existing file in Google Drive with new content.
             "#}
             .to_string(),
             json!({
@@ -360,11 +386,11 @@ impl GoogleDriveRouter {
                   },
                   "body": {
                       "type": "string",
-                      "description": "Plain text body of the file to upload. Mutually exclusive with path.",
+                      "description": "Plain text body of the file to upload. Mutually exclusive with path (required for Google Document and Google Spreadsheet types).",
                   },
                   "path": {
                       "type": "string",
-                      "description": "Path to a local file to use to update the Google Drive file. Mutually exclusive with body.",
+                      "description": "Path to a local file to use to update the Google Drive file. Mutually exclusive with body (required for Google Slides type)",
                   },
                   "allowSharedDrives": {
                       "type": "boolean",
@@ -373,40 +399,12 @@ impl GoogleDriveRouter {
               },
               "required": ["fileId", "mimeType"],
             }),
-        );
-
-        let update_file_tool = Tool::new(
-            "update_file".to_string(),
-            indoc! {r#"
-                Update a Google file (Document, Spreadsheet, or Slides) in Google Drive.
-            "#}
-            .to_string(),
-            json!({
-              "type": "object",
-              "properties": {
-                  "fileId": {
-                      "type": "string",
-                      "description": "ID of the file to update",
-                  },
-                  "fileType": {
-                      "type": "string",
-                      "enum": ["document", "spreadsheet", "slides"],
-                      "description": "Type of Google file to update (document, spreadsheet, or slides)",
-                  },
-                  "body": {
-                      "type": "string",
-                      "description": "Text content for the file (required for document and spreadsheet types)",
-                  },
-                  "path": {
-                      "type": "string",
-                      "description": "Path to a file to upload (required for slides type)",
-                  },
-                  "allowSharedDrives": {
-                      "type": "boolean",
-                      "description": "Whether to allow access to shared drives or just your personal drive (default: false)",
-                  }
-              },
-              "required": ["fileId", "fileType"],
+            Some(ToolAnnotations {
+                title: Some("Update a file".to_string()),
+                read_only_hint: false,
+                destructive_hint: true,
+                idempotent_hint: false,
+                open_world_hint: false,
             }),
         );
 
@@ -468,6 +466,58 @@ impl GoogleDriveRouter {
               },
               "required": ["spreadsheetId", "operation"],
             }),
+            None,
+        );
+
+        let docs_tool = Tool::new(
+            "docs_tool".to_string(),
+            indoc! {r#"
+                Work with Google Docs data using various operations.
+                Supports operations:
+                - get_document: Get the full document content
+                - insert_text: Insert text at a specific location
+                - append_text: Append text to the end of the document
+                - replace_text: Replace all instances of text
+                - create_paragraph: Create a new paragraph
+                - delete_content: Delete content between positions
+            "#}
+            .to_string(),
+            json!({
+              "type": "object",
+              "properties": {
+                  "documentId": {
+                      "type": "string",
+                      "description": "The ID of the document to work with",
+                  },
+                  "operation": {
+                      "type": "string",
+                      "enum": ["get_document", "insert_text", "append_text", "replace_text", "create_paragraph", "delete_content"],
+                      "description": "The operation to perform on the document",
+                  },
+                  "text": {
+                      "type": "string",
+                      "description": "The text to insert, append, or use for replacement",
+                  },
+                  "replaceText": {
+                      "type": "string",
+                      "description": "The text to be replaced",
+                  },
+                  "position": {
+                      "type": "number",
+                      "description": "The position in the document (index) for operations that require a position",
+                  },
+                  "startPosition": {
+                      "type": "number",
+                      "description": "The start position for delete_content operation",
+                  },
+                  "endPosition": {
+                      "type": "number",
+                      "description": "The end position for delete_content operation",
+                  }
+              },
+              "required": ["documentId", "operation"],
+            }),
+            None,
         );
 
         let get_comments_tool = Tool::new(
@@ -486,34 +536,23 @@ impl GoogleDriveRouter {
               },
               "required": ["fileId"],
             }),
-        );
-
-        let create_comment_tool = Tool::new(
-            "create_comment".to_string(),
-            indoc! {r#"
-                Create a comment for the latest revision of a Google Drive file. The Google Drive API only supports unanchored comments (they don't refer to a specific location in the file).
-            "#}
-            .to_string(),
-            json!({
-              "type": "object",
-              "properties": {
-                "fileId": {
-                    "type": "string",
-                    "description": "Id of the file to comment on.",
-                },
-                "comment": {
-                    "type": "string",
-                    "description": "Content of the comment.",
-                }
-              },
-              "required": ["fileId", "comment"],
+            Some(ToolAnnotations {
+                title: Some("List file comments".to_string()),
+                read_only_hint: true,
+                destructive_hint: false,
+                idempotent_hint: false,
+                open_world_hint: false,
             }),
         );
 
-        let reply_tool = Tool::new(
-            "reply".to_string(),
+        let manage_comment_tool = Tool::new(
+            "manage_comment".to_string(),
             indoc! {r#"
-                Add a reply to a comment thread, or resolve a comment.
+                Manage comment for a Google Drive file.
+                
+                Supports the operations:
+                - create: Create a comment for the latest revision of a Google Drive file. The Google Drive API only supports unanchored comments (they don't refer to a specific location in the file).
+                - reply: Add a reply to a comment thread, or resolve a comment.
             "#}
             .to_string(),
             json!({
@@ -523,20 +562,32 @@ impl GoogleDriveRouter {
                     "type": "string",
                     "description": "Id of the file.",
                 },
-                "commentId": {
+                "operation": {
                     "type": "string",
-                    "description": "Id of the comment to which you'd like to reply.",
+                    "description": "Desired comment management operation.",
+                    "enum": ["create", "reply"],
                 },
                 "content": {
                     "type": "string",
-                    "description": "Content of the reply.",
+                    "description": "Content of the comment to create or reply.",
+                },
+                "commentId": {
+                    "type": "string",
+                    "description": "Id of the comment to which you'd like to reply. ",
                 },
                 "resolveComment": {
                     "type": "boolean",
-                    "description": "Whether to resolve the comment. Defaults to false.",
+                    "description": "Whether to resolve the comment in reply. Defaults to false.",
                 }
               },
-              "required": ["fileId", "commentId", "content"],
+              "required": ["fileId", "operation", "content"],
+            }),
+            Some(ToolAnnotations {
+                title: Some("Manage file comment".to_string()),
+                read_only_hint: false,
+                destructive_hint: false,
+                idempotent_hint: false,
+                open_world_hint: false,
             }),
         );
 
@@ -555,18 +606,114 @@ impl GoogleDriveRouter {
                 }
               },
             }),
+            Some(ToolAnnotations {
+                title: Some("List shared google drives".to_string()),
+                read_only_hint: true,
+                destructive_hint: false,
+                idempotent_hint: false,
+                open_world_hint: false,
+            }),
+        );
+
+        let get_permissions_tool = Tool::new(
+            "get_permissions".to_string(),
+            indoc! {r#"
+                List sharing permissions for a file, folder, or shared drive.
+            "#}
+            .to_string(),
+            json!({
+              "type": "object",
+              "properties": {
+                "fileId": {
+                    "type": "string",
+                    "description": "Id of the file, folder, or shared drive.",
+                }
+              },
+              "required": ["fileId"],
+            }),
+            Some(ToolAnnotations {
+                title: Some("List sharing permissions".to_string()),
+                read_only_hint: true,
+                destructive_hint: false,
+                idempotent_hint: false,
+                open_world_hint: false,
+            }),
+        );
+
+        let sharing_tool = Tool::new(
+            "sharing".to_string(),
+            indoc! {r#"
+                Manage sharing for a Google Drive file or folder.
+
+                Supports the operations:
+                - create: Create a new permission for a 'type' identified by the 'target' param to have the 'role' privileges.
+                - update: Update an existing permission to a different role. (You cannot change the type or to whom it is targeted).
+                - delete: Delete an existing permission.
+            "#}
+            .to_string(),
+            json!({
+              "type": "object",
+              "properties": {
+                "fileId": {
+                    "type": "string",
+                    "description": "Id of the file or folder.",
+                },
+                "operation": {
+                    "type": "string",
+                    "description": "Desired sharing operation.",
+                    "enum": ["create", "update", "delete"],
+                },
+                "permissionId": {
+                    "type": "string",
+                    "description": "Permission Id for delete or update operations.",
+                },
+                "role": {
+                    "type": "string",
+                    "description": "Role to apply to permission for create or update operations.",
+                    "enum": ["owner", "organizer", "fileOrganizer", "writer", "commenter", "reader"]
+                },
+                "type": {
+                    "type": "string",
+                    "description": "Type of permission to create or update.",
+                    "enum": ["user", "group", "domain", "anyone"],
+                },
+                "target": {
+                    "type": "string",
+                    "description": "For the user and group types, the email address. For a domain type, the domain name. (The anyone type does not require a target). Required for the create operation.",
+                },
+                "emailMessage": {
+                    "type": "string",
+                    "description": "Email notification message to send to users and groups.",
+                },
+              },
+              "required": ["fileId", "operation"],
+            }),
+            Some(ToolAnnotations {
+                title: Some("Manage file sharing".to_string()),
+                read_only_hint: false,
+                destructive_hint: false,
+                idempotent_hint: false,
+                open_world_hint: false,
+            }),
         );
 
         let instructions = indoc::formatdoc! {r#"
             Google Drive MCP Server Instructions
 
             ## Overview
-            The Google Drive MCP server provides tools for interacting with Google Drive files and Google Sheets:
+            The Google Drive MCP server provides tools for interacting with Google Drive files, Google Sheets, and Google Docs:
             1. search - Find files in your Google Drive
             2. read - Read file contents directly using a uri in the `gdrive:///uri` format
-            3. sheets_tool - Work with Google Sheets data using various operations
-            4. create_file - Create Google Workspace files (Docs, Sheets, or Slides)
-            5. update_file - Update existing Google Workspace files
+            3. move_file - Move a file to a new location in Google Drive
+            4. list_drives - List the shared drives to which you have access
+            5. get_permissions - List the permissions of a file or folder
+            6. sharing - Share a file or folder with others
+            7. get_comments - List a file or folder's comments
+            8. manage_comment - Manage comment for a Google Drive file.
+            9. create_file - Create a new file
+            10. update_file - Update a existing file
+            11. sheets_tool - Work with Google Sheets data using various operations
+            12. docs_tool - Work with Google Docs data using various operations
 
             ## Available Tools
 
@@ -579,20 +726,82 @@ impl GoogleDriveRouter {
             Read a file's contents using its ID, and optionally include images as base64 encoded data.
             The default is to exclude images, to include images set includeImages to true in the query.
 
+            Example mappings for Google Drive resources to `gdrive:///$URI` format:
+            - Google Document File:
+              Example URL: https://docs.google.com/document/d/1QG8d8wtWe7ZfmG93sW-1h2WXDJDUkOi-9hDnvJLmWrc/edit?tab=t.0#heading=h.5v419d3h97tr
+              URI Format: gdrive:///1QG8d8wtWe7ZfmG93sW-1h2WXDJDUkOi-9hDnvJLmWrc
+
+            - Google Sheet:
+              Example URL: https://docs.google.com/spreadsheets/d/1J5KHqWsGFzweuiQboX7dlm8Ejv90Po16ocEBahzCt4W/edit?gid=1249300797#gid=1249300797
+              URI Format: gdrive:///1J5KHqWsGFzweuiQboX7dlm8Ejv90Po16ocEBahzCt4W
+
+            - Google Slides:
+              Example URL: https://docs.google.com/presentation/d/1zXWqsGpHJEu40oqb1omh68sW9liu7EKFBCdnPaJVoQ5et/edit#slide=id.p1
+              URI Format: gdrive:///1zXWqsGpHJEu40oqb1omh68sW9liu7EKFBCdnPaJVoQ5et
+
             Images take up a large amount of context, this should only be used if a
             user explicity needs the image data.
 
             Limitations: Google Sheets exporting only supports reading the first sheet. This is an important limitation that should
             be communicated to the user whenever dealing with a Google Sheet (mimeType: application/vnd.google-apps.spreadsheet).
 
-            ### 3. Sheets Tool
+            #### File Format Handling
+            The read file tool's output will be converted:
+            - Google Docs → Markdown
+            - Google Sheets → CSV
+            - Google Presentations → Plain text
+            - Text/JSON files → UTF-8 text
+            - Binary files → Base64 encoded
+
+            ### 3. Move File Tool
+            Move a file from its current folder to a new folder, including folders on another drive.
+
+            ### 4. List Drives Tool
+            Lists the user's available Shared Drives.
+
+            ### 5. Get Permissions Tool
+            Lists the permissions for a file or folder. Permissions in Google
+            Drive consist of a type ('user', 'group', 'domain', 'anyone') and a role
+            ('owner', 'organizer', 'fileOrganizer', 'writer', 'commenter',
+            'reader').
+
+            ### 6. Sharing Tool
+            Create a new permission, update the role on an existing permission,
+            or delete a permission. User, group, and domain permissions should
+            have a provided "target" email address or domain name.
+
+            ### 7. Get Comments Tool
+            Lists the comments for a Google Workspace file.
+
+            ### 8. Manage Comment Tool
+            Create or reply comment for a Google Drive file.
+            
+            ### 9. Create File Tool
+            Create any kind of file, including Google Workspace files (Docs, Sheets, or Slides) directly in Google Drive.
+            - For Google Docs: Converts Markdown text to a Google Document
+            - For Google Sheets: Converts CSV text to a Google Spreadsheet
+            - For Google Slides: Converts a PowerPoint file to Google Slides (requires a path to the powerpoint file)
+            - Other: No file conversion.
+
+            *Note*: All updates overwrite the existing content with the new
+            content provided. To modify specific parts of the document, you must
+            include the changes as part of the entire document.
+
+            ### 10. Update File Tool
+            Replace the entire contents of an existing file with new content, including Google Workspace files (Docs, Sheets, or Slides).
+            - For Google Docs: Updates with new Markdown text
+            - For Google Sheets: Updates with new CSV text
+            - For Google Slides: Updates with a new PowerPoint file (requires a path to the powerpoint file)
+            - Other: No file conversion.
+
+            ### 11. Sheets Tool
             Work with Google Sheets data using various operations:
             - list_sheets: List all sheets in a spreadsheet
             - get_columns: Get column headers from a specific sheet
             - get_values: Get values from a range
             - update_values: Update values in a range (requires CSV formatted data)
             - update_cell: Update a single cell value
-            - add_sheet: Add a new sheet (tab) to a spreadshee
+            - add_sheet: Add a new sheet (tab) to a spreadsheet
             - clear_values: Clear values from a range
 
             For update_values operation, provide CSV formatted data in the values parameter.
@@ -600,19 +809,6 @@ impl GoogleDriveRouter {
             Example: "John,Doe,30\nJane,Smith,25"
 
             For update_cell operation, provide the cell reference (e.g., 'Sheet1!A1') and the value to set.
-
-            ### 4. Create File Tool
-            Create Google Workspace files (Docs, Sheets, or Slides) directly in Google Drive.
-            - For Google Docs: Converts Markdown text to a Google Document
-            - For Google Sheets: Converts CSV text to a Google Spreadsheet
-            - For Google Slides: Converts a PowerPoint file to Google Slides (requires a path to the powerpoint file)
-
-            ### 5. Update File Tool
-            Update existing Google Workspace files (Docs, Sheets, or Slides) in Google Drive.
-            - For Google Docs: Updates with new Markdown text
-            - For Google Sheets: Updates with new CSV text
-            - For Google Slides: Updates with a new PowerPoint file (requires a path to the powerpoint file)
-                - Note: This functionally is an overwrite to the slides, warn the user before using this tool.
 
             Parameters:
             - spreadsheetId: The ID of the spreadsheet (can be obtained from search results)
@@ -625,19 +821,30 @@ impl GoogleDriveRouter {
             - title: Title for the new sheet (required for add_sheet operation)
             - valueInputOption: How input data should be interpreted (RAW or USER_ENTERED)
 
-            ## File Format Handling
-            The server automatically handles different file types:
-            - Google Docs → Markdown
-            - Google Sheets → CSV
-            - Google Presentations → Plain text
-            - Text/JSON files → UTF-8 text
-            - Binary files → Base64 encoded
+            ### 12. Docs Tool
+            Work with Google Docs data using various operations:
+            - get_document: Get the full document content
+            - insert_text: Insert text at a specific location
+            - append_text: Append text to the end of the document
+            - replace_text: Replace all instances of text
+            - create_paragraph: Create a new paragraph
+            - delete_content: Delete content between positions
+
+            Parameters:
+            - documentId: The ID of the document (can be obtained from search results)
+            - operation: The operation to perform (one of the operations listed above)
+            - text: The text to insert, append, or use for replacement
+            - replaceText: The text to be replaced (for replace_text operation)
+            - position: The position in the document (index) for operations that require a position
+            - startPosition: The start position for delete_content operation
+            - endPosition: The end position for delete_content operation
 
             ## Common Usage Pattern
 
             1. First, search for the file you want to read, searching by name.
             2. Then, use the file URI from the search results to read its contents.
             3. For Google Sheets, use the sheets_tool with the appropriate operation.
+            4. For Google Docs, use the docs_tool with the appropriate operation.
 
             ## Best Practices
             1. Always use search first to find the correct file URI
@@ -659,20 +866,21 @@ impl GoogleDriveRouter {
             tools: vec![
                 search_tool,
                 read_tool,
-                upload_tool,
                 create_file_tool,
                 move_file_tool,
-                update_tool,
                 update_file_tool,
                 sheets_tool,
+                docs_tool,
                 get_comments_tool,
-                create_comment_tool,
-                reply_tool,
+                manage_comment_tool,
                 list_drives_tool,
+                get_permissions_tool,
+                sharing_tool,
             ],
             instructions,
             drive,
             sheets,
+            docs,
             credentials_manager,
         }
     }
@@ -945,6 +1153,7 @@ impl GoogleDriveRouter {
     async fn get_google_file(
         &self,
         uri: &str,
+        mime_type: &str,
         include_images: bool,
     ) -> Result<Vec<Content>, ToolError> {
         let result = self
@@ -963,10 +1172,6 @@ impl GoogleDriveRouter {
                 uri, e
             ))),
             Ok(r) => {
-                let file = r.1;
-                let mime_type = file
-                    .mime_type
-                    .unwrap_or("application/octet-stream".to_string());
                 if mime_type.starts_with("text/") || mime_type == "application/json" {
                     if let Ok(body) = r.0.into_body().collect().await {
                         if let Ok(response) = String::from_utf8(body.to_bytes().to_vec()) {
@@ -1010,15 +1215,46 @@ impl GoogleDriveRouter {
     }
 
     async fn read(&self, params: Value) -> Result<Vec<Content>, ToolError> {
-        let uri =
-            params
-                .get("uri")
-                .and_then(|q| q.as_str())
-                .ok_or(ToolError::InvalidParameters(
-                    "The uri of the file is required".to_string(),
-                ))?;
+        let (maybe_uri, maybe_url) = (
+            params.get("uri").and_then(|q| q.as_str()),
+            params.get("url").and_then(|q| q.as_str()),
+        );
 
-        let drive_uri = uri.replace("gdrive:///", "");
+        let drive_uri = match (maybe_uri, maybe_url) {
+            (Some(uri), None) => {
+                let drive_uri = uri.replace("gdrive:///", "");
+
+                // Validation: check for / path separators as invalid uris
+                if drive_uri.contains('/') {
+                    return Err(ToolError::InvalidParameters(format!(
+                        "The uri '{}' contains extra '/'. Only the base URI is allowed.",
+                        uri
+                    )));
+                }
+
+                drive_uri
+            }
+            (None, Some(url)) => {
+                if let Some(drive_uri) = extract_google_drive_id(url) {
+                    drive_uri.to_string()
+                } else {
+                    return Err(ToolError::InvalidParameters(format!(
+                        "Failed to extract valid google drive URI from {}",
+                        url
+                    )));
+                }
+            }
+            (Some(_), Some(_)) => {
+                return Err(ToolError::InvalidParameters(
+                    "Only one of 'uri' or 'url' should be provided".to_string(),
+                ));
+            }
+            (None, None) => {
+                return Err(ToolError::InvalidParameters(
+                    "Either 'uri' or 'url' must be provided".to_string(),
+                ));
+            }
+        };
 
         let include_images = params
             .get("includeImages")
@@ -1027,7 +1263,10 @@ impl GoogleDriveRouter {
 
         let metadata = self.fetch_file_metadata(&drive_uri).await?;
         let mime_type = metadata.mime_type.ok_or_else(|| {
-            ToolError::ExecutionError(format!("Missing mime type in file metadata for {}.", uri))
+            ToolError::ExecutionError(format!(
+                "Missing mime type in file metadata for {}.",
+                drive_uri
+            ))
         })?;
 
         // Handle Google Docs export
@@ -1035,7 +1274,8 @@ impl GoogleDriveRouter {
             self.export_google_file(&drive_uri, &mime_type, include_images)
                 .await
         } else {
-            self.get_google_file(&drive_uri, include_images).await
+            self.get_google_file(&drive_uri, &mime_type, include_images)
+                .await
         }
     }
 
@@ -1557,7 +1797,8 @@ impl GoogleDriveRouter {
         }
     }
 
-    async fn upload(&self, params: Value) -> Result<Vec<Content>, ToolError> {
+    async fn create_file(&self, params: Value) -> Result<Vec<Content>, ToolError> {
+        // Extract common parameters
         let filename =
             params
                 .get("name")
@@ -1574,63 +1815,10 @@ impl GoogleDriveRouter {
                     "The mimeType param is required".to_string(),
                 ))?;
 
+        let parent_id = params.get("parentId").and_then(|q| q.as_str());
+        let target_id = params.get("targetId").and_then(|q| q.as_str());
         let body = params.get("body").and_then(|q| q.as_str());
         let path = params.get("path").and_then(|q| q.as_str());
-
-        let reader: Box<dyn ReadSeek> = match (body, path) {
-            (None, None) | (Some(_), Some(_)) => {
-                return Err(ToolError::InvalidParameters(
-                    "Either the body or path param is required".to_string(),
-                ))
-            }
-            (Some(b), None) => Box::new(Cursor::new(b.as_bytes().to_owned())),
-            (None, Some(p)) => Box::new(std::fs::File::open(p).map_err(|e| {
-                ToolError::ExecutionError(format!("Error opening {}: {}", p, e).to_string())
-            })?),
-        };
-
-        let parent_id = params.get("parentId").and_then(|q| q.as_str());
-
-        let allow_shared_drives = params
-            .get("allowSharedDrives")
-            .and_then(|q| q.as_bool())
-            .unwrap_or_default();
-
-        self.upload_to_drive(
-            FileOperation::Create {
-                name: filename.to_string(),
-            },
-            reader,
-            mime_type,
-            mime_type,
-            parent_id,
-            allow_shared_drives,
-            None,
-        )
-        .await
-    }
-
-    async fn create_file(&self, params: Value) -> Result<Vec<Content>, ToolError> {
-        // Extract common parameters
-        let filename =
-            params
-                .get("name")
-                .and_then(|q| q.as_str())
-                .ok_or(ToolError::InvalidParameters(
-                    "The name param is required".to_string(),
-                ))?;
-
-        let file_type =
-            params
-                .get("fileType")
-                .and_then(|q| q.as_str())
-                .ok_or(ToolError::InvalidParameters(
-                    "The fileType param is required".to_string(),
-                ))?;
-
-        let parent_id = params.get("parentId").and_then(|q| q.as_str());
-
-        let target_id = params.get("targetId").and_then(|q| q.as_str());
 
         let allow_shared_drives = params
             .get("allowSharedDrives")
@@ -1639,81 +1827,93 @@ impl GoogleDriveRouter {
 
         // Determine source and target MIME types based on file_type
         let (source_mime_type, target_mime_type, reader): (String, String, Box<dyn ReadSeek>) =
-            match file_type {
-                "document" => {
-                    let body = params.get("body").and_then(|q| q.as_str()).ok_or(
-                        ToolError::InvalidParameters(
-                            "The body param is required for document file type".to_string(),
-                        ),
-                    )?;
+            match mime_type {
+                "application/vnd.google-apps.document" => {
+                    if body.is_none() {
+                        return Err(ToolError::InvalidParameters(
+                            "The body param is required for google document file type".to_string(),
+                        ));
+                    }
 
                     (
                         "text/markdown".to_string(),
-                        "application/vnd.google-apps.document".to_string(),
-                        Box::new(Cursor::new(body.as_bytes().to_owned())),
+                        mime_type.to_string(),
+                        Box::new(Cursor::new(body.unwrap().as_bytes().to_owned())),
                     )
                 }
-                "spreadsheet" => {
-                    let body = params.get("body").and_then(|q| q.as_str()).ok_or(
-                        ToolError::InvalidParameters(
-                            "The body param is required for spreadsheet file type".to_string(),
-                        ),
-                    )?;
+                "application/vnd.google-apps.spreadsheet" => {
+                    if body.is_none() {
+                        return Err(ToolError::InvalidParameters(
+                            "The body param is required for google spreadsheet file type"
+                                .to_string(),
+                        ));
+                    }
+
                     (
                         "text/csv".to_string(),
-                        "application/vnd.google-apps.spreadsheet".to_string(),
-                        Box::new(Cursor::new(body.as_bytes().to_owned())),
+                        mime_type.to_string(),
+                        Box::new(Cursor::new(body.unwrap().as_bytes().to_owned())),
                     )
                 }
-                "slides" => {
-                    let path = params.get("path").and_then(|q| q.as_str()).ok_or(
-                        ToolError::InvalidParameters(
-                            "The path param is required for slides file type".to_string(),
-                        ),
-                    )?;
+                "application/vnd.google-apps.presentation" => {
+                    if path.is_none() {
+                        return Err(ToolError::InvalidParameters(
+                            "The path param is required for google slides file type".to_string(),
+                        ));
+                    }
 
-                    let file = std::fs::File::open(path).map_err(|e| {
+                    let file = std::fs::File::open(path.unwrap()).map_err(|e| {
                         ToolError::ExecutionError(
-                            format!("Error opening {}: {}", path, e).to_string(),
+                            format!("Error opening {}: {}", path.unwrap(), e).to_string(),
                         )
                     })?;
 
                     (
                         "application/vnd.openxmlformats-officedocument.presentationml.presentation"
                             .to_string(),
-                        "application/vnd.google-apps.presentation".to_string(),
+                        mime_type.to_string(),
                         Box::new(file),
                     )
                 }
-                "folder" => {
+                "application/vnd.google-apps.folder" => {
                     let emptybuf: [u8; 0] = [];
                     let empty_stream = Cursor::new(emptybuf);
                     (
-                        "application/vnd.google-apps.folder".to_string(),
-                        "application/vnd.google-apps.folder".to_string(),
+                        mime_type.to_string(),
+                        mime_type.to_string(),
                         Box::new(empty_stream),
                     )
                 }
-                "shortcut" => {
+                "application/vnd.google-apps.shortcut" => {
                     if target_id.is_none() {
                         return Err(ToolError::InvalidParameters(
                             "The targetId param is required when creating a shortcut".to_string(),
-                        ))
+                        ));
                     }
                     let emptybuf: [u8; 0] = [];
                     let empty_stream = Cursor::new(emptybuf);
                     (
-                        "application/vnd.google-apps.shortcut".to_string(),
-                        "application/vnd.google-apps.shortcut".to_string(),
+                        mime_type.to_string(),
+                        mime_type.to_string(),
                         Box::new(empty_stream),
                     )
                 }
 
                 _ => {
-                    return Err(ToolError::InvalidParameters(format!(
-                        "Invalid fileType: {}. Supported types are: document, spreadsheet, slides, folder, shortcut",
-                        file_type
-                    )))
+                    let reader: Box<dyn ReadSeek> = match (body, path) {
+                        (None, None) | (Some(_), Some(_)) => {
+                            return Err(ToolError::InvalidParameters(
+                                "Either the body or path param is required".to_string(),
+                            ))
+                        }
+                        (Some(b), None) => Box::new(Cursor::new(b.as_bytes().to_owned())),
+                        (None, Some(p)) => Box::new(std::fs::File::open(p).map_err(|e| {
+                            ToolError::ExecutionError(
+                                format!("Error opening {}: {}", p, e).to_string(),
+                            )
+                        })?),
+                    };
+                    (mime_type.to_string(), mime_type.to_string(), reader)
                 }
             };
 
@@ -1776,7 +1976,7 @@ impl GoogleDriveRouter {
         }
     }
 
-    async fn update(&self, params: Value) -> Result<Vec<Content>, ToolError> {
+    async fn update_file(&self, params: Value) -> Result<Vec<Content>, ToolError> {
         let file_id =
             params
                 .get("fileId")
@@ -1796,117 +1996,79 @@ impl GoogleDriveRouter {
         let body = params.get("body").and_then(|q| q.as_str());
         let path = params.get("path").and_then(|q| q.as_str());
 
-        let reader: Box<dyn ReadSeek> = match (body, path) {
-            (None, None) | (Some(_), Some(_)) => {
-                return Err(ToolError::InvalidParameters(
-                    "Either the body or path param is required".to_string(),
-                ))
-            }
-            (Some(b), None) => Box::new(Cursor::new(b.as_bytes().to_owned())),
-            (None, Some(p)) => Box::new(std::fs::File::open(p).map_err(|e| {
-                ToolError::ExecutionError(format!("Error opening {}: {}", p, e).to_string())
-            })?),
-        };
-
-        let allow_shared_drives = params
-            .get("allowSharedDrives")
-            .and_then(|q| q.as_bool())
-            .unwrap_or_default();
-
-        self.upload_to_drive(
-            FileOperation::Update {
-                file_id: file_id.to_string(),
-            },
-            reader,
-            mime_type,
-            mime_type,
-            None,
-            allow_shared_drives,
-            None,
-        )
-        .await
-    }
-
-    async fn update_file(&self, params: Value) -> Result<Vec<Content>, ToolError> {
-        // Extract common parameters
-        let file_id =
-            params
-                .get("fileId")
-                .and_then(|q| q.as_str())
-                .ok_or(ToolError::InvalidParameters(
-                    "The fileId param is required".to_string(),
-                ))?;
-
-        let file_type =
-            params
-                .get("fileType")
-                .and_then(|q| q.as_str())
-                .ok_or(ToolError::InvalidParameters(
-                    "The fileType param is required".to_string(),
-                ))?;
-
-        let allow_shared_drives = params
-            .get("allowSharedDrives")
-            .and_then(|q| q.as_bool())
-            .unwrap_or_default();
-
         // Determine source and target MIME types based on file_type
         let (source_mime_type, target_mime_type, reader): (String, String, Box<dyn ReadSeek>) =
-            match file_type {
-                "document" => {
-                    let body = params.get("body").and_then(|q| q.as_str()).ok_or(
-                        ToolError::InvalidParameters(
-                            "The body param is required for document file type".to_string(),
-                        ),
-                    )?;
+            match mime_type {
+                "application/vnd.google-apps.document" => {
+                    if body.is_none() {
+                        return Err(ToolError::InvalidParameters(
+                            "The body param is required for google document file type".to_string(),
+                        ));
+                    }
 
                     (
                         "text/markdown".to_string(),
-                        "application/vnd.google-apps.document".to_string(),
-                        Box::new(Cursor::new(body.as_bytes().to_owned())),
+                        mime_type.to_string(),
+                        Box::new(Cursor::new(body.unwrap().as_bytes().to_owned())),
                     )
                 }
-                "spreadsheet" => {
-                    let body = params.get("body").and_then(|q| q.as_str()).ok_or(
-                        ToolError::InvalidParameters(
-                            "The body param is required for spreadsheet file type".to_string(),
-                        ),
-                    )?;
+                "application/vnd.google-apps.spreadsheet" => {
+                    if body.is_none() {
+                        return Err(ToolError::InvalidParameters(
+                            "The body param is required for google spreadsheet file type"
+                                .to_string(),
+                        ));
+                    }
+
                     (
                         "text/csv".to_string(),
-                        "application/vnd.google-apps.spreadsheet".to_string(),
-                        Box::new(Cursor::new(body.as_bytes().to_owned())),
+                        mime_type.to_string(),
+                        Box::new(Cursor::new(body.unwrap().as_bytes().to_owned())),
                     )
                 }
-                "slides" => {
-                    let path = params.get("path").and_then(|q| q.as_str()).ok_or(
-                        ToolError::InvalidParameters(
-                            "The path param is required for slides file type".to_string(),
-                        ),
-                    )?;
+                "application/vnd.google-apps.presentation" => {
+                    if path.is_none() {
+                        return Err(ToolError::InvalidParameters(
+                            "The path param is required for google slides file type".to_string(),
+                        ));
+                    }
 
-                    let file = std::fs::File::open(path).map_err(|e| {
+                    let file = std::fs::File::open(path.unwrap()).map_err(|e| {
                         ToolError::ExecutionError(
-                            format!("Error opening {}: {}", path, e).to_string(),
+                            format!("Error opening {}: {}", path.unwrap(), e).to_string(),
                         )
                     })?;
 
                     (
                         "application/vnd.openxmlformats-officedocument.presentationml.presentation"
                             .to_string(),
-                        "application/vnd.google-apps.presentation".to_string(),
+                        mime_type.to_string(),
                         Box::new(file),
                     )
                 }
                 _ => {
-                    return Err(ToolError::InvalidParameters(format!(
-                        "Invalid fileType: {}. Supported types are: document, spreadsheet, slides",
-                        file_type
-                    )))
+                    let reader: Box<dyn ReadSeek> = match (body, path) {
+                        (None, None) | (Some(_), Some(_)) => {
+                            return Err(ToolError::InvalidParameters(
+                                "Either the body or path param is required".to_string(),
+                            ))
+                        }
+                        (Some(b), None) => Box::new(Cursor::new(b.as_bytes().to_owned())),
+                        (None, Some(p)) => Box::new(std::fs::File::open(p).map_err(|e| {
+                            ToolError::ExecutionError(
+                                format!("Error opening {}: {}", p, e).to_string(),
+                            )
+                        })?),
+                    };
+                    (mime_type.to_string(), mime_type.to_string(), reader)
                 }
             };
 
-        // Upload the file to Google Drive
+        let allow_shared_drives = params
+            .get("allowSharedDrives")
+            .and_then(|q| q.as_bool())
+            .unwrap_or_default();
+
         self.upload_to_drive(
             FileOperation::Update {
                 file_id: file_id.to_string(),
@@ -1986,7 +2148,7 @@ impl GoogleDriveRouter {
         Ok(vec![Content::text(results.join("\n"))])
     }
 
-    async fn create_comment(&self, params: Value) -> Result<Vec<Content>, ToolError> {
+    async fn manage_comment(&self, params: Value) -> Result<Vec<Content>, ToolError> {
         let file_id =
             params
                 .get("fileId")
@@ -1994,54 +2156,8 @@ impl GoogleDriveRouter {
                 .ok_or(ToolError::InvalidParameters(
                     "The fileId param is required".to_string(),
                 ))?;
-        let comment =
-            params
-                .get("comment")
-                .and_then(|q| q.as_str())
-                .ok_or(ToolError::InvalidParameters(
-                    "The comment param is required".to_string(),
-                ))?;
-
-        let req = Comment {
-            content: Some(comment.to_string()),
-            ..Default::default()
-        };
-        let result = self
-            .drive
-            .comments()
-            .create(req, file_id)
-            .clear_scopes() // Scope::MeetReadonly is the default, remove it
-            .add_scope(GOOGLE_DRIVE_SCOPES)
-            .param("fields", "*")
-            // .param("fields", "action, author, content, createdTime, id")
-            .doit()
-            .await;
-        match result {
-            Err(e) => Err(ToolError::ExecutionError(format!(
-                "Failed to add comment for google drive file {}, {}.",
-                file_id, e
-            ))),
-            Ok(r) => Ok(vec![Content::text(format!(
-                "Author: {:?} Content: {} Created: {} uri: {} quoted_content: {:?}",
-                r.1.author.unwrap_or_default(),
-                r.1.content.unwrap_or_default(),
-                r.1.created_time.unwrap_or_default(),
-                r.1.id.unwrap_or_default(),
-                r.1.quoted_file_content.unwrap_or_default()
-            ))]),
-        }
-    }
-
-    async fn reply(&self, params: Value) -> Result<Vec<Content>, ToolError> {
-        let file_id =
-            params
-                .get("fileId")
-                .and_then(|q| q.as_str())
-                .ok_or(ToolError::InvalidParameters(
-                    "The fileId param is required".to_string(),
-                ))?;
-        let comment_id = params.get("commentId").and_then(|q| q.as_str()).ok_or(
-            ToolError::InvalidParameters("The commentId param is required".to_string()),
+        let operation = params.get("operation").and_then(|q| q.as_str()).ok_or(
+            ToolError::InvalidParameters("The operation is required".to_string()),
         )?;
         let content =
             params
@@ -2050,41 +2166,462 @@ impl GoogleDriveRouter {
                 .ok_or(ToolError::InvalidParameters(
                     "The content param is required if the action is create".to_string(),
                 ))?;
-        let resolve_comment = params
-            .get("resolveComment")
-            .and_then(|q| q.as_bool())
-            .unwrap_or(false);
 
-        let mut req = Reply {
-            content: Some(content.to_string()),
-            ..Default::default()
-        };
+        match operation {
+            "create" => {
+                let req = Comment {
+                    content: Some(content.to_string()),
+                    ..Default::default()
+                };
+                let result = self
+                    .drive
+                    .comments()
+                    .create(req, file_id)
+                    .clear_scopes() // Scope::MeetReadonly is the default, remove it
+                    .add_scope(GOOGLE_DRIVE_SCOPES)
+                    .param("fields", "*")
+                    // .param("fields", "action, author, content, createdTime, id")
+                    .doit()
+                    .await;
+                match result {
+                    Err(e) => Err(ToolError::ExecutionError(format!(
+                        "Failed to add comment for google drive file {}, {}.",
+                        file_id, e
+                    ))),
+                    Ok(r) => Ok(vec![Content::text(format!(
+                        "Author: {:?} Content: {} Created: {} uri: {} quoted_content: {:?}",
+                        r.1.author.unwrap_or_default(),
+                        r.1.content.unwrap_or_default(),
+                        r.1.created_time.unwrap_or_default(),
+                        r.1.id.unwrap_or_default(),
+                        r.1.quoted_file_content.unwrap_or_default()
+                    ))]),
+                }
+            }
+            "reply" => {
+                let comment_id = params.get("commentId").and_then(|q| q.as_str()).ok_or(
+                    ToolError::InvalidParameters(
+                        "The commentId param is required for reply".to_string(),
+                    ),
+                )?;
 
-        if resolve_comment {
-            req.action = Some("resolve".to_string());
-        }
-        let result = self
-            .drive
-            .replies()
-            .create(req, file_id, comment_id)
-            .clear_scopes() // Scope::MeetReadonly is the default, remove it
-            .add_scope(GOOGLE_DRIVE_SCOPES)
-            .param("fields", "action, author, content, createdTime, id")
-            .doit()
-            .await;
-        match result {
-            Err(e) => Err(ToolError::ExecutionError(format!(
-                "Failed to manage reply to comment {} for google drive file {}, {}.",
-                comment_id, file_id, e
+                let resolve_comment = params
+                    .get("resolveComment")
+                    .and_then(|q| q.as_bool())
+                    .unwrap_or(false);
+
+                let mut req = Reply {
+                    content: Some(content.to_string()),
+                    ..Default::default()
+                };
+
+                if resolve_comment {
+                    req.action = Some("resolve".to_string());
+                }
+                let result = self
+                    .drive
+                    .replies()
+                    .create(req, file_id, comment_id)
+                    .clear_scopes() // Scope::MeetReadonly is the default, remove it
+                    .add_scope(GOOGLE_DRIVE_SCOPES)
+                    .param("fields", "action, author, content, createdTime, id")
+                    .doit()
+                    .await;
+                match result {
+                    Err(e) => Err(ToolError::ExecutionError(format!(
+                        "Failed to manage reply to comment {} for google drive file {}, {}.",
+                        comment_id, file_id, e
+                    ))),
+                    Ok(r) => Ok(vec![Content::text(format!(
+                        "Action: {} Author: {:?} Content: {} Created: {} uri: {}",
+                        r.1.action.unwrap_or_default(),
+                        r.1.author.unwrap_or_default(),
+                        r.1.content.unwrap_or_default(),
+                        r.1.created_time.unwrap_or_default(),
+                        r.1.id.unwrap_or_default()
+                    ))]),
+                }
+            }
+            _ => Err(ToolError::InvalidParameters(format!(
+                "Invalid operation: {}. Supported operations are: create, reply",
+                operation
             ))),
-            Ok(r) => Ok(vec![Content::text(format!(
-                "Action: {} Author: {:?} Content: {} Created: {} uri: {}",
-                r.1.action.unwrap_or_default(),
-                r.1.author.unwrap_or_default(),
-                r.1.content.unwrap_or_default(),
-                r.1.created_time.unwrap_or_default(),
-                r.1.id.unwrap_or_default()
-            ))]),
+        }
+    }
+
+    async fn docs_tool(&self, params: Value) -> Result<Vec<Content>, ToolError> {
+        let document_id = params.get("documentId").and_then(|q| q.as_str()).ok_or(
+            ToolError::InvalidParameters("The documentId is required".to_string()),
+        )?;
+
+        let operation = params.get("operation").and_then(|q| q.as_str()).ok_or(
+            ToolError::InvalidParameters("The operation is required".to_string()),
+        )?;
+
+        match operation {
+            "get_document" => {
+                // Get the document content
+                let result = self
+                    .docs
+                    .documents()
+                    .get(document_id)
+                    .clear_scopes()
+                    .add_scope(GOOGLE_DRIVE_SCOPES)
+                    .doit()
+                    .await;
+
+                match result {
+                    Err(e) => Err(ToolError::ExecutionError(format!(
+                        "Failed to execute Google Docs get query, {}.",
+                        e
+                    ))),
+                    Ok(r) => {
+                        let document = r.1;
+                        let title = document.title.unwrap_or_default();
+
+                        // Extract the document content as text
+                        let mut content = String::new();
+                        content.push_str(&format!("# {}\n\n", title));
+
+                        if let Some(body) = document.body {
+                            if let Some(content_items) = body.content {
+                                for item in content_items {
+                                    if let Some(paragraph) = item.paragraph {
+                                        if let Some(elements) = paragraph.elements {
+                                            for element in elements {
+                                                if let Some(text_run) = element.text_run {
+                                                    if let Some(text) = text_run.content {
+                                                        content.push_str(&text);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Ok(vec![Content::text(content).with_priority(0.1)])
+                    }
+                }
+            },
+            "insert_text" => {
+                let text = params.get("text").and_then(|q| q.as_str()).ok_or(
+                    ToolError::InvalidParameters("The text parameter is required for insert_text operation".to_string()),
+                )?;
+
+                let position = params.get("position").and_then(|q| q.as_i64()).ok_or(
+                    ToolError::InvalidParameters("The position parameter is required for insert_text operation".to_string()),
+                )?;
+
+                // Create the insert text request
+                let insert_text_request = google_docs1::api::InsertTextRequest {
+                    text: Some(text.to_string()),
+                    location: Some(google_docs1::api::Location {
+                        index: Some(position.try_into().unwrap()),
+                        segment_id: None,
+                    }),
+                    end_of_segment_location: None,
+                };
+
+                // Create the batch update request
+                let batch_update_request = google_docs1::api::BatchUpdateDocumentRequest {
+                    requests: Some(vec![google_docs1::api::Request {
+                        insert_text: Some(insert_text_request),
+                        ..google_docs1::api::Request::default()
+                    }]),
+                    write_control: None,
+                };
+
+                // Execute the batch update
+                let result = self
+                    .docs
+                    .documents()
+                    .batch_update(batch_update_request, document_id)
+                    .clear_scopes()
+                    .add_scope(GOOGLE_DRIVE_SCOPES)
+                    .doit()
+                    .await;
+
+                match result {
+                    Err(e) => Err(ToolError::ExecutionError(format!(
+                        "Failed to execute Google Docs insert_text operation, {}.",
+                        e
+                    ))),
+                    Ok(_) => {
+                        Ok(vec![Content::text(format!(
+                            "Successfully inserted text at position {}.",
+                            position
+                        )).with_priority(0.1)])
+                    }
+                }
+            },
+            "append_text" => {
+                let text = params.get("text").and_then(|q| q.as_str()).ok_or(
+                    ToolError::InvalidParameters("The text parameter is required for append_text operation".to_string()),
+                )?;
+
+                // First, get the document to find the end position
+                let get_result = self
+                    .docs
+                    .documents()
+                    .get(document_id)
+                    .clear_scopes()
+                    .add_scope(GOOGLE_DRIVE_SCOPES)
+                    .doit()
+                    .await;
+
+                let end_index = match get_result {
+                    Err(e) => {
+                        return Err(ToolError::ExecutionError(format!(
+                            "Failed to get document to determine end position, {}.",
+                            e
+                        )));
+                    },
+                    Ok(r) => {
+                        let document = r.1;
+                        if let Some(body) = document.body {
+                            body.content.and_then(|content| {
+                                content.last().and_then(|last_item| {
+                                    last_item.end_index
+                                })
+                            }).unwrap_or(1) // Default to 1 if we can't determine the end position
+                        } else {
+                            1 // Default to 1 if there's no body
+                        }
+                    }
+                };
+
+                // Create the insert text request at the end position
+                let insert_text_request = google_docs1::api::InsertTextRequest {
+                    text: Some(text.to_string()),
+                    location: Some(google_docs1::api::Location {
+                        index: Some(end_index - 1), // -1 because end_index is one past the last character
+                        segment_id: None,
+                    }),
+                    end_of_segment_location: None,
+                };
+
+                // Create the batch update request
+                let batch_update_request = google_docs1::api::BatchUpdateDocumentRequest {
+                    requests: Some(vec![google_docs1::api::Request {
+                        insert_text: Some(insert_text_request),
+                        ..google_docs1::api::Request::default()
+                    }]),
+                    write_control: None,
+                };
+
+                // Execute the batch update
+                let result = self
+                    .docs
+                    .documents()
+                    .batch_update(batch_update_request, document_id)
+                    .clear_scopes()
+                    .add_scope(GOOGLE_DRIVE_SCOPES)
+                    .doit()
+                    .await;
+
+                match result {
+                    Err(e) => Err(ToolError::ExecutionError(format!(
+                        "Failed to execute Google Docs append_text operation, {}.",
+                        e
+                    ))),
+                    Ok(_) => {
+                        Ok(vec![Content::text("Successfully appended text to the document.").with_priority(0.1)])
+                    }
+                }
+            },
+            "replace_text" => {
+                let text = params.get("text").and_then(|q| q.as_str()).ok_or(
+                    ToolError::InvalidParameters("The text parameter is required for replace_text operation".to_string()),
+                )?;
+
+                let replace_text = params.get("replaceText").and_then(|q| q.as_str()).ok_or(
+                    ToolError::InvalidParameters("The replaceText parameter is required for replace_text operation".to_string()),
+                )?;
+
+                // Create the replace all text request
+                let replace_all_text_request = google_docs1::api::ReplaceAllTextRequest {
+                    contains_text: Some(google_docs1::api::SubstringMatchCriteria {
+                        text: Some(replace_text.to_string()),
+                        match_case: Some(true),
+                    }),
+                    replace_text: Some(text.to_string()),
+                };
+
+                // Create the batch update request
+                let batch_update_request = google_docs1::api::BatchUpdateDocumentRequest {
+                    requests: Some(vec![google_docs1::api::Request {
+                        replace_all_text: Some(replace_all_text_request),
+                        ..google_docs1::api::Request::default()
+                    }]),
+                    write_control: None,
+                };
+
+                // Execute the batch update
+                let result = self
+                    .docs
+                    .documents()
+                    .batch_update(batch_update_request, document_id)
+                    .clear_scopes()
+                    .add_scope(GOOGLE_DRIVE_SCOPES)
+                    .doit()
+                    .await;
+
+                match result {
+                    Err(e) => Err(ToolError::ExecutionError(format!(
+                        "Failed to execute Google Docs replace_text operation, {}.",
+                        e
+                    ))),
+                    Ok(r) => {
+                        let response = r.1;
+                        let replacements = response
+                            .replies
+                            .and_then(|replies| {
+                                replies.first().and_then(|reply| {
+                                    reply.replace_all_text.as_ref().map(|replace_response| {
+                                        replace_response.occurrences_changed.unwrap_or(0)
+                                    })
+                                })
+                            })
+                            .unwrap_or(0);
+
+                        Ok(vec![Content::text(format!(
+                            "Successfully replaced {} occurrences of '{}' with '{}'.",
+                            replacements, replace_text, text
+                        )).with_priority(0.1)])
+                    }
+                }
+            },
+            "create_paragraph" => {
+                let text = params.get("text").and_then(|q| q.as_str()).ok_or(
+                    ToolError::InvalidParameters("The text parameter is required for create_paragraph operation".to_string()),
+                )?;
+
+                // Get the end position of the document
+                let get_result = self
+                    .docs
+                    .documents()
+                    .get(document_id)
+                    .clear_scopes()
+                    .add_scope(GOOGLE_DRIVE_SCOPES)
+                    .doit()
+                    .await;
+
+                let end_index = match get_result {
+                    Err(e) => {
+                        return Err(ToolError::ExecutionError(format!(
+                            "Failed to get document to determine end position, {}.",
+                            e
+                        )));
+                    },
+                    Ok(r) => {
+                        let document = r.1;
+                        if let Some(body) = document.body {
+                            body.content.and_then(|content| {
+                                content.last().and_then(|last_item| {
+                                    last_item.end_index
+                                })
+                            }).unwrap_or(1) // Default to 1 if we can't determine the end position
+                        } else {
+                            1 // Default to 1 if there's no body
+                        }
+                    }
+                };
+
+                // Create the insert text request with a newline at the end
+                let insert_text_request = google_docs1::api::InsertTextRequest {
+                    text: Some(format!("\n{}", text)),
+                    location: Some(google_docs1::api::Location {
+                        index: Some(end_index - 1), // -1 because end_index is one past the last character
+                        segment_id: None,
+                    }),
+                    end_of_segment_location: None,
+                };
+
+                // Create the batch update request
+                let batch_update_request = google_docs1::api::BatchUpdateDocumentRequest {
+                    requests: Some(vec![google_docs1::api::Request {
+                        insert_text: Some(insert_text_request),
+                        ..google_docs1::api::Request::default()
+                    }]),
+                    write_control: None,
+                };
+
+                // Execute the batch update
+                let result = self
+                    .docs
+                    .documents()
+                    .batch_update(batch_update_request, document_id)
+                    .clear_scopes()
+                    .add_scope(GOOGLE_DRIVE_SCOPES)
+                    .doit()
+                    .await;
+
+                match result {
+                    Err(e) => Err(ToolError::ExecutionError(format!(
+                        "Failed to execute Google Docs create_paragraph operation, {}.",
+                        e
+                    ))),
+                    Ok(_) => {
+                        Ok(vec![Content::text("Successfully created a new paragraph.").with_priority(0.1)])
+                    }
+                }
+            },
+            "delete_content" => {
+                let start_position = params.get("startPosition").and_then(|q| q.as_i64()).ok_or(
+                    ToolError::InvalidParameters("The startPosition parameter is required for delete_content operation".to_string()),
+                )?;
+
+                let end_position = params.get("endPosition").and_then(|q| q.as_i64()).ok_or(
+                    ToolError::InvalidParameters("The endPosition parameter is required for delete_content operation".to_string()),
+                )?;
+
+                // Create the delete content range request
+                let delete_content_range_request = google_docs1::api::DeleteContentRangeRequest {
+                    range: Some(google_docs1::api::Range {
+                        start_index: Some(start_position.try_into().unwrap()),
+                        end_index: Some(end_position.try_into().unwrap()),
+                        segment_id: None,
+                    }),
+                };
+
+                // Create the batch update request
+                let batch_update_request = google_docs1::api::BatchUpdateDocumentRequest {
+                    requests: Some(vec![google_docs1::api::Request {
+                        delete_content_range: Some(delete_content_range_request),
+                        ..google_docs1::api::Request::default()
+                    }]),
+                    write_control: None,
+                };
+
+                // Execute the batch update
+                let result = self
+                    .docs
+                    .documents()
+                    .batch_update(batch_update_request, document_id)
+                    .clear_scopes()
+                    .add_scope(GOOGLE_DRIVE_SCOPES)
+                    .doit()
+                    .await;
+
+                match result {
+                    Err(e) => Err(ToolError::ExecutionError(format!(
+                        "Failed to execute Google Docs delete_content operation, {}.",
+                        e
+                    ))),
+                    Ok(_) => {
+                        Ok(vec![Content::text(format!(
+                            "Successfully deleted content from position {} to {}.",
+                            start_position, end_position
+                        )).with_priority(0.1)])
+                    }
+                }
+            },
+            _ => Err(ToolError::InvalidParameters(format!(
+                "Invalid operation: {}. Supported operations are: get_document, insert_text, append_text, replace_text, create_paragraph, delete_content",
+                operation
+            ))),
         }
     }
 
@@ -2142,6 +2679,225 @@ impl GoogleDriveRouter {
         }
         Ok(vec![Content::text(results.join("\n"))])
     }
+
+    fn output_permission(&self, p: Permission) -> String {
+        format!(
+            "(display_name: {}) (domain: {}) (email_address: {}) (expiration_time: {}) (permission_details: {:?}) (role: {}) (type: {}) (uri: {})",
+            p.display_name.unwrap_or_default(),
+            p.domain.unwrap_or_default(),
+            p.email_address.unwrap_or_default(),
+            p.expiration_time.unwrap_or_default(),
+            p.permission_details.unwrap_or_default(),
+            p.role.unwrap_or_default(),
+            p.type_.unwrap_or_default(),
+            p.id.unwrap_or_default())
+    }
+
+    async fn get_permissions(&self, params: Value) -> Result<Vec<Content>, ToolError> {
+        let file_id =
+            params
+                .get("fileId")
+                .and_then(|q| q.as_str())
+                .ok_or(ToolError::InvalidParameters(
+                    "The fileId param is required".to_string(),
+                ))?;
+
+        let mut results: Vec<String> = Vec::new();
+        let mut state = PaginationState::Start;
+        while state != PaginationState::End {
+            let mut builder = self
+                .drive
+                .permissions()
+                .list(file_id)
+                .param("fields", "permissions(displayName, domain, emailAddress, expirationTime, permissionDetails, role, type, id)")
+                .supports_all_drives(true)
+                .page_size(100)
+                .clear_scopes() // Scope::MeetReadonly is the default, remove it
+                .add_scope(GOOGLE_DRIVE_SCOPES);
+            if let PaginationState::Next(pt) = state {
+                builder = builder.page_token(&pt);
+            }
+            let result = builder.doit().await;
+
+            match result {
+                Err(e) => {
+                    return Err(ToolError::ExecutionError(format!(
+                        "Failed to execute google drive list, {}.",
+                        e
+                    )))
+                }
+                Ok(r) => {
+                    let mut content =
+                        r.1.permissions
+                            .map(|perms| perms.into_iter().map(|p| self.output_permission(p)))
+                            .into_iter()
+                            .flatten()
+                            .collect::<Vec<_>>();
+                    results.append(&mut content);
+                    state = match r.1.next_page_token {
+                        Some(npt) => PaginationState::Next(npt),
+                        None => PaginationState::End,
+                    }
+                }
+            }
+        }
+        Ok(vec![Content::text(results.join("\n"))])
+    }
+
+    async fn sharing(&self, params: Value) -> Result<Vec<Content>, ToolError> {
+        let file_id =
+            params
+                .get("fileId")
+                .and_then(|q| q.as_str())
+                .ok_or(ToolError::InvalidParameters(
+                    "The fileId param is required".to_string(),
+                ))?;
+        let operation = params.get("operation").and_then(|q| q.as_str()).ok_or(
+            ToolError::InvalidParameters("The operation is required".to_string()),
+        )?;
+        let permission_id = params.get("permissionId").and_then(|q| q.as_str());
+        let role = params.get("role").and_then(|s| {
+            s.as_str().map(|s| {
+                if ROLES.contains(&s) {
+                    Ok(s)
+                } else {
+                    Err(ToolError::InvalidParameters("Invalid role: must be one of ('owner', 'organizer', 'fileOrganizer', 'writer', 'commenter', 'reader')".to_string()))
+                }
+            })
+        }).transpose()?;
+        let permission_type = params.get("type").and_then(|s|
+            s.as_str().map(|s| {
+                if PERMISSIONTYPE.contains(&s) {
+                    Ok(s)
+                } else {
+                    Err(ToolError::InvalidParameters("Invalid permission type: must be one of ('user', 'group', 'domain', 'anyone')".to_string()))
+                }
+            })
+        ).transpose()?;
+        let target = params.get("target").and_then(|s| s.as_str());
+        let email_message = params.get("emailMessage").and_then(|s| s.as_str());
+
+        match operation {
+            "create" => {
+                let (role, permission_type) = match (role, permission_type) {
+                    (Some(r), Some(t)) => (r, t),
+                    _ => {
+                        return Err(ToolError::InvalidParameters(
+                            "The 'create' operation requires the 'role' and 'type' parameters."
+                                .to_string(),
+                        ))
+                    }
+                };
+                let mut req = Permission {
+                    role: Some(role.to_string()),
+                    type_: Some(permission_type.to_string()),
+                    ..Default::default()
+                };
+                match (permission_type, target) {
+                    ("user", Some(t)) | ("group", Some(t)) => {
+                        req.email_address = Some(t.to_string())
+                    }
+                    ("domain", Some(d)) => req.domain = Some(d.to_string()),
+                    ("anyone", None) => {}
+                    (_, _) => {
+                        return Err(ToolError::InvalidParameters(format!(
+                            "The '{}' operation for type '{}' requires the 'target' parameter.",
+                            operation, permission_type
+                        )))
+                    }
+                }
+
+                let mut builder = self
+                    .drive
+                    .permissions()
+                    .create(req, file_id)
+                    .supports_all_drives(true)
+                    .clear_scopes()
+                    .add_scope(GOOGLE_DRIVE_SCOPES);
+                if let Some(msg) = email_message {
+                    builder = builder.email_message(msg);
+                }
+
+                let result = builder.doit().await;
+                match result {
+                    Err(e) => Err(ToolError::ExecutionError(format!(
+                        "Failed to manage sharing for google drive file {}, {}.",
+                        file_id, e
+                    ))),
+                    Ok(r) => Ok(vec![Content::text(self.output_permission(r.1))]),
+                }
+            }
+            "update" => {
+                let (permission_id, role) = match (permission_id, role) {
+                    (Some(p), Some(r)) => (p, r),
+                    _ => {
+                        return Err(ToolError::InvalidParameters(
+                            "The 'update' operation requires the 'permissionId', and 'role'."
+                                .to_string(),
+                        ))
+                    }
+                };
+                // A permission update requires a permissionId, which is also
+                // the ID for that user, group, or domain. We don't _use_ the
+                // permission type in the Permission req body, because the
+                // update uses "patch semantics", and you can't patch a
+                // permission from one user to another without changing its ID.
+                let req = Permission {
+                    role: Some(role.to_string()),
+                    ..Default::default()
+                };
+
+                let result = self
+                    .drive
+                    .permissions()
+                    .update(req, file_id, permission_id)
+                    .supports_all_drives(true)
+                    .clear_scopes()
+                    .add_scope(GOOGLE_DRIVE_SCOPES)
+                    .doit()
+                    .await;
+                match result {
+                    Err(e) => Err(ToolError::ExecutionError(format!(
+                        "Failed to manage sharing for google drive file {}, {}.",
+                        file_id, e
+                    ))),
+                    Ok(r) => Ok(vec![Content::text(self.output_permission(r.1))]),
+                }
+            }
+            "delete" => {
+                let permission_id = permission_id.ok_or(ToolError::InvalidParameters(
+                    "The 'delete' operation requires the 'permissionId'.".to_string(),
+                ))?;
+
+                let result = self
+                    .drive
+                    .permissions()
+                    .delete(file_id, permission_id)
+                    .supports_all_drives(true)
+                    .clear_scopes()
+                    .add_scope(GOOGLE_DRIVE_SCOPES)
+                    .doit()
+                    .await;
+                match result {
+                    Err(e) => Err(ToolError::ExecutionError(format!(
+                        "Failed to manage sharing for google drive file {}, {}.",
+                        file_id, e
+                    ))),
+                    Ok(_) => Ok(vec![Content::text(format!(
+                        "Deleted permission: {} from file: {}",
+                        file_id, permission_id
+                    ))]),
+                }
+            }
+            s => Err(ToolError::InvalidParameters(
+                format!(
+                    "Parameter 'operation' must be one of ('create', 'update', 'delete'); given {}",
+                    s
+                )
+                .to_string(),
+            )),
+        }
+    }
 }
 
 impl Router for GoogleDriveRouter {
@@ -2175,16 +2931,16 @@ impl Router for GoogleDriveRouter {
             match tool_name.as_str() {
                 "search" => this.search(arguments).await,
                 "read" => this.read(arguments).await,
-                "upload" => this.upload(arguments).await,
                 "create_file" => this.create_file(arguments).await,
                 "move_file" => this.move_file(arguments).await,
-                "update" => this.update(arguments).await,
                 "update_file" => this.update_file(arguments).await,
                 "sheets_tool" => this.sheets_tool(arguments).await,
-                "create_comment" => this.create_comment(arguments).await,
+                "docs_tool" => this.docs_tool(arguments).await,
+                "manage_comment" => this.manage_comment(arguments).await,
                 "get_comments" => this.get_comments(arguments).await,
-                "reply" => this.reply(arguments).await,
                 "list_drives" => this.list_drives(arguments).await,
+                "get_permissions" => this.get_permissions(arguments).await,
+                "sharing" => this.sharing(arguments).await,
                 _ => Err(ToolError::NotFound(format!("Tool {} not found", tool_name))),
             }
         })
@@ -2231,7 +2987,68 @@ impl Clone for GoogleDriveRouter {
             instructions: self.instructions.clone(),
             drive: self.drive.clone(),
             sheets: self.sheets.clone(),
+            docs: self.docs.clone(),
             credentials_manager: self.credentials_manager.clone(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_document_url() {
+        let url = "https://docs.google.com/document/d/1QG8d8wtWe7ZfmG93sW-1h2WXDJDUkOi-9hDnvJLmWrc/edit?tab=t.0#heading=h.5v419d3h97tr";
+        assert_eq!(
+            extract_google_drive_id(url),
+            Some("1QG8d8wtWe7ZfmG93sW-1h2WXDJDUkOi-9hDnvJLmWrc")
+        );
+    }
+
+    #[test]
+    fn test_spreadsheets_url() {
+        let url = "https://docs.google.com/spreadsheets/d/1J5KHqWsGFzweuiQboX7dlm8Ejv90Po16ocEBahzCt4W/edit?gid=1249300797#gid=1249300797";
+        assert_eq!(
+            extract_google_drive_id(url),
+            Some("1J5KHqWsGFzweuiQboX7dlm8Ejv90Po16ocEBahzCt4W")
+        );
+    }
+
+    #[test]
+    fn test_slides_url() {
+        let url = "https://docs.google.com/presentation/d/1zXWqsGpHJEu40oqb1omh68sW9liu7EKFBCdnPaJVoQ5et/edit#slide=id.p1";
+        assert_eq!(
+            extract_google_drive_id(url),
+            Some("1zXWqsGpHJEu40oqb1omh68sW9liu7EKFBCdnPaJVoQ5et")
+        );
+    }
+
+    #[test]
+    fn test_missing_scheme() {
+        let url = "docs.google.com/document/d/abcdef12345/edit";
+        assert_eq!(extract_google_drive_id(url), None);
+    }
+
+    #[test]
+    fn test_extra_path_segments() {
+        let url = "https://drive.google.com/file/d/1abcdEFGH_ijklMNOpqrstUVwxyz-1234/view";
+        assert_eq!(
+            extract_google_drive_id(url),
+            Some("1abcdEFGH_ijklMNOpqrstUVwxyz-1234")
+        );
+    }
+
+    #[test]
+    fn test_invalid_google_url() {
+        let url = "https://example.com/d/12345";
+        assert_eq!(extract_google_drive_id(url), None);
+    }
+
+    #[test]
+    fn test_no_d_segment() {
+        let url =
+            "https://docs.google.com/document/1QG8d8wtWe7ZfmG93sW-1h2WXDJDUkOi-9hDnvJLmWrc/edit";
+        assert_eq!(extract_google_drive_id(url), None);
     }
 }
