@@ -13,7 +13,7 @@ use mcp_core::{
     prompt::Prompt,
     protocol::ServerCapabilities,
     resource::Resource,
-    tool::Tool,
+    tool::{Tool, ToolAnnotations},
     Content,
 };
 use mcp_server::router::CapabilitiesBuilder;
@@ -47,26 +47,6 @@ impl Default for ComputerControllerRouter {
 
 impl ComputerControllerRouter {
     pub fn new() -> Self {
-        // Create tools for the system
-        let web_search_tool = Tool::new(
-            "web_search",
-            indoc! {r#"
-                Search the web for a single word (proper noun ideally) using DuckDuckGo's API. Returns results in JSON format.
-                The results are cached locally for future reference.
-                Be sparing as there is a limited number of api calls allowed.
-            "#},
-            json!({
-                "type": "object",
-                "required": ["query"],
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "A single word to search for, a topic, propernoun, brand name that you may not know about"
-                    }
-                }
-            }),
-        );
-
         let web_scrape_tool = Tool::new(
             "web_scrape",
             indoc! {r#"
@@ -93,6 +73,13 @@ impl ComputerControllerRouter {
                         "description": "How to interpret and save the content"
                     }
                 }
+            }),
+            Some(ToolAnnotations {
+                title: Some("Web Scrape".to_string()),
+                read_only_hint: true,
+                destructive_hint: false,
+                idempotent_hint: false,
+                open_world_hint: true,
             }),
         );
 
@@ -159,6 +146,7 @@ impl ComputerControllerRouter {
                     }
                 }
             }),
+            None,
         );
 
         let quick_script_desc = match std::env::consts::OS {
@@ -209,6 +197,7 @@ impl ComputerControllerRouter {
                     }
                 }
             }),
+            None,
         );
 
         let cache_tool = Tool::new(
@@ -235,6 +224,7 @@ impl ComputerControllerRouter {
                     }
                 }
             }),
+            None,
         );
 
         let pdf_tool = Tool::new(
@@ -261,6 +251,13 @@ impl ComputerControllerRouter {
                         "description": "Operation to perform on the PDF"
                     }
                 }
+            }),
+            Some(ToolAnnotations {
+                title: Some("PDF process".to_string()),
+                read_only_hint: true,
+                destructive_hint: false,
+                idempotent_hint: true,
+                open_world_hint: false,
             }),
         );
 
@@ -360,6 +357,7 @@ impl ComputerControllerRouter {
                     }
                 }
             }),
+            None,
         );
 
         let make_presentation_tool = Tool::new(
@@ -400,6 +398,7 @@ impl ComputerControllerRouter {
                     }
                 }
             }),
+            None,
         );
 
         let xlsx_tool = Tool::new(
@@ -461,6 +460,7 @@ impl ComputerControllerRouter {
                     }
                 }
             }),
+            None,
         );
 
         // choose_app_strategy().cache_dir()
@@ -564,8 +564,6 @@ impl ComputerControllerRouter {
 
             {os_instructions}
 
-            web_search
-              - Search the web using DuckDuckGo's API for general topics or keywords
             web_scrape
               - Fetch content from html websites and APIs
               - Save as text, JSON, or binary files
@@ -585,7 +583,6 @@ impl ComputerControllerRouter {
 
         Self {
             tools: vec![
-                web_search_tool,
                 web_scrape_tool,
                 quick_script_tool,
                 computer_control_tool,
@@ -638,51 +635,6 @@ impl ComputerControllerRouter {
 
         self.active_resources.lock().unwrap().insert(uri, resource);
         Ok(())
-    }
-
-    // Implement web_search tool functionality
-    async fn web_search(&self, params: Value) -> Result<Vec<Content>, ToolError> {
-        let query = params
-            .get("query")
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| ToolError::InvalidParameters("Missing 'query' parameter".into()))?;
-
-        // Create the DuckDuckGo API URL
-        let url = format!(
-            "https://api.duckduckgo.com/?q={}&format=json&pretty=1",
-            urlencoding::encode(query)
-        );
-
-        // Fetch the results
-        let response = self.http_client.get(&url).send().await.map_err(|e| {
-            ToolError::ExecutionError(format!("Failed to fetch search results: {}", e))
-        })?;
-
-        let status = response.status();
-        if !status.is_success() {
-            return Err(ToolError::ExecutionError(format!(
-                "HTTP request failed with status: {}",
-                status
-            )));
-        }
-
-        // Get the JSON response
-        let json_text = response.text().await.map_err(|e| {
-            ToolError::ExecutionError(format!("Failed to get response text: {}", e))
-        })?;
-
-        // Save to cache
-        let cache_path = self
-            .save_to_cache(json_text.as_bytes(), "search", "json")
-            .await?;
-
-        // Register as a resource
-        self.register_as_resource(&cache_path, "json")?;
-
-        Ok(vec![Content::text(format!(
-            "Search results saved to: {}",
-            cache_path.display()
-        ))])
     }
 
     async fn web_scrape(&self, params: Value) -> Result<Vec<Content>, ToolError> {
@@ -1188,7 +1140,6 @@ impl Router for ComputerControllerRouter {
         let tool_name = tool_name.to_string();
         Box::pin(async move {
             match tool_name.as_str() {
-                "web_search" => this.web_search(arguments).await,
                 "web_scrape" => this.web_scrape(arguments).await,
                 "automation_script" => this.quick_script(arguments).await,
                 "computer_control" => this.computer_control(arguments).await,

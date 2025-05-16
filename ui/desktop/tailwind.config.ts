@@ -7,6 +7,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Cash Sans', 'sans-serif'],
+        mono: ['Cash Sans Mono', 'monospace'],
       },
       keyframes: {
         shimmer: {
@@ -54,10 +55,13 @@ export default {
         bgStandard: 'var(--background-standard)',
         bgProminent: 'var(--background-prominent)',
         bgAppInverse: 'var(--background-app-inverse)',
+        bgSubtleInverse: 'var(--background-subtle-inverse)',
         bgStandardInverse: 'var(--background-standard-inverse)',
+        bgProminentInverse: 'var(--background-prominent-inverse)',
 
         borderSubtle: 'var(--border-subtle)',
         borderStandard: 'var(--border-standard)',
+        borderProminent: 'var(--border-prominent)',
 
         textProminent: 'var(--text-prominent)',
         textStandard: 'var(--text-standard)',
@@ -72,6 +76,13 @@ export default {
         slate: 'var(--slate)',
         blockTeal: 'var(--block-teal)',
         blockOrange: 'var(--block-orange)',
+      },
+      typography: {
+        DEFAULT: {
+          css: {
+            color: 'var(--text-standard)',
+          },
+        },
       },
     },
   },

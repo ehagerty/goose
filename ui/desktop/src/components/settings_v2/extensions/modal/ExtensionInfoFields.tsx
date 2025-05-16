@@ -1,12 +1,11 @@
 import { Input } from '../../../ui/input';
-import Select from 'react-select';
-import React, { useState } from 'react';
+import { Select } from '../../../ui/Select';
 
 interface ExtensionInfoFieldsProps {
   name: string;
   type: 'stdio' | 'sse' | 'builtin';
   description: string;
-  onChange: (key: string, value: any) => void;
+  onChange: (key: string, value: string) => void;
   submitAttempted: boolean;
 }
 
@@ -52,7 +51,7 @@ export default function ExtensionInfoFields({
             }}
             options={[
               { value: 'stdio', label: 'Standard IO (STDIO)' },
-              { value: 'sse', label: 'Security Service Edge (SSE)' },
+              { value: 'sse', label: 'Server-Sent Events (SSE)' },
             ]}
             isSearchable={false}
           />

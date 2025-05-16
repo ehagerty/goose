@@ -1,37 +1,32 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { addExtensionFromDeepLink } from './extensions';
-import { getStoredModel } from './utils/providerUtils';
-import { getStoredProvider, initializeSystem } from './utils/providerUtils';
-import { useModel } from './components/settings/models/ModelContext';
-import { useRecentModels } from './components/settings/models/RecentModels';
-import { createSelectedModel } from './components/settings/models/utils';
-import { getDefaultModel } from './components/settings/models/hardcoded_stuff';
-import ErrorScreen from './components/ErrorScreen';
+import { IpcRendererEvent } from 'electron';
+import { openSharedSessionFromDeepLink } from './sessionLinks';
+import { initializeSystem } from './utils/providerUtils';
+import { ErrorUI } from './components/ErrorBoundary';
 import { ConfirmationModal } from './components/ui/ConfirmationModal';
 import { ToastContainer } from 'react-toastify';
+import { toastService } from './toasts';
 import { extractExtensionName } from './components/settings/extensions/utils';
 import { GoosehintsModal } from './components/GoosehintsModal';
-import { SessionDetails, fetchSessionDetails } from './sessions';
+import { SessionDetails } from './sessions';
 
-import WelcomeView from './components/WelcomeView';
 import ChatView from './components/ChatView';
-import SettingsView, { type SettingsViewOptions } from './components/settings/SettingsView';
+import SuspenseLoader from './suspense-loader';
+import { type SettingsViewOptions } from './components/settings/SettingsView';
 import SettingsViewV2 from './components/settings_v2/SettingsView';
 import MoreModelsView from './components/settings/models/MoreModelsView';
 import ConfigureProvidersView from './components/settings/providers/ConfigureProvidersView';
 import SessionsView from './components/sessions/SessionsView';
+import SharedSessionView from './components/sessions/SharedSessionView';
 import ProviderSettings from './components/settings_v2/providers/ProviderSettingsPage';
+import RecipeEditor from './components/RecipeEditor';
 import { useChat } from './hooks/useChat';
 
 import 'react-toastify/dist/ReactToastify.css';
-import { FixedExtensionEntry, useConfig } from './components/ConfigContext';
-import {
-  initializeBuiltInExtensions,
-  syncBuiltInExtensions,
-  addExtensionFromDeepLink as addExtensionFromDeepLinkV2,
-  addToAgentOnStartup,
-} from './components/settings_v2/extensions';
-import { extractExtensionConfig } from './components/settings_v2/extensions/utils';
+import { useConfig, MalformedConfigError } from './components/ConfigContext';
+import { addExtensionFromDeepLink as addExtensionFromDeepLinkV2 } from './components/settings_v2/extensions';
+import { backupConfig, initConfig, readAllConfig } from './api/sdk.gen';
+import PermissionSettingsView from './components/settings_v2/permission/PermissionSetting';
 
 // Views and their options
 export type View =
@@ -43,16 +38,50 @@ export type View =
   | 'configPage'
   | 'ConfigureProviders'
   | 'settingsV2'
-  | 'sessions';
+  | 'sessions'
+  | 'sharedSession'
+  | 'loading'
+  | 'recipeEditor'
+  | 'permission';
+
+export type ViewOptions =
+  | SettingsViewOptions
+  | { resumedSession?: SessionDetails }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  | Record<string, any>;
 
 export type ViewConfig = {
   view: View;
-  viewOptions?:
-    | SettingsViewOptions
-    | {
-        resumedSession?: SessionDetails;
-      }
-    | Record<string, any>;
+  viewOptions?: ViewOptions;
+};
+
+const getInitialView = (): ViewConfig => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const viewFromUrl = urlParams.get('view');
+  const windowConfig = window.electron.getConfig();
+
+  if (viewFromUrl === 'recipeEditor' && windowConfig?.recipeConfig) {
+    return {
+      view: 'recipeEditor',
+      viewOptions: {
+        config: windowConfig.recipeConfig,
+      },
+    };
+  }
+
+  // Any other URL-specified view
+  if (viewFromUrl) {
+    return {
+      view: viewFromUrl as View,
+      viewOptions: {},
+    };
+  }
+
+  // Default case
+  return {
+    view: 'loading',
+    viewOptions: {},
+  };
 };
 
 export default function App() {
@@ -60,10 +89,9 @@ export default function App() {
   const [modalVisible, setModalVisible] = useState(false);
   const [pendingLink, setPendingLink] = useState<string | null>(null);
   const [modalMessage, setModalMessage] = useState<string>('');
-  const [{ view, viewOptions }, setInternalView] = useState<ViewConfig>({
-    view: 'welcome',
-    viewOptions: {},
-  });
+  const [extensionConfirmLabel, setExtensionConfirmLabel] = useState<string>('');
+  const [extensionConfirmTitle, setExtensionConfirmTitle] = useState<string>('');
+  const [{ view, viewOptions }, setInternalView] = useState<ViewConfig>(getInitialView());
   const { getExtensions, addExtension, read } = useConfig();
   const initAttemptedRef = useRef(false);
 
@@ -75,126 +103,119 @@ export default function App() {
     return `${cmd} ${args.join(' ')}`.trim();
   }
 
-  // this is all settings v2 stuff
-  // Modified version of the alpha initialization flow for App.tsx
+  // Utility function to extract the remote url from the link
+  function extractRemoteUrl(link: string): string {
+    const url = new URL(link);
+    return url.searchParams.get('url');
+  }
 
-  useEffect(() => {
-    // Skip if feature flag is not enabled
-    if (!process.env.ALPHA) {
-      return;
-    }
-
-    console.log('Alpha flow initializing...');
-
-    // First quickly check if we have model and provider to set chat view
-    const checkRequiredConfig = async () => {
-      try {
-        console.log('Reading GOOSE_PROVIDER and GOOSE_MODEL from config...');
-        const provider = (await read('GOOSE_PROVIDER', false)) as string;
-        const model = (await read('GOOSE_MODEL', false)) as string;
-
-        if (provider && model) {
-          // We have all needed configuration, set chat view immediately
-          console.log(`Found provider: ${provider}, model: ${model}, setting chat view`);
-          setView('chat');
-
-          // Initialize the system in background
-          initializeSystem(provider, model)
-            .then(() => console.log('System initialization successful'))
-            .catch((error) => {
-              console.error('Error initializing system:', error);
-              setFatalError(`System initialization error: ${error.message || 'Unknown error'}`);
-              setView('welcome');
-            });
-        } else {
-          // Missing configuration, show onboarding
-          console.log('Missing configuration, showing onboarding');
-          if (!provider) console.log('Missing provider');
-          if (!model) console.log('Missing model');
-          setView('welcome');
-        }
-      } catch (error) {
-        console.error('Error checking configuration:', error);
-        setFatalError(`Configuration check error: ${error.message || 'Unknown error'}`);
-        setView('welcome');
-      }
-    };
-
-    // Setup extensions in parallel
-    const setupExtensions = async () => {
-      // Set the ref immediately to prevent duplicate runs
-      initAttemptedRef.current = true;
-
-      let refreshedExtensions: FixedExtensionEntry[] = [];
-      try {
-        // Force refresh extensions from the backend to ensure we have the latest
-        console.log('Getting extensions from backend...');
-        refreshedExtensions = await getExtensions(true);
-        console.log(`Retrieved ${refreshedExtensions.length} extensions`);
-      } catch (error) {
-        console.log('Error getting extensions list');
-        return; // Exit early if we can't get the extensions list
-      }
-
-      // built-in extensions block -- just adds them to config if missing
-      try {
-        console.log('Setting up built-in extensions...');
-
-        if (refreshedExtensions.length === 0) {
-          // If we still have no extensions, this is truly a first-time setup
-          console.log('First-time setup: Adding all built-in extensions...');
-          await initializeBuiltInExtensions(addExtension);
-          console.log('Built-in extensions initialization complete');
-
-          // Refresh the extensions list after initialization
-          refreshedExtensions = await getExtensions(true);
-        } else {
-          // Extensions exist, check for any missing built-ins
-          console.log('Checking for missing built-in extensions...');
-          console.log('Current extensions:', refreshedExtensions);
-          await syncBuiltInExtensions(refreshedExtensions, addExtension);
-          console.log('Built-in extensions sync complete');
-        }
-      } catch (error) {
-        console.error('Error setting up extensions:', error);
-        // We don't set fatal error here since the app might still work without extensions
-      }
-
-      // now try to add to agent
-      console.log('Adding enabled extensions to agent...');
-      for (const extensionEntry of refreshedExtensions) {
-        if (extensionEntry.enabled) {
-          console.log(`Adding extension to agent: ${extensionEntry.name}`);
-          // need to convert to config because that's what the endpoint expects
-          const extensionConfig = extractExtensionConfig(extensionEntry);
-          // will handle toasts and also set failures to enabled = false
-          await addToAgentOnStartup({ addToConfig: addExtension, extensionConfig });
-        } else {
-          console.log(`Skipping disabled extension: ${extensionEntry.name}`);
-        }
-      }
-
-      console.log('Extensions setup complete');
-    };
-
-    // Execute the two flows in parallel for speed
-    checkRequiredConfig().catch((error) => {
-      console.error('Unhandled error in checkRequiredConfig:', error);
-      setFatalError(`Config check error: ${error.message || 'Unknown error'}`);
-    });
-
-    setupExtensions().catch((error) => {
-      console.error('Unhandled error in setupExtensions:', error);
-      // Not setting fatal error here since extensions are optional
-    });
-  }, []); // Empty dependency array since we're using initAttemptedRef
-  const setView = (view: View, viewOptions: Record<any, any> = {}) => {
+  const setView = (view: View, viewOptions: ViewOptions = {}) => {
     console.log(`Setting view to: ${view}`, viewOptions);
     setInternalView({ view, viewOptions });
   };
 
+  useEffect(() => {
+    // Guard against multiple initialization attempts
+    if (initAttemptedRef.current) {
+      console.log('Initialization already attempted, skipping...');
+      return;
+    }
+    initAttemptedRef.current = true;
+
+    console.log(`Initializing app with settings v2`);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewType = urlParams.get('view');
+    const recipeConfig = window.appConfig.get('recipeConfig');
+
+    // If we have a specific view type in the URL, use that and skip provider detection
+    if (viewType) {
+      if (viewType === 'recipeEditor' && recipeConfig) {
+        console.log('Setting view to recipeEditor with config:', recipeConfig);
+        setView('recipeEditor', { config: recipeConfig });
+      } else {
+        setView(viewType as View);
+      }
+      return;
+    }
+
+    const initializeApp = async () => {
+      try {
+        // checks if there is a config, and if not creates it
+        await initConfig();
+
+        // now try to read config, if we fail and are migrating backup, then re-init config
+        try {
+          await readAllConfig({ throwOnError: true });
+        } catch (error) {
+          // NOTE: we do this check here and in providerUtils.ts, be sure to clean up both in the future
+          const configVersion = localStorage.getItem('configVersion');
+          const shouldMigrateExtensions = !configVersion || parseInt(configVersion, 10) < 3;
+          if (shouldMigrateExtensions) {
+            await backupConfig({ throwOnError: true });
+            await initConfig();
+          } else {
+            // if we've migrated throw this back up
+            throw new Error('Unable to read config file, it may be malformed');
+          }
+        }
+
+        // note: if in a non recipe session, recipeConfig is undefined, otherwise null if error
+        if (recipeConfig === null) {
+          setFatalError('Cannot read recipe config. Please check the deeplink and try again.');
+          return;
+        }
+
+        const config = window.electron.getConfig();
+
+        const provider = (await read('GOOSE_PROVIDER', false)) ?? config.GOOSE_DEFAULT_PROVIDER;
+        const model = (await read('GOOSE_MODEL', false)) ?? config.GOOSE_DEFAULT_MODEL;
+
+        if (provider && model) {
+          setView('chat');
+
+          try {
+            await initializeSystem(provider, model, {
+              getExtensions,
+              addExtension,
+            });
+          } catch (error) {
+            console.error('Error in initialization:', error);
+
+            // propagate the error upward so the global ErrorUI shows in cases
+            // where going through welcome/onboarding wouldn't address the issue
+            if (error instanceof MalformedConfigError) {
+              throw error;
+            }
+
+            setView('welcome');
+          }
+        } else {
+          console.log('Missing required configuration, showing onboarding');
+          setView('welcome');
+        }
+      } catch (error) {
+        setFatalError(
+          `Initialization failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+        setView('welcome');
+      }
+
+      // Reset toast service after initialization
+      toastService.configure({ silent: false });
+    };
+
+    initializeApp().catch((error) => {
+      console.error('Unhandled error in initialization:', error);
+      setFatalError(`${error instanceof Error ? error.message : 'Unknown error'}`);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array since we only want this to run once
+
   const [isGoosehintsModalOpen, setIsGoosehintsModalOpen] = useState(false);
   const [isLoadingSession, setIsLoadingSession] = useState(false);
+  const [sharedSessionError, setSharedSessionError] = useState<string | null>(null);
+  const [isLoadingSharedSession, setIsLoadingSharedSession] = useState(false);
   const { chat, setChat } = useChat({ setView, setIsLoadingSession });
 
   useEffect(() => {
@@ -203,20 +224,48 @@ export default function App() {
       window.electron.reactReady();
     } catch (error) {
       console.error('Error sending reactReady:', error);
-      setFatalError(`React ready notification failed: ${error.message}`);
+      setFatalError(
+        `React ready notification failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      );
     }
+  }, []);
+
+  // Handle shared session deep links
+  useEffect(() => {
+    const handleOpenSharedSession = async (_event: IpcRendererEvent, link: string) => {
+      window.electron.logInfo(`Opening shared session from deep link ${link}`);
+      setIsLoadingSharedSession(true);
+      setSharedSessionError(null);
+
+      try {
+        await openSharedSessionFromDeepLink(link, setView);
+        // No need to handle errors here as openSharedSessionFromDeepLink now handles them internally
+      } catch (error) {
+        // This should not happen, but just in case
+        console.error('Unexpected error opening shared session:', error);
+        setView('sessions'); // Fallback to sessions view
+      } finally {
+        setIsLoadingSharedSession(false);
+      }
+    };
+
+    window.electron.on('open-shared-session', handleOpenSharedSession);
+    return () => {
+      window.electron.off('open-shared-session', handleOpenSharedSession);
+    };
   }, []);
 
   // Keyboard shortcut handler
   useEffect(() => {
     console.log('Setting up keyboard shortcuts');
     const handleKeyDown = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === 'n') {
+      const isMac = window.electron.platform === 'darwin';
+      if ((isMac ? event.metaKey : event.ctrlKey) && event.key === 'n') {
         event.preventDefault();
         try {
           const workingDir = window.appConfig.get('GOOSE_WORKING_DIR');
           console.log(`Creating new chat window with working dir: ${workingDir}`);
-          window.electron.createChatWindow(undefined, workingDir);
+          window.electron.createChatWindow(undefined, workingDir as string);
         } catch (error) {
           console.error('Error creating new window:', error);
         }
@@ -231,7 +280,7 @@ export default function App() {
 
   useEffect(() => {
     console.log('Setting up fatal error handler');
-    const handleFatalError = (_: any, errorMessage: string) => {
+    const handleFatalError = (_event: IpcRendererEvent, errorMessage: string) => {
       console.error('Encountered a fatal error: ', errorMessage);
       // Log additional context that might help diagnose the issue
       console.error('Current view:', view);
@@ -247,10 +296,28 @@ export default function App() {
 
   useEffect(() => {
     console.log('Setting up view change handler');
-    const handleSetView = (_, newView) => {
+    const handleSetView = (_event: IpcRendererEvent, newView: View) => {
       console.log(`Received view change request to: ${newView}`);
       setView(newView);
     };
+
+    // Get initial view and config
+    const urlParams = new URLSearchParams(window.location.search);
+    const viewFromUrl = urlParams.get('view');
+    if (viewFromUrl) {
+      // Get the config from the electron window config
+      const windowConfig = window.electron.getConfig();
+
+      if (viewFromUrl === 'recipeEditor') {
+        const initialViewOptions = {
+          recipeConfig: windowConfig?.recipeConfig,
+          view: viewFromUrl,
+        };
+        setView(viewFromUrl, initialViewOptions);
+      } else {
+        setView(viewFromUrl);
+      }
+    }
 
     window.electron.on('set-view', handleSetView);
     return () => window.electron.off('set-view', handleSetView);
@@ -259,25 +326,104 @@ export default function App() {
   // Add cleanup for session states when view changes
   useEffect(() => {
     console.log(`View changed to: ${view}`);
-    if (view !== 'chat') {
+    if (view !== 'chat' && view !== 'recipeEditor') {
       console.log('Not in chat view, clearing loading session state');
       setIsLoadingSession(false);
     }
   }, [view]);
 
-  // TODO: modify
+  // Configuration for extension security
+  const config = window.electron.getConfig();
+  // If GOOSE_ALLOWLIST_WARNING is true, use warning-only mode (STRICT_ALLOWLIST=false)
+  // If GOOSE_ALLOWLIST_WARNING is not set or false, use strict blocking mode (STRICT_ALLOWLIST=true)
+  const STRICT_ALLOWLIST = config.GOOSE_ALLOWLIST_WARNING === true ? false : true;
+
   useEffect(() => {
     console.log('Setting up extension handler');
-    const handleAddExtension = (_: any, link: string) => {
+    const handleAddExtension = async (_event: IpcRendererEvent, link: string) => {
       try {
         console.log(`Received add-extension event with link: ${link}`);
         const command = extractCommand(link);
+        const remoteUrl = extractRemoteUrl(link);
         const extName = extractExtensionName(link);
         window.electron.logInfo(`Adding extension from deep link ${link}`);
         setPendingLink(link);
-        setModalMessage(
-          `Are you sure you want to install the ${extName} extension?\n\nCommand: ${command}`
-        );
+
+        // Default values for confirmation dialog
+        let warningMessage = '';
+        let label = 'OK';
+        let title = 'Confirm Extension Installation';
+        let isBlocked = false;
+        let useDetailedMessage = false;
+
+        // For SSE extensions (with remoteUrl), always use detailed message
+        if (remoteUrl) {
+          useDetailedMessage = true;
+        } else {
+          // For command-based extensions, check against allowlist
+          try {
+            const allowedCommands = await window.electron.getAllowedExtensions();
+
+            // Only check and show warning if we have a non-empty allowlist
+            if (allowedCommands && allowedCommands.length > 0) {
+              const isCommandAllowed = allowedCommands.some((allowedCmd) =>
+                command.startsWith(allowedCmd)
+              );
+
+              if (!isCommandAllowed) {
+                // Not in allowlist - use detailed message and show warning/block
+                useDetailedMessage = true;
+                title = '⛔️ Untrusted Extension ⛔️';
+
+                if (STRICT_ALLOWLIST) {
+                  // Block installation completely unless override is active
+                  isBlocked = true;
+                  label = 'Extension Blocked';
+                  warningMessage =
+                    '\n\n⛔️ BLOCKED: This extension command is not in the allowed list. ' +
+                    'Installation is blocked by your administrator. ' +
+                    'Please contact your administrator if you need this extension.';
+                } else {
+                  // Allow override (either because STRICT_ALLOWLIST is false or secret key combo was used)
+                  label = 'Override and install';
+                  warningMessage =
+                    '\n\n⚠️ WARNING: This extension command is not in the allowed list. ' +
+                    'Installing extensions from untrusted sources may pose security risks. ' +
+                    'Please contact an admin if you are unsure or want to allow this extension.';
+                }
+              }
+              // If in allowlist, use simple message (useDetailedMessage remains false)
+            }
+            // If no allowlist, use simple message (useDetailedMessage remains false)
+          } catch (error) {
+            console.error('Error checking allowlist:', error);
+          }
+        }
+
+        // Set the appropriate message based on the extension type and allowlist status
+        if (useDetailedMessage) {
+          // Detailed message for SSE extensions or non-allowlisted command extensions
+          const detailedMessage = remoteUrl
+            ? `You are about to install the ${extName} extension which connects to:\n\n${remoteUrl}\n\nThis extension will be able to access your conversations and provide additional functionality.`
+            : `You are about to install the ${extName} extension which runs the command:\n\n${command}\n\nThis extension will be able to access your conversations and provide additional functionality.`;
+
+          setModalMessage(`${detailedMessage}${warningMessage}`);
+        } else {
+          // Simple message for allowlisted command extensions or when no allowlist exists
+          const messageDetails = `Command: ${command}`;
+          setModalMessage(
+            `Are you sure you want to install the ${extName} extension?\n\n${messageDetails}`
+          );
+        }
+
+        setExtensionConfirmLabel(label);
+        setExtensionConfirmTitle(title);
+
+        // If blocked, disable the confirmation button functionality by setting a special flag
+        if (isBlocked) {
+          setPendingLink(null); // Clear the pending link so confirmation does nothing
+        }
+
         setModalVisible(true);
       } catch (error) {
         console.error('Error handling add-extension event:', error);
@@ -288,6 +434,20 @@ export default function App() {
     return () => {
       window.electron.off('add-extension', handleAddExtension);
     };
+  }, [STRICT_ALLOWLIST]);
+
+  // Focus the first found input field
+  useEffect(() => {
+    const handleFocusInput = (_event: IpcRendererEvent) => {
+      const inputField = document.querySelector('input[type="text"], textarea') as HTMLInputElement;
+      if (inputField) {
+        inputField.focus();
+      }
+    };
+    window.electron.on('focus-input', handleFocusInput);
+    return () => {
+      window.electron.off('focus-input', handleFocusInput);
+    };
   }, []);
 
   // TODO: modify
@@ -296,11 +456,7 @@ export default function App() {
       console.log(`Confirming installation of extension from: ${pendingLink}`);
       setModalVisible(false); // Dismiss modal immediately
       try {
-        if (process.env.ALPHA) {
-          await addExtensionFromDeepLinkV2(pendingLink, addExtension, setView);
-        } else {
-          await addExtensionFromDeepLink(pendingLink, setView);
-        }
+        await addExtensionFromDeepLinkV2(pendingLink, addExtension, setView);
         console.log('Extension installation successful');
       } catch (error) {
         console.error('Failed to add extension:', error);
@@ -308,6 +464,10 @@ export default function App() {
       } finally {
         setPendingLink(null);
       }
+    } else {
+      // This case happens when pendingLink was cleared due to blocking
+      console.log('Extension installation blocked by allowlist restrictions');
+      setModalVisible(false);
     }
   };
 
@@ -318,85 +478,8 @@ export default function App() {
     setPendingLink(null);
   };
 
-  // TODO: remove
-  const { switchModel } = useModel(); // TODO: remove
-  const { addRecentModel } = useRecentModels(); // TODO: remove
-
-  useEffect(() => {
-    if (process.env.ALPHA) {
-      return;
-    }
-
-    console.log('Non-alpha flow initializing...');
-
-    // Attempt to detect config for a stored provider
-    const detectStoredProvider = () => {
-      try {
-        const config = window.electron.getConfig();
-        console.log('Loaded config:', JSON.stringify(config));
-
-        const storedProvider = getStoredProvider(config);
-        console.log('Stored provider:', storedProvider);
-
-        if (storedProvider) {
-          setView('chat');
-        } else {
-          setView('welcome');
-        }
-      } catch (err) {
-        console.error('DETECTION ERROR:', err);
-        setFatalError(`Config detection error: ${err.message || 'Unknown error'}`);
-      }
-    };
-
-    // Initialize system if we have a stored provider
-    const setupStoredProvider = async () => {
-      try {
-        const config = window.electron.getConfig();
-
-        if (config.GOOSE_PROVIDER && config.GOOSE_MODEL) {
-          console.log('using GOOSE_PROVIDER and GOOSE_MODEL from config');
-          await initializeSystem(config.GOOSE_PROVIDER, config.GOOSE_MODEL);
-          return;
-        }
-
-        const storedProvider = getStoredProvider(config);
-        const storedModel = getStoredModel();
-
-        if (storedProvider) {
-          try {
-            await initializeSystem(storedProvider, storedModel);
-            console.log('Setup using locally stored provider:', storedProvider);
-            console.log('Setup using locally stored model:', storedModel);
-
-            if (!storedModel) {
-              const modelName = getDefaultModel(storedProvider.toLowerCase());
-              const model = createSelectedModel(storedProvider.toLowerCase(), modelName);
-              switchModel(model);
-              addRecentModel(model);
-            }
-          } catch (error) {
-            console.error('Failed to initialize with stored provider:', error);
-            setFatalError(`Initialization failed: ${error.message || 'Unknown error'}`);
-          }
-        }
-      } catch (err) {
-        console.error('SETUP ERROR:', err);
-        setFatalError(`Setup error: ${err.message || 'Unknown error'}`);
-      }
-    };
-
-    // Execute the functions with better error handling
-    detectStoredProvider();
-    setupStoredProvider().catch((err) => {
-      console.error('ASYNC SETUP ERROR:', err);
-      setFatalError(`Async setup error: ${err.message || 'Unknown error'}`);
-    });
-  }, []);
-
-  // keep
   if (fatalError) {
-    return <ErrorScreen error={fatalError} onReload={() => window.electron.reloadApp()} />;
+    return <ErrorUI error={new Error(fatalError)} />;
   }
 
   if (isLoadingSession)
@@ -426,8 +509,9 @@ export default function App() {
       {modalVisible && (
         <ConfirmationModal
           isOpen={modalVisible}
-          title="Confirm Extension Installation"
           message={modalMessage}
+          confirmLabel={extensionConfirmLabel}
+          title={extensionConfirmTitle}
           onConfirm={handleConfirm}
           onCancel={handleCancel}
         />
@@ -435,34 +519,19 @@ export default function App() {
       <div className="relative w-screen h-screen overflow-hidden bg-bgApp flex flex-col">
         <div className="titlebar-drag-region" />
         <div>
-          {view === 'welcome' &&
-            (process.env.ALPHA ? (
-              <ProviderSettings onClose={() => setView('chat')} isOnboarding={true} />
-            ) : (
-              <WelcomeView
-                onSubmit={() => {
-                  setView('chat');
-                }}
-              />
-            ))}
-          {view === 'settings' &&
-            (process.env.ALPHA ? (
-              <SettingsViewV2
-                onClose={() => {
-                  setView('chat');
-                }}
-                setView={setView}
-                viewOptions={viewOptions as SettingsViewOptions}
-              />
-            ) : (
-              <SettingsView
-                onClose={() => {
-                  setView('chat');
-                }}
-                setView={setView}
-                viewOptions={viewOptions as SettingsViewOptions}
-              />
-            ))}
+          {view === 'loading' && <SuspenseLoader />}
+          {view === 'welcome' && (
+            <ProviderSettings onClose={() => setView('chat')} isOnboarding={true} />
+          )}
+          {view === 'settings' && (
+            <SettingsViewV2
+              onClose={() => {
+                setView('chat');
+              }}
+              setView={setView}
+              viewOptions={viewOptions as SettingsViewOptions}
+            />
+          )}
           {view === 'moreModels' && (
             <MoreModelsView
               onClose={() => {
@@ -490,11 +559,61 @@ export default function App() {
             />
           )}
           {view === 'sessions' && <SessionsView setView={setView} />}
+          {view === 'sharedSession' && (
+            <SharedSessionView
+              session={viewOptions?.sessionDetails}
+              isLoading={isLoadingSharedSession}
+              error={viewOptions?.error || sharedSessionError}
+              onBack={() => setView('sessions')}
+              onRetry={async () => {
+                if (viewOptions?.shareToken && viewOptions?.baseUrl) {
+                  setIsLoadingSharedSession(true);
+                  try {
+                    await openSharedSessionFromDeepLink(
+                      `goose://sessions/${viewOptions.shareToken}`,
+                      setView,
+                      viewOptions.baseUrl
+                    );
+                  } catch (error) {
+                    console.error('Failed to retry loading shared session:', error);
+                  } finally {
+                    setIsLoadingSharedSession(false);
+                  }
+                }
+              }}
+            />
+          )}
+          {view === 'recipeEditor' && (
+            <RecipeEditor
+              key={viewOptions?.config ? 'with-config' : 'no-config'}
+              config={viewOptions?.config || window.electron.getConfig().recipeConfig}
+              onClose={() => setView('chat')}
+              setView={setView}
+              onSave={(config) => {
+                console.log('Saving recipe config:', config);
+                window.electron.createChatWindow(
+                  undefined,
+                  undefined,
+                  undefined,
+                  undefined,
+                  config,
+                  'recipeEditor',
+                  { config }
+                );
+                setView('chat');
+              }}
+            />
+          )}
+          {view === 'permission' && (
+            <PermissionSettingsView
+              onClose={() => setView((viewOptions as { parentView: View }).parentView)}
+            />
+          )}
         </div>
       </div>
       {isGoosehintsModalOpen && (
         <GoosehintsModal
-          directory={window.appConfig.get('GOOSE_WORKING_DIR')}
+          directory={window.appConfig.get('GOOSE_WORKING_DIR') as string}
           setIsGoosehintsModalOpen={setIsGoosehintsModalOpen}
         />
       )}

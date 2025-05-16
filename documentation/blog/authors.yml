@@ -16,6 +16,8 @@ rizel:
   socials:
     x: blackgirlbytes
     github: blackgirlbytes
+    bluesky: blackgirlbytes.bsky.social
+    linkedin: rizel-bobb-semple
 
 adewale:
   name: Adewale Abati
@@ -39,11 +41,13 @@ tania:
   name: Tania Chakraborty
   title: Senior Technical Community Manager
   image_url: https://avatars.githubusercontent.com/u/126204004?v=4
+  url: https://taniachakraborty.com
   page: true
   socials:
     linkedin: taniachakraborty
     x: taniashiba
     github: taniashiba
+    bluesky: taniachakraborty.com
 
 angie:
   name: Angie Jones
@@ -55,3 +59,41 @@ angie:
     linkedin: angiejones
     github: angiejones
     x: techgirl1908
+    bluesky: angiejones.tech
+
+alex:
+  name: Alex Rosenzweig
+  title: Staff Security Engineer
+  image_url: https://media.licdn.com/dms/image/v2/C5103AQGrOYDDHn8z6g/profile-displayphoto-shrink_400_400/profile-displayphoto-shrink_400_400/0/1520985744775?e=1749081600&v=beta&t=krNAyF8rFRnInDfEZcO2TlLOHXWKMzt-fJdkgHVfFNs
+  page: true
+  socials:
+    linkedin: alex-rosenzweig
+    github: shellz-n-stuff
+
+alice:
+  name: Alice Hau
+  title: Machine Learning Engineer
+  image_url: https://avatars.githubusercontent.com/u/110418948?v=4
+  page: true
+  socials:
+    linkedin: alice-hau
+    github: alicehau
+
+mic:
+  name: Michael Neale
+  title: Principal Engineer
+  image_url: https://avatars.githubusercontent.com/u/14976?v=4
+  page: true
+  socials:
+    github: michaelneale
+
+ian:
+  name: W Ian Douglas
+  title: Staff Developer Advocate
+  image_url: https://avatars.githubusercontent.com/u/168030?v=4
+  page: true
+  socials:
+    linkedin: iandouglas736
+    github: iandouglas
+    bluesky: iandouglas736.com
+    x: iandouglas736

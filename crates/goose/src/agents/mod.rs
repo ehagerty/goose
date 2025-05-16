@@ -1,16 +1,15 @@
 mod agent;
-mod capabilities;
+mod context;
 pub mod extension;
-mod factory;
-mod permission_judge;
-mod permission_store;
-mod reference;
-mod summarize;
-mod truncate;
+pub mod extension_manager;
+pub mod platform_tools;
+pub mod prompt_manager;
+mod reply_parts;
+mod tool_execution;
+mod types;
 
-pub use agent::{Agent, SessionConfig};
-pub use capabilities::Capabilities;
+pub use agent::Agent;
 pub use extension::ExtensionConfig;
-pub use factory::{register_agent, AgentFactory};
-pub use permission_judge::detect_read_only_tools;
-pub use permission_store::ToolPermissionStore;
+pub use extension_manager::ExtensionManager;
+pub use prompt_manager::PromptManager;
+pub use types::{FrontendTool, SessionConfig};

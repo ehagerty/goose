@@ -1,3 +1,4 @@
+use super::utils::verify_secret_key;
 use crate::state::AppState;
 use axum::{
     extract::State,
@@ -8,25 +9,31 @@ use axum::{
 };
 use bytes::Bytes;
 use futures::{stream::StreamExt, Stream};
-use goose::session;
 use goose::{
     agents::SessionConfig,
     message::{Message, MessageContent},
+    permission::permission_confirmation::PrincipalType,
 };
-
-use mcp_core::role::Role;
+use goose::{
+    permission::{Permission, PermissionConfirmation},
+    session,
+};
+use mcp_core::{role::Role, Content, ToolResult};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use serde_json::Value;
 use std::{
     convert::Infallible,
     path::PathBuf,
     pin::Pin,
+    sync::Arc,
     task::{Context, Poll},
     time::Duration,
 };
 use tokio::sync::mpsc;
 use tokio::time::timeout;
 use tokio_stream::wrappers::ReceiverStream;
+use utoipa::ToSchema;
 
 // Direct message serialization for the chat request
 #[derive(Debug, Deserialize)]
@@ -95,19 +102,11 @@ async fn stream_event(
 }
 
 async fn handler(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     headers: HeaderMap,
     Json(request): Json<ChatRequest>,
 ) -> Result<SseResponse, StatusCode> {
-    // Verify secret key
-    let secret_key = headers
-        .get("X-Secret-Key")
-        .and_then(|value| value.to_str().ok())
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
-    if secret_key != state.secret_key {
-        return Err(StatusCode::UNAUTHORIZED);
-    }
+    verify_secret_key(&headers, &state)?;
 
     // Create channel for streaming
     let (tx, rx) = mpsc::channel(100);
@@ -121,15 +120,34 @@ async fn handler(
         .session_id
         .unwrap_or_else(session::generate_session_id);
 
-    // Get a lock on the shared agent
-    let agent = state.agent.clone();
-
     // Spawn task to handle streaming
     tokio::spawn(async move {
-        let agent = agent.read().await;
-        let agent = match agent.as_ref() {
-            Some(agent) => agent,
-            None => {
+        let agent = state.get_agent().await;
+        let agent = match agent {
+            Ok(agent) => {
+                let provider = agent.provider().await;
+                match provider {
+                    Ok(_) => agent,
+                    Err(_) => {
+                        let _ = stream_event(
+                            MessageEvent::Error {
+                                error: "No provider configured".to_string(),
+                            },
+                            &tx,
+                        )
+                        .await;
+                        let _ = stream_event(
+                            MessageEvent::Finish {
+                                reason: "error".to_string(),
+                            },
+                            &tx,
+                        )
+                        .await;
+                        return;
+                    }
+                }
+            }
+            Err(_) => {
                 let _ = stream_event(
                     MessageEvent::Error {
                         error: "No agent configured".to_string(),
@@ -206,7 +224,7 @@ async fn handler(
                             // Store messages and generate description in background
                             let session_path = session_path.clone();
                             let messages = all_messages.clone();
-                            let provider = provider.clone();
+                            let provider = Arc::clone(provider.as_ref().unwrap());
                             tokio::spawn(async move {
                                 if let Err(e) = session::persist_messages(&session_path, &messages, Some(provider)).await {
                                     tracing::error!("Failed to store session history: {:?}", e);
@@ -264,19 +282,11 @@ struct AskResponse {
 
 // Simple ask an AI for a response, non streaming
 async fn ask_handler(
-    State(state): State<AppState>,
+    State(state): State<Arc<AppState>>,
     headers: HeaderMap,
     Json(request): Json<AskRequest>,
 ) -> Result<Json<AskResponse>, StatusCode> {
-    // Verify secret key
-    let secret_key = headers
-        .get("X-Secret-Key")
-        .and_then(|value| value.to_str().ok())
-        .ok_or(StatusCode::UNAUTHORIZED)?;
-
-    if secret_key != state.secret_key {
-        return Err(StatusCode::UNAUTHORIZED);
-    }
+    verify_secret_key(&headers, &state)?;
 
     let session_working_dir = request.session_working_dir;
 
@@ -285,9 +295,10 @@ async fn ask_handler(
         .session_id
         .unwrap_or_else(session::generate_session_id);
 
-    let agent = state.agent.clone();
-    let agent = agent.write().await;
-    let agent = agent.as_ref().ok_or(StatusCode::NOT_FOUND)?;
+    let agent = state
+        .get_agent()
+        .await
+        .map_err(|_| StatusCode::PRECONDITION_FAILED)?;
 
     // Get the provider first, before starting the reply stream
     let provider = agent.provider().await;
@@ -349,7 +360,7 @@ async fn ask_handler(
     // Store messages and generate description in background
     let session_path = session_path.clone();
     let messages = all_messages.clone();
-    let provider = provider.clone();
+    let provider = Arc::clone(provider.as_ref().unwrap());
     tokio::spawn(async move {
         if let Err(e) = session::persist_messages(&session_path, &messages, Some(provider)).await {
             tracing::error!("Failed to store session history: {:?}", e);
@@ -361,42 +372,106 @@ async fn ask_handler(
     }))
 }
 
-#[derive(Debug, Deserialize)]
-struct ToolConfirmationRequest {
+#[derive(Debug, Deserialize, Serialize, ToSchema)]
+pub struct PermissionConfirmationRequest {
     id: String,
-    confirmed: bool,
+    #[serde(default = "default_principal_type")]
+    principal_type: PrincipalType,
+    action: String,
 }
 
-async fn confirm_handler(
-    State(state): State<AppState>,
+fn default_principal_type() -> PrincipalType {
+    PrincipalType::Tool
+}
+
+#[utoipa::path(
+    post,
+    path = "/confirm",
+    request_body = PermissionConfirmationRequest,
+    responses(
+        (status = 200, description = "Permission action is confirmed", body = Value),
+        (status = 401, description = "Unauthorized - invalid secret key"),
+        (status = 500, description = "Internal server error")
+    )
+)]
+pub async fn confirm_permission(
+    State(state): State<Arc<AppState>>,
     headers: HeaderMap,
-    Json(request): Json<ToolConfirmationRequest>,
+    Json(request): Json<PermissionConfirmationRequest>,
 ) -> Result<Json<Value>, StatusCode> {
-    // Verify secret key
-    let secret_key = headers
-        .get("X-Secret-Key")
-        .and_then(|value| value.to_str().ok())
-        .ok_or(StatusCode::UNAUTHORIZED)?;
+    verify_secret_key(&headers, &state)?;
 
-    if secret_key != state.secret_key {
-        return Err(StatusCode::UNAUTHORIZED);
-    }
+    let agent = state
+        .get_agent()
+        .await
+        .map_err(|_| StatusCode::PRECONDITION_FAILED)?;
 
-    let agent = state.agent.clone();
-    let agent = agent.read().await;
-    let agent = agent.as_ref().ok_or(StatusCode::NOT_FOUND)?;
+    let permission = match request.action.as_str() {
+        "always_allow" => Permission::AlwaysAllow,
+        "allow_once" => Permission::AllowOnce,
+        "deny" => Permission::DenyOnce,
+        _ => Permission::DenyOnce,
+    };
+
     agent
-        .handle_confirmation(request.id.clone(), request.confirmed)
+        .handle_confirmation(
+            request.id.clone(),
+            PermissionConfirmation {
+                principal_type: request.principal_type,
+                permission,
+            },
+        )
         .await;
     Ok(Json(Value::Object(serde_json::Map::new())))
 }
 
+#[derive(Debug, Deserialize)]
+struct ToolResultRequest {
+    id: String,
+    result: ToolResult<Vec<Content>>,
+}
+
+async fn submit_tool_result(
+    State(state): State<Arc<AppState>>,
+    headers: HeaderMap,
+    raw: axum::extract::Json<serde_json::Value>,
+) -> Result<Json<Value>, StatusCode> {
+    verify_secret_key(&headers, &state)?;
+
+    // Log the raw request for debugging
+    tracing::info!(
+        "Received tool result request: {}",
+        serde_json::to_string_pretty(&raw.0).unwrap()
+    );
+
+    // Try to parse into our struct
+    let payload: ToolResultRequest = match serde_json::from_value(raw.0.clone()) {
+        Ok(req) => req,
+        Err(e) => {
+            tracing::error!("Failed to parse tool result request: {}", e);
+            tracing::error!(
+                "Raw request was: {}",
+                serde_json::to_string_pretty(&raw.0).unwrap()
+            );
+            return Err(StatusCode::UNPROCESSABLE_ENTITY);
+        }
+    };
+
+    let agent = state
+        .get_agent()
+        .await
+        .map_err(|_| StatusCode::PRECONDITION_FAILED)?;
+    agent.handle_tool_result(payload.id, payload.result).await;
+    Ok(Json(json!({"status": "ok"})))
+}
+
 // Configure routes for this module
-pub fn routes(state: AppState) -> Router {
+pub fn routes(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/reply", post(handler))
         .route("/ask", post(ask_handler))
-        .route("/confirm", post(confirm_handler))
+        .route("/confirm", post(confirm_permission))
+        .route("/tool_result", post(submit_tool_result))
         .with_state(state)
 }
 
@@ -404,7 +479,7 @@ pub fn routes(state: AppState) -> Router {
 mod tests {
     use super::*;
     use goose::{
-        agents::AgentFactory,
+        agents::Agent,
         model::ModelConfig,
         providers::{
             base::{Provider, ProviderUsage, Usage},
@@ -445,9 +520,7 @@ mod tests {
     mod integration_tests {
         use super::*;
         use axum::{body::Body, http::Request};
-        use std::collections::HashMap;
         use std::sync::Arc;
-        use tokio::sync::{Mutex, RwLock};
         use tower::ServiceExt;
 
         // This test requires tokio runtime
@@ -455,15 +528,12 @@ mod tests {
         async fn test_ask_endpoint() {
             // Create a mock app state with mock provider
             let mock_model_config = ModelConfig::new("test-model".to_string());
-            let mock_provider = Box::new(MockProvider {
+            let mock_provider = Arc::new(MockProvider {
                 model_config: mock_model_config,
             });
-            let agent = AgentFactory::create("reference", mock_provider).unwrap();
-            let state = AppState {
-                config: Arc::new(Mutex::new(HashMap::new())),
-                agent: Arc::new(RwLock::new(Some(agent))),
-                secret_key: "test-secret".to_string(),
-            };
+            let agent = Agent::new();
+            let _ = agent.update_provider(mock_provider).await;
+            let state = AppState::new(Arc::new(agent), "test-secret".to_string()).await;
 
             // Build router
             let app = routes(state);
