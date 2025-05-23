@@ -20,6 +20,8 @@ pub const OPEN_AI_KNOWN_MODELS: &[&str] = &[
     "gpt-4-turbo",
     "gpt-3.5-turbo",
     "o1",
+    "o3",
+    "o4-mini",
 ];
 
 pub const OPEN_AI_DOC_URL: &str = "https://platform.openai.com/docs/models";
@@ -58,6 +60,7 @@ impl OpenAiProvider {
         let project: Option<String> = config.get_param("OPENAI_PROJECT").ok();
         let custom_headers: Option<HashMap<String, String>> = config
             .get_secret("OPENAI_CUSTOM_HEADERS")
+            .or_else(|_| config.get_param("OPENAI_CUSTOM_HEADERS"))
             .ok()
             .map(parse_custom_headers);
         let timeout_secs: u64 = config.get_param("OPENAI_TIMEOUT").unwrap_or(600);
@@ -119,10 +122,7 @@ impl Provider for OpenAiProvider {
             "OpenAI",
             "GPT-4 and other OpenAI models, including OpenAI compatible ones",
             OPEN_AI_DEFAULT_MODEL,
-            OPEN_AI_KNOWN_MODELS
-                .iter()
-                .map(|&s| s.to_string())
-                .collect(),
+            OPEN_AI_KNOWN_MODELS.to_vec(),
             OPEN_AI_DOC_URL,
             vec![
                 ConfigKey::new("OPENAI_API_KEY", true, true, None),
@@ -168,6 +168,46 @@ impl Provider for OpenAiProvider {
         let model = get_model(&response);
         emit_debug_trace(&self.model, &payload, &response, &usage);
         Ok((message, ProviderUsage::new(model, usage)))
+    }
+
+    /// Fetch supported models from OpenAI; returns Err on any failure, Ok(None) if no data
+    async fn fetch_supported_models_async(&self) -> Result<Option<Vec<String>>, ProviderError> {
+        // List available models via OpenAI API
+        let base_url =
+            url::Url::parse(&self.host).map_err(|e| ProviderError::RequestFailed(e.to_string()))?;
+        let url = base_url
+            .join("v1/models")
+            .map_err(|e| ProviderError::RequestFailed(e.to_string()))?;
+        let mut request = self.client.get(url).bearer_auth(&self.api_key);
+        if let Some(org) = &self.organization {
+            request = request.header("OpenAI-Organization", org);
+        }
+        if let Some(project) = &self.project {
+            request = request.header("OpenAI-Project", project);
+        }
+        if let Some(headers) = &self.custom_headers {
+            for (key, value) in headers {
+                request = request.header(key, value);
+            }
+        }
+        let response = request.send().await?;
+        let json: serde_json::Value = response.json().await?;
+        if let Some(err_obj) = json.get("error") {
+            let msg = err_obj
+                .get("message")
+                .and_then(|v| v.as_str())
+                .unwrap_or("unknown error");
+            return Err(ProviderError::Authentication(msg.to_string()));
+        }
+        let data = json.get("data").and_then(|v| v.as_array()).ok_or_else(|| {
+            ProviderError::UsageError("Missing data field in JSON response".into())
+        })?;
+        let mut models: Vec<String> = data
+            .iter()
+            .filter_map(|m| m.get("id").and_then(|v| v.as_str()).map(str::to_string))
+            .collect();
+        models.sort();
+        Ok(Some(models))
     }
 }
 

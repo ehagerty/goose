@@ -14,7 +14,7 @@ const inkeepOrgId = process.env.INKEEP_ORG_ID;
 const config: Config = {
   title: "codename goose",
   tagline:
-    "Your on-machine AI agent, automating engineering tasks seamlessly.",
+    "Your local AI agent, automating engineering tasks seamlessly.",
   favicon: "img/favicon.ico",
 
   // Set the production url of your site here
@@ -104,6 +104,10 @@ const config: Config = {
           {
             from: '/v1/extensions',
             to: '/extensions'
+          },
+          {
+            from: '/docs/guides/share-goose-sessions',
+            to: '/docs/guides/session-recipes'
           }
         ],
       },
@@ -128,22 +132,39 @@ const config: Config = {
           position: "left",
         },
         {
-          to: "/extensions",
-          label: "Extensions",
-          position: "left",
-        },
-        {
           to: "/docs/category/getting-started",
           position: "left",
           label: "Docs",
         },
-        
         {
           to: "/docs/category/tutorials",
           position: "left",
           label: "Tutorials",
         },
         { to: "/blog", label: "Blog", position: "left" },
+        {
+          type: 'dropdown',
+          label: 'Resources',
+          position: 'left',
+          items: [
+            {
+              to: '/extensions',
+              label: 'Extensions',
+            },
+            {
+              to: '/recipe-generator',
+              label: 'Recipe Generator',
+            },
+            {
+              to: '/prompt-library',
+              label: 'Prompt Library',
+            },
+            {
+              href: 'https://block.github.io/goose/install-link-generator/',
+              label: 'Install Link Generator',
+            },
+          ],
+        },
 
         {
           href: "https://discord.gg/block-opensource",

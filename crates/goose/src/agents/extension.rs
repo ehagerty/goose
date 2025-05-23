@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use mcp_client::client::Error as ClientError;
+use mcp_core::tool::Tool;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 use tracing::warn;
@@ -8,6 +9,7 @@ use utoipa::ToSchema;
 
 use crate::config;
 use crate::config::extensions::name_to_key;
+use crate::config::permission::PermissionLevel;
 
 /// Errors from Extension operation
 #[derive(Error, Debug)]
@@ -22,6 +24,10 @@ pub enum ExtensionError {
     Transport(#[from] mcp_client::transport::Error),
     #[error("Environment variable `{0}` is not allowed to be overridden.")]
     InvalidEnvVar(String),
+    #[error("Error during extension setup: {0}")]
+    SetupError(String),
+    #[error("Join error occurred during task execution: {0}")]
+    TaskJoinError(#[from] tokio::task::JoinError),
 }
 
 pub type ExtensionResult<T> = Result<T, ExtensionError>;
@@ -124,10 +130,15 @@ pub enum ExtensionConfig {
         uri: String,
         #[serde(default)]
         envs: Envs,
+        #[serde(default)]
+        env_keys: Vec<String>,
         description: Option<String>,
         // NOTE: set timeout to be optional for compatibility.
         // However, new configurations should include this field.
         timeout: Option<u64>,
+        /// Whether this extension is bundled with Goose
+        #[serde(default)]
+        bundled: Option<bool>,
     },
     /// Standard I/O client with command and arguments
     #[serde(rename = "stdio")]
@@ -138,8 +149,13 @@ pub enum ExtensionConfig {
         args: Vec<String>,
         #[serde(default)]
         envs: Envs,
+        #[serde(default)]
+        env_keys: Vec<String>,
         timeout: Option<u64>,
         description: Option<String>,
+        /// Whether this extension is bundled with Goose
+        #[serde(default)]
+        bundled: Option<bool>,
     },
     /// Built-in extension that is part of the goose binary
     #[serde(rename = "builtin")]
@@ -148,6 +164,22 @@ pub enum ExtensionConfig {
         name: String,
         display_name: Option<String>, // needed for the UI
         timeout: Option<u64>,
+        /// Whether this extension is bundled with Goose
+        #[serde(default)]
+        bundled: Option<bool>,
+    },
+    /// Frontend-provided tools that will be called through the frontend
+    #[serde(rename = "frontend")]
+    Frontend {
+        /// The name used to identify this extension
+        name: String,
+        /// The tools provided by the frontend
+        tools: Vec<Tool>,
+        /// Instructions for how to use these tools
+        instructions: Option<String>,
+        /// Whether this extension is bundled with Goose
+        #[serde(default)]
+        bundled: Option<bool>,
     },
 }
 
@@ -157,6 +189,7 @@ impl Default for ExtensionConfig {
             name: config::DEFAULT_EXTENSION.to_string(),
             display_name: Some(config::DEFAULT_DISPLAY_NAME.to_string()),
             timeout: Some(config::DEFAULT_EXTENSION_TIMEOUT),
+            bundled: Some(true),
         }
     }
 }
@@ -167,8 +200,10 @@ impl ExtensionConfig {
             name: name.into(),
             uri: uri.into(),
             envs: Envs::default(),
+            env_keys: Vec::new(),
             description: Some(description.into()),
             timeout: Some(timeout.into()),
+            bundled: None,
         }
     }
 
@@ -183,8 +218,10 @@ impl ExtensionConfig {
             cmd: cmd.into(),
             args: vec![],
             envs: Envs::default(),
+            env_keys: Vec::new(),
             description: Some(description.into()),
             timeout: Some(timeout.into()),
+            bundled: None,
         }
     }
 
@@ -198,16 +235,20 @@ impl ExtensionConfig {
                 name,
                 cmd,
                 envs,
+                env_keys,
                 timeout,
                 description,
+                bundled,
                 ..
             } => Self::Stdio {
                 name,
                 cmd,
                 envs,
+                env_keys,
                 args: args.into_iter().map(Into::into).collect(),
                 description,
                 timeout,
+                bundled,
             },
             other => other,
         }
@@ -224,6 +265,7 @@ impl ExtensionConfig {
             Self::Sse { name, .. } => name,
             Self::Stdio { name, .. } => name,
             Self::Builtin { name, .. } => name,
+            Self::Frontend { name, .. } => name,
         }
         .to_string()
     }
@@ -239,6 +281,9 @@ impl std::fmt::Display for ExtensionConfig {
                 write!(f, "Stdio({}: {} {})", name, cmd, args.join(" "))
             }
             ExtensionConfig::Builtin { name, .. } => write!(f, "Builtin({})", name),
+            ExtensionConfig::Frontend { name, tools, .. } => {
+                write!(f, "Frontend({}: {} tools)", name, tools.len())
+            }
         }
     }
 }
@@ -246,9 +291,9 @@ impl std::fmt::Display for ExtensionConfig {
 /// Information about the extension used for building prompts
 #[derive(Clone, Debug, Serialize)]
 pub struct ExtensionInfo {
-    name: String,
-    instructions: String,
-    has_resources: bool,
+    pub name: String,
+    pub instructions: String,
+    pub has_resources: bool,
 }
 
 impl ExtensionInfo {
@@ -262,19 +307,26 @@ impl ExtensionInfo {
 }
 
 /// Information about the tool used for building prompts
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, ToSchema)]
 pub struct ToolInfo {
-    name: String,
-    description: String,
-    parameters: Vec<String>,
+    pub name: String,
+    pub description: String,
+    pub parameters: Vec<String>,
+    pub permission: Option<PermissionLevel>,
 }
 
 impl ToolInfo {
-    pub fn new(name: &str, description: &str, parameters: Vec<String>) -> Self {
+    pub fn new(
+        name: &str,
+        description: &str,
+        parameters: Vec<String>,
+        permission: Option<PermissionLevel>,
+    ) -> Self {
         Self {
             name: name.to_string(),
             description: description.to_string(),
             parameters,
+            permission,
         }
     }
 }

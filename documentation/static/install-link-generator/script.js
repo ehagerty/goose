@@ -1,11 +1,99 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Function to show error message
+    function showError(message) {
+        const resultDiv = document.getElementById('generatedLink');
+        resultDiv.innerHTML = `<div class="error">${message}</div>`;
+        resultDiv.parentElement.style.display = 'block';
+    }
+
+    // Function to handle generated link (display or redirect)
+    function handleGeneratedLink(link, shouldRedirect = false) {
+        if (shouldRedirect) {
+            window.location.href = link;
+        } else {
+            displayGeneratedLink(link);
+        }
+    }
+
+    // Process URL parameters if present
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.toString()) {
+        try {
+            // Check if this is a built-in extension request
+            if (urlParams.get('cmd') === 'goosed' && urlParams.getAll('arg').includes('mcp')) {
+                const args = urlParams.getAll('arg');
+                const extensionId = args[args.indexOf('mcp') + 1];
+                if (!extensionId) {
+                    throw new Error('Missing extension ID in args');
+                }
+
+                const server = {
+                    is_builtin: true,
+                    id: extensionId
+                };
+                const link = generateInstallLink(server);
+                handleGeneratedLink(link, true);
+                return;
+            }
+
+            // Handle custom extension
+            const cmd = urlParams.get('cmd');
+            if (!cmd) {
+                throw new Error('Missing required parameter: cmd');
+            }
+
+            const args = urlParams.getAll('arg') || [];
+            const command = [cmd, ...args].join(' ');
+            const id = urlParams.get('id');
+            const name = urlParams.get('name');
+            const description = urlParams.get('description');
+
+            if (!id || !name || !description) {
+                throw new Error('Missing required parameters. Need: id, name, and description');
+            }
+
+            const server = {
+                is_builtin: false,
+                id,
+                name,
+                description,
+                command,
+                environmentVariables: []
+            };
+
+            // Handle environment variables if present
+            const envVars = urlParams.getAll('env');
+            if (envVars.length > 0) {
+                envVars.forEach(env => {
+                    const [name, description] = env.split('=');
+                    if (name && description) {
+                        server.environmentVariables.push({
+                            name,
+                            description,
+                            required: true
+                        });
+                    }
+                });
+            }
+
+            const link = generateInstallLink(server);
+            handleGeneratedLink(link, true);
+        } catch (error) {
+            showError(error.message);
+            document.querySelector('.container').style.display = 'block';
+        }
+    } else {
+        // Show the form if no parameters
+        document.querySelector('.container').style.display = 'block';
+    }
+
     // Tab switching
     const tabs = document.querySelectorAll('.tab-btn');
     tabs.forEach(tab => {
         tab.addEventListener('click', () => {
             tabs.forEach(t => t.classList.remove('active'));
             tab.classList.add('active');
-            
+
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
@@ -82,7 +170,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const link = generateInstallLink(server);
-        displayGeneratedLink(link);
+        handleGeneratedLink(link);
     });
 
     // Generate link from JSON
@@ -91,9 +179,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const jsonInput = document.getElementById('jsonInput').value;
             const server = JSON.parse(jsonInput);
             const link = generateInstallLink(server);
-            displayGeneratedLink(link);
+            handleGeneratedLink(link);
         } catch (error) {
-            alert('Invalid JSON: ' + error.message);
+            showError('Invalid JSON: ' + error.message);
         }
     });
 
@@ -106,6 +194,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 `arg=${encodeURIComponent(server.id)}`,
                 `description=${encodeURIComponent(server.id)}`
             ].join('&');
+            return `goose://extension?${queryParams}`;
+        }
+
+        // Handle the case where the command is a URL
+        if (server.url) {
+            const queryParams = [
+                `url=${encodeURIComponent(server.url)}`,
+                `id=${encodeURIComponent(server.id)}`,
+                `name=${encodeURIComponent(server.name)}`,
+                `description=${encodeURIComponent(server.description)}`,
+                ...server.environmentVariables
+                    .filter((env) => env.required)
+                    .map(
+                        (env) => `env=${encodeURIComponent(`${env.name}=${env.description}`)}`
+                    ),
+            ].join("&");
+
             return `goose://extension?${queryParams}`;
         }
 
@@ -131,6 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function displayGeneratedLink(link) {
         const linkElement = document.getElementById('generatedLink');
         linkElement.textContent = link;
+        linkElement.parentElement.style.display = 'block';
     }
 
     // Add sample JSON to the textarea
