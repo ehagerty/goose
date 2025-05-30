@@ -1,3 +1,20 @@
+// Default extension timeout in seconds
+// TODO: keep in sync with rust better
+
+export const DEFAULT_EXTENSION_TIMEOUT = 300;
+
+/**
+ * Converts an extension name to a key format
+ * TODO: need to keep this in sync better with `name_to_key` on the rust side
+ */
+export function nameToKey(name: string): string {
+  return name
+    .split('')
+    .filter((char) => !char.match(/\s/))
+    .join('')
+    .toLowerCase();
+}
+
 import { FixedExtensionEntry } from '../../ConfigContext';
 import { ExtensionConfig } from '../../../api/types.gen';
 
@@ -8,7 +25,12 @@ export interface ExtensionFormData {
   cmd?: string;
   endpoint?: string;
   enabled: boolean;
-  envVars: { key: string; value: string }[];
+  timeout?: number;
+  envVars: {
+    key: string;
+    value: string;
+    isEdited?: boolean;
+  }[];
 }
 
 export function getDefaultFormData(): ExtensionFormData {
@@ -19,6 +41,7 @@ export function getDefaultFormData(): ExtensionFormData {
     cmd: '',
     endpoint: '',
     enabled: true,
+    timeout: 300,
     envVars: [],
   };
 }
@@ -27,40 +50,51 @@ export function extensionToFormData(extension: FixedExtensionEntry): ExtensionFo
   // Type guard: Check if 'envs' property exists for this variant
   const hasEnvs = extension.type === 'sse' || extension.type === 'stdio';
 
-  const envVars =
-    hasEnvs && extension.envs
-      ? Object.entries(extension.envs).map(([key, value]) => ({
-          key,
-          value: value as string,
-        }))
-      : [];
+  // Handle both envs (legacy) and env_keys (new secrets)
+  let envVars = [];
+
+  // Add legacy envs with their values
+  if (hasEnvs && extension.envs) {
+    envVars.push(
+      ...Object.entries(extension.envs).map(([key, value]) => ({
+        key,
+        value: value as string,
+        isEdited: true, // We want to submit legacy values as secrets to migrate forward
+      }))
+    );
+  }
+
+  // Add env_keys with placeholder values
+  if (hasEnvs && extension.env_keys) {
+    envVars.push(
+      ...extension.env_keys.map((key) => ({
+        key,
+        value: '••••••••', // Placeholder for secret values
+        isEdited: false, // Mark as not edited initially
+      }))
+    );
+  }
 
   return {
-    name: extension.name,
+    name: extension.name || '',
     description:
-      extension.type === 'stdio' || extension.type === 'sse' ? extension.description : undefined,
-    type: extension.type,
+      extension.type === 'stdio' || extension.type === 'sse' ? extension.description || '' : '',
+    type: extension.type === 'frontend' ? 'stdio' : extension.type,
     cmd: extension.type === 'stdio' ? combineCmdAndArgs(extension.cmd, extension.args) : undefined,
     endpoint: extension.type === 'sse' ? extension.uri : undefined,
     enabled: extension.enabled,
+    timeout: 'timeout' in extension ? (extension.timeout ?? undefined) : undefined,
     envVars,
   };
 }
 
 export function createExtensionConfig(formData: ExtensionFormData): ExtensionConfig {
-  const envs = formData.envVars.reduce(
-    (acc, { key, value }) => {
-      if (key) {
-        acc[key] = value;
-      }
-      return acc;
-    },
-    {} as Record<string, string>
-  );
+  // Extract just the keys from env vars
+  const env_keys = formData.envVars.map(({ key }) => key).filter((key) => key.length > 0);
 
   if (formData.type === 'stdio') {
     // we put the cmd + args all in the form cmd field but need to split out into cmd + args
-    const { cmd, args } = splitCmdAndArgs(formData.cmd);
+    const { cmd, args } = splitCmdAndArgs(formData.cmd || '');
 
     return {
       type: 'stdio',
@@ -68,21 +102,24 @@ export function createExtensionConfig(formData: ExtensionFormData): ExtensionCon
       description: formData.description,
       cmd: cmd,
       args: args,
-      ...(Object.keys(envs).length > 0 ? { envs } : {}),
+      timeout: formData.timeout,
+      ...(env_keys.length > 0 ? { env_keys } : {}),
     };
   } else if (formData.type === 'sse') {
     return {
       type: 'sse',
       name: formData.name,
       description: formData.description,
-      uri: formData.endpoint, // Assuming endpoint maps to uri for SSE type
-      ...(Object.keys(envs).length > 0 ? { envs } : {}),
+      timeout: formData.timeout,
+      uri: formData.endpoint || '',
+      ...(env_keys.length > 0 ? { env_keys } : {}),
     };
   } else {
     // For other types
     return {
       type: formData.type,
       name: formData.name,
+      timeout: formData.timeout,
     };
   }
 }
@@ -108,6 +145,42 @@ export function combineCmdAndArgs(cmd: string, args: string[]): string {
  * @returns The ExtensionConfig portion of the object
  */
 export function extractExtensionConfig(fixedEntry: FixedExtensionEntry): ExtensionConfig {
-  const { enabled, ...extensionConfig } = fixedEntry;
+  // todo: enabled not used?
+  const { ...extensionConfig } = fixedEntry;
   return extensionConfig;
+}
+
+export async function replaceWithShims(cmd: string) {
+  const binaryPathMap: Record<string, string> = {
+    goosed: await window.electron.getBinaryPath('goosed'),
+    jbang: await window.electron.getBinaryPath('jbang'),
+    npx: await window.electron.getBinaryPath('npx'),
+    uvx: await window.electron.getBinaryPath('uvx'),
+  };
+
+  if (binaryPathMap[cmd]) {
+    console.log('--------> Replacing command with shim ------>', cmd, binaryPathMap[cmd]);
+    cmd = binaryPathMap[cmd];
+  }
+
+  return cmd;
+}
+
+export function removeShims(cmd: string) {
+  // Only remove shims if the path matches our known shim patterns
+  const shimPatterns = [/goosed$/, /docker$/, /jbang$/, /npx$/, /uvx$/];
+
+  // Check if the command matches any shim pattern
+  const isShim = shimPatterns.some((pattern) => pattern.test(cmd));
+
+  if (isShim) {
+    const segments = cmd.split('/');
+    // Filter out any empty segments (which can happen with trailing slashes)
+    const nonEmptySegments = segments.filter((segment) => segment.length > 0);
+    // Return the last segment or empty string if there are no segments
+    return nonEmptySegments.length > 0 ? nonEmptySegments[nonEmptySegments.length - 1] : '';
+  }
+
+  // If it's not a shim, return the original command
+  return cmd;
 }

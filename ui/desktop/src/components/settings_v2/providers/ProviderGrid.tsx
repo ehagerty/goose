@@ -42,6 +42,21 @@ const ProviderCards = memo(function ProviderCards({
     [openModal, refreshProviders]
   );
 
+  const deleteProviderConfigViaModal = useCallback(
+    (provider: ProviderDetails) => {
+      openModal(provider, {
+        onDelete: () => {
+          // Only refresh if the function is provided
+          if (refreshProviders) {
+            refreshProviders();
+          }
+        },
+        formProps: {},
+      });
+    },
+    [openModal, refreshProviders]
+  );
+
   // We don't need an intermediate function here
   // Just pass the onProviderLaunch directly
 
@@ -52,11 +67,18 @@ const ProviderCards = memo(function ProviderCards({
         key={provider.name}
         provider={provider}
         onConfigure={() => configureProviderViaModal(provider)}
+        onDelete={() => deleteProviderConfigViaModal(provider)}
         onLaunch={() => onProviderLaunch(provider)}
         isOnboarding={isOnboarding}
       />
     ));
-  }, [providers, isOnboarding, configureProviderViaModal, onProviderLaunch]);
+  }, [
+    providers,
+    isOnboarding,
+    configureProviderViaModal,
+    deleteProviderConfigViaModal,
+    onProviderLaunch,
+  ]);
 
   return <>{providerCards}</>;
 });
@@ -80,13 +102,12 @@ export default memo(function ProviderGrid({
           providers={providers}
           isOnboarding={isOnboarding}
           refreshProviders={refreshProviders}
-          onProviderLaunch={onProviderLaunch}
+          onProviderLaunch={onProviderLaunch || (() => {})}
         />
         <ProviderConfigurationModal />
       </ProviderModalProvider>
     ),
     [providers, isOnboarding, refreshProviders, onProviderLaunch]
   );
-
   return <GridLayout>{modalProviderContent}</GridLayout>;
 });

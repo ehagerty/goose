@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '../../ui/button';
 import { Input } from '../../ui/input';
 import Select from 'react-select';
@@ -19,7 +19,9 @@ export function AddModelInline() {
 
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [modelName, setModelName] = useState<string>('');
-  const [filteredModels, setFilteredModels] = useState([]);
+  const [filteredModels, setFilteredModels] = useState<
+    { id: string; name: string; provider: string }[]
+  >([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const handleModelSelection = useHandleModelSelection();
 
@@ -37,7 +39,12 @@ export function AddModelInline() {
           model.provider.toLowerCase() === selectedProvider &&
           model.name.toLowerCase().includes(modelName.toLowerCase())
       )
-      .slice(0, 5); // Limit suggestions to top 5
+      .slice(0, 5) // Limit suggestions to top 5
+      .map((model) => ({
+        id: String(model.id || ''),
+        name: model.name,
+        provider: model.provider,
+      }));
     setFilteredModels(filtered);
     setShowSuggestions(filtered.length > 0);
   }, [modelName, selectedProvider]);
@@ -61,7 +68,7 @@ export function AddModelInline() {
     setShowSuggestions(false);
   };
 
-  const handleSelectSuggestion = (suggestion) => {
+  const handleSelectSuggestion = (suggestion: { provider: string; name: string }) => {
     setModelName(suggestion.name);
     setShowSuggestions(false); // Hide suggestions after selection
   };
@@ -76,7 +83,8 @@ export function AddModelInline() {
         <Select
           options={providerOptions}
           value={providerOptions.find((option) => option.value === selectedProvider) || null}
-          onChange={(option) => {
+          onChange={(newValue: unknown) => {
+            const option = newValue as { value: string | null } | null;
             setSelectedProvider(option?.value || null);
             setModelName(''); // Clear model name when provider changes
             setFilteredModels([]);
@@ -110,10 +118,10 @@ export function AddModelInline() {
         </div>
         <Button
           type="button"
-          className="bg-black text-white hover:bg-black/90"
+          className="bg-black text-white hover:bg-black/90 dark:bg-white dark:text-black dark:hover:bg-white/90"
           onClick={handleSubmit}
         >
-          <Plus className="mr-2 h-4 w-4" /> Add Model
+          <Plus className="h-4 w-4" /> Add Model
         </Button>
       </form>
     </div>

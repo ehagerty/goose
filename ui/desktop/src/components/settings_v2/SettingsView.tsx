@@ -1,13 +1,18 @@
-import React from 'react';
 import { ScrollArea } from '../ui/scroll-area';
 import BackButton from '../ui/BackButton';
-import type { View } from '../../App';
-import { useConfig } from '../ConfigContext';
+import type { View, ViewOptions } from '../../App';
 import ExtensionsSection from './extensions/ExtensionsSection';
 import ModelsSection from './models/ModelsSection';
+import { ModeSection } from './mode/ModeSection';
+import { ToolSelectionStrategySection } from './tool_selection_strategy/ToolSelectionStrategySection';
+import SessionSharingSection from './sessions/SessionSharingSection';
+import { ResponseStylesSection } from './response_styles/ResponseStylesSection';
+import AppSettingsSection from './app/AppSettingsSection';
+import { ExtensionConfig } from '../../api';
+import MoreMenuLayout from '../more_menu/MoreMenuLayout';
 
 export type SettingsViewOptions = {
-  extensionId?: string;
+  deepLinkConfig?: ExtensionConfig;
   showEnvVars?: boolean;
 };
 
@@ -17,17 +22,18 @@ export default function SettingsView({
   viewOptions,
 }: {
   onClose: () => void;
-  setView: (view: View) => void;
+  setView: (view: View, viewOptions?: ViewOptions) => void;
   viewOptions: SettingsViewOptions;
 }) {
   return (
-    <div className="h-screen w-full">
-      <div className="relative flex items-center h-[36px] w-full bg-bgSubtle"></div>
+    <div className="h-screen w-full animate-[fadein_200ms_ease-in_forwards]">
+      <MoreMenuLayout showMenu={false} />
 
       <ScrollArea className="h-full w-full">
         <div className="flex flex-col pb-24">
           <div className="px-8 pt-6 pb-4">
             <BackButton onClick={() => onClose()} />
+            <h1 className="text-3xl font-medium text-textStandard mt-1">Settings</h1>
           </div>
 
           {/* Content Area */}
@@ -36,7 +42,20 @@ export default function SettingsView({
               {/* Models Section */}
               <ModelsSection setView={setView} />
               {/* Extensions Section */}
-              <ExtensionsSection />
+              <ExtensionsSection
+                deepLinkConfig={viewOptions.deepLinkConfig}
+                showEnvVars={viewOptions.showEnvVars}
+              />
+              {/* Goose Modes */}
+              <ModeSection setView={setView} />
+              {/*Session sharing*/}
+              <SessionSharingSection />
+              {/* Response Styles */}
+              <ResponseStylesSection />
+              {/* Tool Selection Strategy */}
+              <ToolSelectionStrategySection setView={setView} />
+              {/* App Settings */}
+              <AppSettingsSection />
             </div>
           </div>
         </div>

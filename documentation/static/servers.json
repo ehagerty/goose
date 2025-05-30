@@ -87,8 +87,8 @@
     "id": "tavily",
     "name": "Tavily Web Search",
     "description": "Web search capabilities powered by Tavily",
-    "command": "uvx mcp-tavily",
-    "link": "https://github.com/RamXX/mcp-tavily",
+    "command": "npx -y tavily-mcp",
+    "link": "https://github.com/tavily-ai/tavily-mcp",
     "installation_notes": "Install using uvx package manager. Requires Tavily API key.",
     "is_builtin": false,
     "endorsed": true,
@@ -129,6 +129,29 @@
     "is_builtin": false,
     "endorsed": true,
     "githubStars": 1,
+    "environmentVariables": []
+  },
+  {
+    "id": "vscode",
+    "name": "VSCode",
+    "description": "Provides a VSCode IDE integration for development workflows",
+    "command": "npx vscode-mcp-server",
+    "link": "https://github.com/block/vscode-mcp",
+    "installation_notes": "Install using npx package manager.",
+    "is_builtin": false,
+    "endorsed": false,
+    "githubStars": 27,
+    "environmentVariables": []
+  },
+  {
+    "id": "pieces",
+    "name": "Pieces",
+    "description": "Provides access to your Pieces Long-Term Memory. You need to have Pieces installed to use this.",
+    "url": "http://localhost:39300/model_context_protocol/2024-11-05/sse",
+    "link": "https://pieces.app?utm_source=goose&utm_medium=collab&utm_campaign=mcp",
+    "installation_notes": "You need to install Pieces first, and have this running.",
+    "is_builtin": false,
+    "endorsed": false,
     "environmentVariables": []
   }
 ]

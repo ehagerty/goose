@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use super::{
     anthropic::AnthropicProvider,
     azure::AzureProvider,
@@ -5,11 +7,13 @@ use super::{
     bedrock::BedrockProvider,
     databricks::DatabricksProvider,
     gcpvertexai::GcpVertexAIProvider,
+    githubcopilot::GithubCopilotProvider,
     google::GoogleProvider,
     groq::GroqProvider,
     ollama::OllamaProvider,
     openai::OpenAiProvider,
     openrouter::OpenRouterProvider,
+    venice::VeniceProvider,
 };
 use crate::model::ModelConfig;
 use anyhow::Result;
@@ -21,26 +25,31 @@ pub fn providers() -> Vec<ProviderMetadata> {
         BedrockProvider::metadata(),
         DatabricksProvider::metadata(),
         GcpVertexAIProvider::metadata(),
+        GithubCopilotProvider::metadata(),
         GoogleProvider::metadata(),
         GroqProvider::metadata(),
         OllamaProvider::metadata(),
         OpenAiProvider::metadata(),
         OpenRouterProvider::metadata(),
+        VeniceProvider::metadata(),
     ]
 }
 
-pub fn create(name: &str, model: ModelConfig) -> Result<Box<dyn Provider + Send + Sync>> {
+pub fn create(name: &str, model: ModelConfig) -> Result<Arc<dyn Provider>> {
+    // We use Arc instead of Box to be able to clone for multiple async tasks
     match name {
-        "openai" => Ok(Box::new(OpenAiProvider::from_env(model)?)),
-        "anthropic" => Ok(Box::new(AnthropicProvider::from_env(model)?)),
-        "azure_openai" => Ok(Box::new(AzureProvider::from_env(model)?)),
-        "aws_bedrock" => Ok(Box::new(BedrockProvider::from_env(model)?)),
-        "databricks" => Ok(Box::new(DatabricksProvider::from_env(model)?)),
-        "groq" => Ok(Box::new(GroqProvider::from_env(model)?)),
-        "ollama" => Ok(Box::new(OllamaProvider::from_env(model)?)),
-        "openrouter" => Ok(Box::new(OpenRouterProvider::from_env(model)?)),
-        "gcp_vertex_ai" => Ok(Box::new(GcpVertexAIProvider::from_env(model)?)),
-        "google" => Ok(Box::new(GoogleProvider::from_env(model)?)),
+        "openai" => Ok(Arc::new(OpenAiProvider::from_env(model)?)),
+        "anthropic" => Ok(Arc::new(AnthropicProvider::from_env(model)?)),
+        "azure_openai" => Ok(Arc::new(AzureProvider::from_env(model)?)),
+        "aws_bedrock" => Ok(Arc::new(BedrockProvider::from_env(model)?)),
+        "databricks" => Ok(Arc::new(DatabricksProvider::from_env(model)?)),
+        "groq" => Ok(Arc::new(GroqProvider::from_env(model)?)),
+        "ollama" => Ok(Arc::new(OllamaProvider::from_env(model)?)),
+        "openrouter" => Ok(Arc::new(OpenRouterProvider::from_env(model)?)),
+        "gcp_vertex_ai" => Ok(Arc::new(GcpVertexAIProvider::from_env(model)?)),
+        "google" => Ok(Arc::new(GoogleProvider::from_env(model)?)),
+        "venice" => Ok(Arc::new(VeniceProvider::from_env(model)?)),
+        "github_copilot" => Ok(Arc::new(GithubCopilotProvider::from_env(model)?)),
         _ => Err(anyhow::anyhow!("Unknown provider: {}", name)),
     }
 }

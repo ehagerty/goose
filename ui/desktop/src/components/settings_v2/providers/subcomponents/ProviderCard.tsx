@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from 'react';
+import { memo, useMemo } from 'react';
 import CardContainer from './CardContainer';
 import CardHeader from './CardHeader';
 import CardBody from './CardBody';
@@ -9,6 +9,7 @@ type ProviderCardProps = {
   provider: ProviderDetails;
   onConfigure: () => void;
   onLaunch: () => void;
+  onDelete: () => void;
   isOnboarding: boolean;
 };
 
@@ -22,7 +23,7 @@ export const ProviderCard = memo(function ProviderCard({
   const providerMetadata: ProviderMetadata | null = provider?.metadata || null;
 
   // Instead of useEffect for logging, use useMemo to memoize the metadata
-  const metadata = useMemo(() => providerMetadata, [provider]);
+  const metadata = useMemo(() => providerMetadata, [providerMetadata]);
 
   if (!metadata) {
     return <div>ProviderCard error: No metadata provided</div>;
@@ -36,6 +37,7 @@ export const ProviderCard = memo(function ProviderCard({
 
   return (
     <CardContainer
+      testId={`provider-card-${provider.name.toLowerCase()}`}
       grayedOut={!provider.is_configured && isOnboarding} // onboarding page will have grayed out cards if not configured
       onClick={handleCardClick}
       header={

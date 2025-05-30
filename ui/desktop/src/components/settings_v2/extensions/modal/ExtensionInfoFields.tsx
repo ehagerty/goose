@@ -1,12 +1,11 @@
 import { Input } from '../../../ui/input';
-import Select from 'react-select';
-import React, { useState } from 'react';
+import { Select } from '../../../ui/Select';
 
 interface ExtensionInfoFieldsProps {
   name: string;
   type: 'stdio' | 'sse' | 'builtin';
   description: string;
-  onChange: (key: string, value: any) => void;
+  onChange: (key: string, value: string) => void;
   submitAttempted: boolean;
 }
 
@@ -45,14 +44,15 @@ export default function ExtensionInfoFields({
           <label className="text-sm font-medium mb-2 block text-textStandard">Type</label>
           <Select
             value={{ value: type, label: type.toUpperCase() }}
-            onChange={(option: { value: string; label: string } | null) => {
+            onChange={(newValue: unknown) => {
+              const option = newValue as { value: string; label: string } | null;
               if (option) {
                 onChange('type', option.value);
               }
             }}
             options={[
               { value: 'stdio', label: 'Standard IO (STDIO)' },
-              { value: 'sse', label: 'Security Service Edge (SSE)' },
+              { value: 'sse', label: 'Server-Sent Events (SSE)' },
             ]}
             isSearchable={false}
           />

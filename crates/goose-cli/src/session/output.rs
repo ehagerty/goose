@@ -1,13 +1,16 @@
 use bat::WrappingMode;
-use console::style;
+use console::{style, Color};
 use goose::config::Config;
 use goose::message::{Message, MessageContent, ToolRequest, ToolResponse};
+use indicatif::{MultiProgress, ProgressBar, ProgressStyle};
 use mcp_core::prompt::PromptArgument;
 use mcp_core::tool::ToolCall;
 use serde_json::Value;
 use std::cell::RefCell;
 use std::collections::HashMap;
+use std::io::Error;
 use std::path::Path;
+use std::time::Duration;
 
 // Re-export theme for use in main
 #[derive(Clone, Copy)]
@@ -25,26 +28,43 @@ impl Theme {
             Theme::Ansi => "base16",
         }
     }
+
+    fn from_config_str(val: &str) -> Self {
+        if val.eq_ignore_ascii_case("light") {
+            Theme::Light
+        } else if val.eq_ignore_ascii_case("ansi") {
+            Theme::Ansi
+        } else {
+            Theme::Dark
+        }
+    }
+
+    fn as_config_string(&self) -> String {
+        match self {
+            Theme::Light => "light".to_string(),
+            Theme::Dark => "dark".to_string(),
+            Theme::Ansi => "ansi".to_string(),
+        }
+    }
 }
 
 thread_local! {
     static CURRENT_THEME: RefCell<Theme> = RefCell::new(
-        std::env::var("GOOSE_CLI_THEME")
-            .ok()
-            .map(|val| {
-                if val.eq_ignore_ascii_case("light") {
-                    Theme::Light
-                } else if val.eq_ignore_ascii_case("ansi") {
-                    Theme::Ansi
-                } else {
-                    Theme::Dark
-                }
-            })
-            .unwrap_or(Theme::Dark)
+        std::env::var("GOOSE_CLI_THEME").ok()
+            .map(|val| Theme::from_config_str(&val))
+            .unwrap_or_else(||
+                Config::global().get_param::<String>("GOOSE_CLI_THEME").ok()
+                    .map(|val| Theme::from_config_str(&val))
+                    .unwrap_or(Theme::Dark)
+            )
     );
 }
 
 pub fn set_theme(theme: Theme) {
+    let config = Config::global();
+    config
+        .set_param("GOOSE_CLI_THEME", Value::String(theme.as_config_string()))
+        .expect("Failed to set theme");
     CURRENT_THEME.with(|t| *t.borrow_mut() = theme);
 }
 
@@ -126,6 +146,23 @@ pub fn render_message(message: &Message, debug: bool) {
     println!();
 }
 
+pub fn render_text(text: &str, color: Option<Color>, dim: bool) {
+    render_text_no_newlines(format!("\n{}\n\n", text).as_str(), color, dim);
+}
+
+pub fn render_text_no_newlines(text: &str, color: Option<Color>, dim: bool) {
+    let mut styled_text = style(text);
+    if dim {
+        styled_text = styled_text.dim();
+    }
+    if let Some(color) = color {
+        styled_text = styled_text.fg(color);
+    } else {
+        styled_text = styled_text.green();
+    }
+    print!("{}", styled_text);
+}
+
 pub fn render_enter_plan_mode() {
     println!(
         "\n{} {}\n",
@@ -179,7 +216,7 @@ fn render_tool_response(resp: &ToolResponse, theme: Theme, debug: bool) {
                 let min_priority = config
                     .get_param::<f32>("GOOSE_CLI_MIN_PRIORITY")
                     .ok()
-                    .unwrap_or(0.0);
+                    .unwrap_or(0.5);
 
                 if content
                     .priority()
@@ -329,7 +366,6 @@ fn render_shell_request(call: &ToolCall, debug: bool) {
         }
         _ => print_params(&call.arguments, 0, debug),
     }
-    println!();
 }
 
 fn render_default_request(call: &ToolCall, debug: bool) {
@@ -358,18 +394,31 @@ fn print_tool_header(call: &ToolCall) {
     println!("{}", tool_header);
 }
 
+// Respect NO_COLOR, as https://crates.io/crates/console already does
+pub fn env_no_color() -> bool {
+    // if NO_COLOR is defined at all disable colors
+    std::env::var_os("NO_COLOR").is_none()
+}
+
 fn print_markdown(content: &str, theme: Theme) {
     bat::PrettyPrinter::new()
         .input(bat::Input::from_bytes(content.as_bytes()))
         .theme(theme.as_str())
+        .colored_output(env_no_color())
         .language("Markdown")
         .wrapping_mode(WrappingMode::NoWrapping(true))
         .print()
         .unwrap();
 }
 
-const MAX_STRING_LENGTH: usize = 40;
 const INDENT: &str = "    ";
+
+fn get_tool_params_max_length() -> usize {
+    Config::global()
+        .get_param::<usize>("GOOSE_CLI_TOOL_PARAMS_TRUNCATION_MAX_LENGTH")
+        .ok()
+        .unwrap_or(40)
+}
 
 fn print_params(value: &Value, depth: usize, debug: bool) {
     let indent = INDENT.repeat(depth);
@@ -390,7 +439,7 @@ fn print_params(value: &Value, depth: usize, debug: bool) {
                         }
                     }
                     Value::String(s) => {
-                        if !debug && s.len() > MAX_STRING_LENGTH {
+                        if !debug && s.len() > get_tool_params_max_length() {
                             println!("{}{}: {}", indent, style(key).dim(), style("...").dim());
                         } else {
                             println!("{}{}: {}", indent, style(key).dim(), style(s).green());
@@ -415,7 +464,7 @@ fn print_params(value: &Value, depth: usize, debug: bool) {
             }
         }
         Value::String(s) => {
-            if !debug && s.len() > MAX_STRING_LENGTH {
+            if !debug && s.len() > get_tool_params_max_length() {
                 println!(
                     "{}{}",
                     indent,
@@ -490,6 +539,8 @@ fn shorten_path(path: &str, debug: bool) -> String {
 pub fn display_session_info(resume: bool, provider: &str, model: &str, session_file: &Path) {
     let start_session_msg = if resume {
         "resuming session |"
+    } else if session_file.to_str() == Some("/dev/null") || session_file.to_str() == Some("NUL") {
+        "running without session |"
     } else {
         "starting session |"
     };
@@ -501,11 +552,15 @@ pub fn display_session_info(resume: bool, provider: &str, model: &str, session_f
         style("model:").dim(),
         style(model).cyan().dim(),
     );
-    println!(
-        "    {} {}",
-        style("logging to").dim(),
-        style(session_file.display()).dim().cyan(),
-    );
+
+    if session_file.to_str() != Some("/dev/null") && session_file.to_str() != Some("NUL") {
+        println!(
+            "    {} {}",
+            style("logging to").dim(),
+            style(session_file.display()).dim().cyan(),
+        );
+    }
+
     println!(
         "    {} {}",
         style("working directory:").dim(),
@@ -517,6 +572,64 @@ pub fn display_session_info(resume: bool, provider: &str, model: &str, session_f
 
 pub fn display_greeting() {
     println!("\nGoose is running! Enter your instructions, or try asking what goose can do.\n");
+}
+
+pub struct McpSpinners {
+    bars: HashMap<String, ProgressBar>,
+    log_spinner: Option<ProgressBar>,
+
+    multi_bar: MultiProgress,
+}
+
+impl McpSpinners {
+    pub fn new() -> Self {
+        McpSpinners {
+            bars: HashMap::new(),
+            log_spinner: None,
+            multi_bar: MultiProgress::new(),
+        }
+    }
+
+    pub fn log(&mut self, message: &str) {
+        let spinner = self.log_spinner.get_or_insert_with(|| {
+            let bar = self.multi_bar.add(
+                ProgressBar::new_spinner()
+                    .with_style(
+                        ProgressStyle::with_template("{spinner:.green} {msg}")
+                            .unwrap()
+                            .tick_chars("⠋⠙⠚⠛⠓⠒⠊⠉"),
+                    )
+                    .with_message(message.to_string()),
+            );
+            bar.enable_steady_tick(Duration::from_millis(100));
+            bar
+        });
+
+        spinner.set_message(message.to_string());
+    }
+
+    pub fn update(&mut self, token: &str, value: f64, total: Option<f64>, message: Option<&str>) {
+        let bar = self.bars.entry(token.to_string()).or_insert_with(|| {
+            if let Some(total) = total {
+                self.multi_bar.add(
+                    ProgressBar::new((total * 100.0) as u64).with_style(
+                        ProgressStyle::with_template("[{elapsed}] {bar:40} {pos:>3}/{len:3} {msg}")
+                            .unwrap(),
+                    ),
+                )
+            } else {
+                self.multi_bar.add(ProgressBar::new_spinner())
+            }
+        });
+        bar.set_position((value * 100.0) as u64);
+        if let Some(msg) = message {
+            bar.set_message(msg.to_string());
+        }
+    }
+
+    pub fn hide(&mut self) -> Result<(), Error> {
+        self.multi_bar.clear()
+    }
 }
 
 #[cfg(test)]
