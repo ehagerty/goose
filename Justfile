@@ -25,7 +25,15 @@ release-windows:
             rust:latest \
             sh -c "rustup target add x86_64-pc-windows-gnu && \
                 apt-get update && \
-                apt-get install -y mingw-w64 && \
+                apt-get install -y mingw-w64 protobuf-compiler cmake && \
+                export CC_x86_64_pc_windows_gnu=x86_64-w64-mingw32-gcc && \
+                export CXX_x86_64_pc_windows_gnu=x86_64-w64-mingw32-g++ && \
+                export AR_x86_64_pc_windows_gnu=x86_64-w64-mingw32-ar && \
+                export CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc && \
+                export PKG_CONFIG_ALLOW_CROSS=1 && \
+                export PROTOC=/usr/bin/protoc && \
+                export PATH=/usr/bin:\$PATH && \
+                protoc --version && \
                 cargo build --release --target x86_64-pc-windows-gnu && \
                 GCC_DIR=\$(ls -d /usr/lib/gcc/x86_64-w64-mingw32/*/ | head -n 1) && \
                 cp \$GCC_DIR/libstdc++-6.dll /usr/src/myapp/target/x86_64-pc-windows-gnu/release/ && \
@@ -79,6 +87,11 @@ run-ui:
     @echo "Running UI..."
     cd ui/desktop && npm install && npm run start-gui
 
+run-ui-only:
+    @echo "Running UI..."
+    cd ui/desktop && npm install && npm run start-gui
+
+
 # Run UI with alpha changes
 run-ui-alpha:
     @just release-binary
@@ -111,17 +124,34 @@ make-ui:
 make-ui-windows:
     @just release-windows
     #!/usr/bin/env sh
+    set -e
     if [ -f "./target/x86_64-pc-windows-gnu/release/goosed.exe" ]; then \
-        echo "Copying Windows binary and DLLs to ui/desktop/src/bin..."; \
-        mkdir -p ./ui/desktop/src/bin; \
-        cp -f ./target/x86_64-pc-windows-gnu/release/goosed.exe ./ui/desktop/src/bin/; \
-        cp -f ./target/x86_64-pc-windows-gnu/release/*.dll ./ui/desktop/src/bin/; \
-        echo "Building Windows package..."; \
-        cd ui/desktop && \
-        npm run bundle:windows && \
-        mkdir -p out/Goose-win32-x64/resources/bin && \
-        cp -f src/bin/goosed.exe out/Goose-win32-x64/resources/bin/ && \
-        cp -f src/bin/*.dll out/Goose-win32-x64/resources/bin/; \
+        echo "Cleaning destination directory..." && \
+        rm -rf ./ui/desktop/src/bin && \
+        mkdir -p ./ui/desktop/src/bin && \
+        echo "Copying Windows binary and DLLs..." && \
+        cp -f ./target/x86_64-pc-windows-gnu/release/goosed.exe ./ui/desktop/src/bin/ && \
+        cp -f ./target/x86_64-pc-windows-gnu/release/*.dll ./ui/desktop/src/bin/ && \
+        if [ -d "./ui/desktop/src/platform/windows/bin" ]; then \
+            echo "Copying Windows platform files..." && \
+            for file in ./ui/desktop/src/platform/windows/bin/*.{exe,dll,cmd}; do \
+                if [ -f "$file" ] && [ "$(basename "$file")" != "goosed.exe" ]; then \
+                    cp -f "$file" ./ui/desktop/src/bin/; \
+                fi; \
+            done && \
+            if [ -d "./ui/desktop/src/platform/windows/bin/goose-npm" ]; then \
+                echo "Setting up npm environment..." && \
+                rsync -a --delete ./ui/desktop/src/platform/windows/bin/goose-npm/ ./ui/desktop/src/bin/goose-npm/; \
+            fi && \
+            echo "Windows-specific files copied successfully"; \
+        fi && \
+        echo "Starting Windows package build..." && \
+        (cd ui/desktop && echo "In desktop directory, running npm bundle:windows..." && npm run bundle:windows) && \
+        echo "Creating resources directory..." && \
+        (cd ui/desktop && mkdir -p out/Goose-win32-x64/resources/bin) && \
+        echo "Copying final binaries..." && \
+        (cd ui/desktop && rsync -av src/bin/ out/Goose-win32-x64/resources/bin/) && \
+        echo "Windows package build complete!"; \
     else \
         echo "Windows binary not found."; \
         exit 1; \
@@ -302,3 +332,24 @@ win-total-dbg *allparam:
 win-total-rls *allparam:
   just win-bld-rls{{allparam}}
   just win-run-rls
+
+### Build and run the Kotlin example with 
+### auto-generated bindings for goose-llm 
+kotlin-example:
+    # Build Rust dylib and generate Kotlin bindings
+    cargo build -p goose-llm
+    cargo run --features=uniffi/cli --bin uniffi-bindgen generate \
+        --library ./target/debug/libgoose_llm.dylib --language kotlin --out-dir bindings/kotlin
+
+    # Compile and run the Kotlin example
+    cd bindings/kotlin/ && kotlinc \
+      example/Usage.kt \
+      uniffi/goose_llm/goose_llm.kt \
+      -classpath "libs/kotlin-stdlib-1.9.0.jar:libs/kotlinx-coroutines-core-jvm-1.7.3.jar:libs/jna-5.13.0.jar" \
+      -include-runtime \
+      -d example.jar
+
+    cd bindings/kotlin/ && java \
+      -Djna.library.path=$HOME/Development/goose/target/debug \
+      -classpath "example.jar:libs/kotlin-stdlib-1.9.0.jar:libs/kotlinx-coroutines-core-jvm-1.7.3.jar:libs/jna-5.13.0.jar" \
+      UsageKt
