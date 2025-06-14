@@ -110,6 +110,12 @@ pub fn format_messages(messages: &[Message], image_format: &ImageFormat) -> Vec<
                         }
                     }
                 }
+                MessageContent::ContextLengthExceeded(_) => {
+                    continue;
+                }
+                MessageContent::SummarizationRequested(_) => {
+                    continue;
+                }
                 MessageContent::ToolResponse(response) => {
                     match &response.tool_result {
                         Ok(contents) => {
@@ -188,6 +194,27 @@ pub fn format_messages(messages: &[Message], image_format: &ImageFormat) -> Vec<
                         }
                     }));
                 }
+                MessageContent::FrontendToolRequest(req) => {
+                    // Frontend tool requests are converted to text messages
+                    if let Ok(tool_call) = &req.tool_call {
+                        content_array.push(json!({
+                            "type": "text",
+                            "text": format!(
+                                "Frontend tool request: {} ({})",
+                                tool_call.name,
+                                serde_json::to_string_pretty(&tool_call.arguments).unwrap()
+                            )
+                        }));
+                    } else {
+                        content_array.push(json!({
+                            "type": "text",
+                            "text": format!(
+                                "Frontend tool request error: {}",
+                                req.tool_call.as_ref().unwrap_err()
+                            )
+                        }));
+                    }
+                }
             }
         }
 
@@ -222,15 +249,12 @@ pub fn format_tools(tools: &[Tool]) -> anyhow::Result<Vec<Value>> {
             return Err(anyhow!("Duplicate tool name: {}", tool.name));
         }
 
-        let mut description = tool.description.clone();
-        description.truncate(1024);
-
-        // OpenAI's tool description max str len is 1024
         result.push(json!({
             "type": "function",
             "function": {
                 "name": tool.name,
-                "description": description,
+                // do not silently truncate description
+                "description": tool.description,
                 "parameters": tool.input_schema,
             }
         }));
@@ -675,6 +699,7 @@ mod tests {
                 },
                 "required": ["input"]
             }),
+            None,
         );
 
         let spec = format_tools(&[tool])?;
@@ -766,6 +791,7 @@ mod tests {
                 },
                 "required": ["input"]
             }),
+            None,
         );
 
         let tool2 = Tool::new(
@@ -781,6 +807,7 @@ mod tests {
                 },
                 "required": ["input"]
             }),
+            None,
         );
 
         let result = format_tools(&[tool1, tool2]);
