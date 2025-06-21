@@ -1,9 +1,12 @@
+import ArrowDown from './ArrowDown';
+import ArrowUp from './ArrowUp';
 import Attach from './Attach';
 import Back from './Back';
 import ChatSmart from './ChatSmart';
 import Check from './Check';
 import ChevronDown from './ChevronDown';
 import ChevronUp from './ChevronUp';
+import { ChevronRight } from './ChevronRight';
 import Close from './Close';
 import Copy from './Copy';
 import Document from './Document';
@@ -19,11 +22,14 @@ import Time from './Time';
 import { Gear } from './Gear';
 
 export {
+  ArrowDown,
+  ArrowUp,
   Attach,
   Back,
   ChatSmart,
   Check,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   Close,
   Copy,

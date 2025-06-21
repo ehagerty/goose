@@ -10,7 +10,7 @@ let cfg = {
   win32: {
     icon: 'src/images/icon.ico',
     certificateFile: process.env.WINDOWS_CERTIFICATE_FILE,
-    certificatePassword: process.env.WINDOWS_CERTIFICATE_PASSWORD,
+    signingRole: process.env.WINDOW_SIGNING_ROLE,
     rfc3161TimeStampServer: 'http://timestamp.digicert.com',
     signWithParams: '/fd sha256 /tr http://timestamp.digicert.com /td sha256'
   },
@@ -34,12 +34,6 @@ let cfg = {
     appleIdPassword: process.env['APPLE_ID_PASSWORD'],
     teamId: process.env['APPLE_TEAM_ID']
   },
-  protocols: [
-    {
-      name: "GooseProtocol",     // The macOS CFBundleURLName
-      schemes: ["goose"]         // The macOS CFBundleURLSchemes array
-    }
-  ]
 }
 
 if (process.env['APPLE_ID'] === undefined) {
@@ -50,24 +44,43 @@ if (process.env['APPLE_ID'] === undefined) {
 module.exports = {
   packagerConfig: cfg,
   rebuildConfig: {},
+  publishers: [
+    {
+      name: '@electron-forge/publisher-github',
+      config: {
+        repository: {
+          owner: 'block',
+          name: 'goose'
+        },
+        prerelease: false,
+        draft: true
+      }
+    }
+  ],
   makers: [
     {
       name: '@electron-forge/maker-zip',
       platforms: ['darwin', 'win32'],
       config: {
-          arch: process.env.ELECTRON_ARCH === 'x64' ? ['x64'] : ['arm64'],
-          options: {
-              icon: 'src/images/icon.ico'
+        arch: process.env.ELECTRON_ARCH === 'x64' ? ['x64'] : ['arm64'],
+        options: {
+          icon: 'src/images/icon.ico'
         }
       }
     },
     {
       name: '@electron-forge/maker-deb',
-      config: {},
+      config: {
+        name: 'Goose',
+        bin: 'Goose'
+      },
     },
     {
       name: '@electron-forge/maker-rpm',
-      config: {},
+      config: {
+        name: 'Goose',
+        bin: 'Goose'
+      },
     },
   ],
   plugins: [

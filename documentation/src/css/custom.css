@@ -241,8 +241,6 @@ html {
   padding-top: 24px;
 }
 
-/* net new */
-
 .hero--logo svg {
   height: 220px;
   width: 220px;
@@ -255,6 +253,17 @@ html {
 
 .pill-button p {
   margin: 0;
+}
+
+.ctaButton {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background: var(--background-app);
+  color: var(--text-standard);
+  font-weight: bold;
+  border-radius: 999px;
+  text-decoration: none;
+  font-size: 0.9rem;
 }
 
 /* Enable word-wrap for code blocks */
@@ -292,11 +301,81 @@ html[data-theme="light"] .hide-in-light {
   border-bottom: 1px solid var(--border-divider);
 }
 
+/* Smooth transitions for navbar items */
 .navbar__item {
   display: flex;
   align-items: center;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.navbar__toggle {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+/* Dropdown styles */
+.navbar__link--active {
+  color: var(--text-prominent);
+}
+
+.dropdown__menu {
+  background-color: var(--background-app);
+  border-color: var(--border-subtle);
+}
+
+.dropdown__link {
+  color: var(--text-standard);
+}
+
+.dropdown__link:hover {
+  background-color: var(--background-subtle);
+  color: var(--text-prominent);
 }
 
 .iconExternalLink_nPIU {
   margin-left: 8px !important;
 }
+
+/* Force hamburger menu to appear earlier to prevent navbar overlap with smooth transitions */
+@media (max-width: 1350px) {
+  .navbar__item {
+    opacity: 0;
+    transform: translateX(-10px);
+    pointer-events: none;
+    /* Use visibility instead of display for smoother transitions */
+    visibility: hidden;
+  }
+  
+  .navbar__toggle {
+    opacity: 1 !important;
+    transform: scale(1) !important;
+    display: inherit !important;
+  }
+  
+  .navbar-sidebar {
+    display: block;
+  }
+}
+
+/* Ensure navbar items are visible above the breakpoint */
+@media (min-width: 1351px) {
+  .navbar__item {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+    visibility: visible;
+  }
+  
+  .navbar__toggle {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+.carousel-image {
+  width: 100%;      /* Make the image fill the width */
+  object-fit: cover; /* Ensure the image covers the area while maintaining aspect ratio */
+  border-radius: 8px; /* Optional: rounded corners */
+}
+
