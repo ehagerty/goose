@@ -5,7 +5,7 @@ use reqwest::{Client, StatusCode};
 use serde_json::Value;
 use std::time::Duration;
 
-use super::base::{ConfigKey, Provider, ProviderMetadata, ProviderUsage};
+use super::base::{ConfigKey, ModelInfo, Provider, ProviderMetadata, ProviderUsage};
 use super::errors::ProviderError;
 use super::formats::anthropic::{create_request, get_usage, response_to_message};
 use super::utils::{emit_debug_trace, get_model};
@@ -15,14 +15,19 @@ use mcp_core::tool::Tool;
 
 pub const ANTHROPIC_DEFAULT_MODEL: &str = "claude-3-5-sonnet-latest";
 pub const ANTHROPIC_KNOWN_MODELS: &[&str] = &[
+    "claude-sonnet-4-latest",
+    "claude-sonnet-4-20250514",
+    "claude-opus-4-latest",
+    "claude-opus-4-20250514",
+    "claude-3-7-sonnet-latest",
+    "claude-3-7-sonnet-20250219",
     "claude-3-5-sonnet-latest",
     "claude-3-5-haiku-latest",
     "claude-3-opus-latest",
-    "claude-3-7-sonnet-20250219",
-    "claude-3-7-sonnet-latest",
 ];
 
 pub const ANTHROPIC_DOC_URL: &str = "https://docs.anthropic.com/en/docs/about-claude/models";
+pub const ANTHROPIC_API_VERSION: &str = "2023-06-01";
 
 #[derive(serde::Serialize)]
 pub struct AnthropicProvider {
@@ -119,21 +124,30 @@ impl AnthropicProvider {
 #[async_trait]
 impl Provider for AnthropicProvider {
     fn metadata() -> ProviderMetadata {
-        ProviderMetadata::new(
+        ProviderMetadata::with_models(
             "anthropic",
             "Anthropic",
             "Claude and other models from Anthropic",
             ANTHROPIC_DEFAULT_MODEL,
-            ANTHROPIC_KNOWN_MODELS
-                .iter()
-                .map(|&s| s.to_string())
-                .collect(),
+            vec![
+                ModelInfo::with_cost("claude-sonnet-4-latest", 200000, 0.000015, 0.000075),
+                ModelInfo::with_cost("claude-sonnet-4-20250514", 200000, 0.000015, 0.000075),
+                ModelInfo::with_cost("claude-opus-4-latest", 200000, 0.000025, 0.000125),
+                ModelInfo::with_cost("claude-opus-4-20250514", 200000, 0.000025, 0.000125),
+                ModelInfo::with_cost("claude-3-7-sonnet-latest", 200000, 0.000008, 0.000024),
+                ModelInfo::with_cost("claude-3-7-sonnet-20250219", 200000, 0.000008, 0.000024),
+                ModelInfo::with_cost("claude-3-5-sonnet-20241022", 200000, 0.000003, 0.000015),
+                ModelInfo::with_cost("claude-3-5-haiku-20241022", 200000, 0.000001, 0.000005),
+                ModelInfo::with_cost("claude-3-opus-20240229", 200000, 0.000015, 0.000075),
+                ModelInfo::with_cost("claude-3-sonnet-20240229", 200000, 0.000003, 0.000015),
+                ModelInfo::with_cost("claude-3-haiku-20240307", 200000, 0.00000025, 0.00000125),
+            ],
             ANTHROPIC_DOC_URL,
             vec![
                 ConfigKey::new("ANTHROPIC_API_KEY", true, true, None),
                 ConfigKey::new(
                     "ANTHROPIC_HOST",
-                    false,
+                    true,
                     false,
                     Some("https://api.anthropic.com"),
                 ),
@@ -159,7 +173,7 @@ impl Provider for AnthropicProvider {
 
         let mut headers = reqwest::header::HeaderMap::new();
         headers.insert("x-api-key", self.api_key.parse().unwrap());
-        headers.insert("anthropic-version", "2023-06-01".parse().unwrap());
+        headers.insert("anthropic-version", ANTHROPIC_API_VERSION.parse().unwrap());
 
         let is_thinking_enabled = std::env::var("CLAUDE_THINKING_ENABLED").is_ok();
         if self.model.model_name.starts_with("claude-3-7-sonnet-") && is_thinking_enabled {
@@ -185,5 +199,37 @@ impl Provider for AnthropicProvider {
         let model = get_model(&response);
         emit_debug_trace(&self.model, &payload, &response, &usage);
         Ok((message, ProviderUsage::new(model, usage)))
+    }
+
+    /// Fetch supported models from Anthropic; returns Err on failure, Ok(None) if not present
+    async fn fetch_supported_models_async(&self) -> Result<Option<Vec<String>>, ProviderError> {
+        let url = format!("{}/v1/models", self.host);
+        let response = self
+            .client
+            .get(&url)
+            .header("anthropic-version", ANTHROPIC_API_VERSION)
+            .header("x-api-key", self.api_key.clone())
+            .send()
+            .await?;
+        let json: serde_json::Value = response.json().await?;
+        // if 'models' key missing, return None
+        let arr = match json.get("models").and_then(|v| v.as_array()) {
+            Some(arr) => arr,
+            None => return Ok(None),
+        };
+        let mut models: Vec<String> = arr
+            .iter()
+            .filter_map(|m| {
+                if let Some(s) = m.as_str() {
+                    Some(s.to_string())
+                } else if let Some(obj) = m.as_object() {
+                    obj.get("id").and_then(|v| v.as_str()).map(str::to_string)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        models.sort();
+        Ok(Some(models))
     }
 }

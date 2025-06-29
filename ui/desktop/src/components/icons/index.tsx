@@ -1,9 +1,12 @@
+import ArrowDown from './ArrowDown';
+import ArrowUp from './ArrowUp';
 import Attach from './Attach';
 import Back from './Back';
 import ChatSmart from './ChatSmart';
 import Check from './Check';
 import ChevronDown from './ChevronDown';
 import ChevronUp from './ChevronUp';
+import { ChevronRight } from './ChevronRight';
 import Close from './Close';
 import Copy from './Copy';
 import Document from './Document';
@@ -17,13 +20,17 @@ import Send from './Send';
 import Settings from './Settings';
 import Time from './Time';
 import { Gear } from './Gear';
+import { Microphone } from './Microphone';
 
 export {
+  ArrowDown,
+  ArrowUp,
   Attach,
   Back,
   ChatSmart,
   Check,
   ChevronDown,
+  ChevronRight,
   ChevronUp,
   Close,
   Copy,
@@ -31,6 +38,7 @@ export {
   Edit,
   Idea,
   Gear,
+  Microphone,
   More,
   Refresh,
   SensitiveHidden,

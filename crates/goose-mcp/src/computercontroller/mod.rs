@@ -6,14 +6,17 @@ use serde_json::{json, Value};
 use std::{
     collections::HashMap, fs, future::Future, path::PathBuf, pin::Pin, sync::Arc, sync::Mutex,
 };
-use tokio::process::Command;
+use tokio::{process::Command, sync::mpsc};
+
+#[cfg(unix)]
+use std::os::unix::fs::PermissionsExt;
 
 use mcp_core::{
     handler::{PromptError, ResourceError, ToolError},
     prompt::Prompt,
-    protocol::ServerCapabilities,
+    protocol::{JsonRpcMessage, ServerCapabilities},
     resource::Resource,
-    tool::Tool,
+    tool::{Tool, ToolAnnotations},
     Content,
 };
 use mcp_server::router::CapabilitiesBuilder;
@@ -21,7 +24,6 @@ use mcp_server::Router;
 
 mod docx_tool;
 mod pdf_tool;
-mod presentation_tool;
 mod xlsx_tool;
 
 mod platform;
@@ -47,26 +49,6 @@ impl Default for ComputerControllerRouter {
 
 impl ComputerControllerRouter {
     pub fn new() -> Self {
-        // Create tools for the system
-        let web_search_tool = Tool::new(
-            "web_search",
-            indoc! {r#"
-                Search the web for a single word (proper noun ideally) using DuckDuckGo's API. Returns results in JSON format.
-                The results are cached locally for future reference.
-                Be sparing as there is a limited number of api calls allowed.
-            "#},
-            json!({
-                "type": "object",
-                "required": ["query"],
-                "properties": {
-                    "query": {
-                        "type": "string",
-                        "description": "A single word to search for, a topic, propernoun, brand name that you may not know about"
-                    }
-                }
-            }),
-        );
-
         let web_scrape_tool = Tool::new(
             "web_scrape",
             indoc! {r#"
@@ -93,6 +75,13 @@ impl ComputerControllerRouter {
                         "description": "How to interpret and save the content"
                     }
                 }
+            }),
+            Some(ToolAnnotations {
+                title: Some("Web Scrape".to_string()),
+                read_only_hint: true,
+                destructive_hint: false,
+                idempotent_hint: false,
+                open_world_hint: true,
             }),
         );
 
@@ -159,6 +148,7 @@ impl ComputerControllerRouter {
                     }
                 }
             }),
+            None,
         );
 
         let quick_script_desc = match std::env::consts::OS {
@@ -209,6 +199,7 @@ impl ComputerControllerRouter {
                     }
                 }
             }),
+            None,
         );
 
         let cache_tool = Tool::new(
@@ -235,6 +226,7 @@ impl ComputerControllerRouter {
                     }
                 }
             }),
+            None,
         );
 
         let pdf_tool = Tool::new(
@@ -261,6 +253,13 @@ impl ComputerControllerRouter {
                         "description": "Operation to perform on the PDF"
                     }
                 }
+            }),
+            Some(ToolAnnotations {
+                title: Some("PDF process".to_string()),
+                read_only_hint: true,
+                destructive_hint: false,
+                idempotent_hint: true,
+                open_world_hint: false,
             }),
         );
 
@@ -360,46 +359,7 @@ impl ComputerControllerRouter {
                     }
                 }
             }),
-        );
-
-        let make_presentation_tool = Tool::new(
-            "make_presentation",
-            indoc! {r#"
-                Create and manage HTML presentations with a simple, modern design.
-                Operations:
-                - create: Create new presentation with template
-                - add_slide: Add a new slide with content
-
-                Open in a browser (using a command) to show the user: open <path> 
-
-                For advanced edits, use developer tools to modify the HTML directly.
-                A template slide is included in comments for reference.
-            "#},
-            json!({
-                "type": "object",
-                "required": ["path", "operation"],
-                "properties": {
-                    "path": {
-                        "type": "string",
-                        "description": "Path to the presentation file"
-                    },
-                    "operation": {
-                        "type": "string",
-                        "enum": ["create", "add_slide"],
-                        "description": "Operation to perform"
-                    },
-                    "params": {
-                        "type": "object",
-                        "description": "Parameters for add_slide operation",
-                        "properties": {
-                            "content": {
-                                "type": "string",
-                                "description": "Content for the new slide"
-                            }
-                        }
-                    }
-                }
-            }),
+            None,
         );
 
         let xlsx_tool = Tool::new(
@@ -461,6 +421,7 @@ impl ComputerControllerRouter {
                     }
                 }
             }),
+            None,
         );
 
         // choose_app_strategy().cache_dir()
@@ -564,8 +525,6 @@ impl ComputerControllerRouter {
 
             {os_instructions}
 
-            web_search
-              - Search the web using DuckDuckGo's API for general topics or keywords
             web_scrape
               - Fetch content from html websites and APIs
               - Save as text, JSON, or binary files
@@ -585,7 +544,6 @@ impl ComputerControllerRouter {
 
         Self {
             tools: vec![
-                web_search_tool,
                 web_scrape_tool,
                 quick_script_tool,
                 computer_control_tool,
@@ -593,7 +551,6 @@ impl ComputerControllerRouter {
                 pdf_tool,
                 docx_tool,
                 xlsx_tool,
-                make_presentation_tool,
             ],
             cache_dir,
             active_resources: Arc::new(Mutex::new(HashMap::new())),
@@ -638,51 +595,6 @@ impl ComputerControllerRouter {
 
         self.active_resources.lock().unwrap().insert(uri, resource);
         Ok(())
-    }
-
-    // Implement web_search tool functionality
-    async fn web_search(&self, params: Value) -> Result<Vec<Content>, ToolError> {
-        let query = params
-            .get("query")
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| ToolError::InvalidParameters("Missing 'query' parameter".into()))?;
-
-        // Create the DuckDuckGo API URL
-        let url = format!(
-            "https://api.duckduckgo.com/?q={}&format=json&pretty=1",
-            urlencoding::encode(query)
-        );
-
-        // Fetch the results
-        let response = self.http_client.get(&url).send().await.map_err(|e| {
-            ToolError::ExecutionError(format!("Failed to fetch search results: {}", e))
-        })?;
-
-        let status = response.status();
-        if !status.is_success() {
-            return Err(ToolError::ExecutionError(format!(
-                "HTTP request failed with status: {}",
-                status
-            )));
-        }
-
-        // Get the JSON response
-        let json_text = response.text().await.map_err(|e| {
-            ToolError::ExecutionError(format!("Failed to get response text: {}", e))
-        })?;
-
-        // Save to cache
-        let cache_path = self
-            .save_to_cache(json_text.as_bytes(), "search", "json")
-            .await?;
-
-        // Register as a resource
-        self.register_as_resource(&cache_path, "json")?;
-
-        Ok(vec![Content::text(format!(
-            "Search results saved to: {}",
-            cache_path.display()
-        ))])
     }
 
     async fn web_scrape(&self, params: Value) -> Result<Vec<Content>, ToolError> {
@@ -791,6 +703,23 @@ impl ComputerControllerRouter {
                     ToolError::ExecutionError(format!("Failed to write script: {}", e))
                 })?;
 
+                // Set execute permissions on Unix systems
+                #[cfg(unix)]
+                {
+                    let mut perms = fs::metadata(&script_path)
+                        .map_err(|e| {
+                            ToolError::ExecutionError(format!("Failed to get file metadata: {}", e))
+                        })?
+                        .permissions();
+                    perms.set_mode(0o755); // rwxr-xr-x
+                    fs::set_permissions(&script_path, perms).map_err(|e| {
+                        ToolError::ExecutionError(format!(
+                            "Failed to set execute permissions: {}",
+                            e
+                        ))
+                    })?;
+                }
+
                 script_path.display().to_string()
             }
             "ruby" => {
@@ -807,10 +736,7 @@ impl ComputerControllerRouter {
                     ToolError::ExecutionError(format!("Failed to write script: {}", e))
                 })?;
 
-                format!(
-                    "powershell -NoProfile -NonInteractive -File {}",
-                    script_path.display()
-                )
+                script_path.display().to_string()
             }
             _ => {
                 return Err( ToolError::InvalidParameters(
@@ -820,12 +746,27 @@ impl ComputerControllerRouter {
         };
 
         // Run the script
-        let output = Command::new(shell)
-            .arg(shell_arg)
-            .arg(&command)
-            .output()
-            .await
-            .map_err(|e| ToolError::ExecutionError(format!("Failed to run script: {}", e)))?;
+        let output = match language {
+            "powershell" => {
+                // For PowerShell, we need to use -File instead of -Command
+                Command::new("powershell")
+                    .arg("-NoProfile")
+                    .arg("-NonInteractive")
+                    .arg("-File")
+                    .arg(&command)
+                    .output()
+                    .await
+                    .map_err(|e| {
+                        ToolError::ExecutionError(format!("Failed to run script: {}", e))
+                    })?
+            }
+            _ => Command::new(shell)
+                .arg(shell_arg)
+                .arg(&command)
+                .output()
+                .await
+                .map_err(|e| ToolError::ExecutionError(format!("Failed to run script: {}", e)))?,
+        };
 
         let output_str = String::from_utf8_lossy(&output.stdout).into_owned();
         let error_str = String::from_utf8_lossy(&output.stderr).into_owned();
@@ -1183,12 +1124,12 @@ impl Router for ComputerControllerRouter {
         &self,
         tool_name: &str,
         arguments: Value,
+        _notifier: mpsc::Sender<JsonRpcMessage>,
     ) -> Pin<Box<dyn Future<Output = Result<Vec<Content>, ToolError>> + Send + 'static>> {
         let this = self.clone();
         let tool_name = tool_name.to_string();
         Box::pin(async move {
             match tool_name.as_str() {
-                "web_search" => this.web_search(arguments).await,
                 "web_scrape" => this.web_scrape(arguments).await,
                 "automation_script" => this.quick_script(arguments).await,
                 "computer_control" => this.computer_control(arguments).await,
@@ -1196,24 +1137,6 @@ impl Router for ComputerControllerRouter {
                 "pdf_tool" => this.pdf_tool(arguments).await,
                 "docx_tool" => this.docx_tool(arguments).await,
                 "xlsx_tool" => this.xlsx_tool(arguments).await,
-                "make_presentation" => {
-                    let path = arguments
-                        .get("path")
-                        .and_then(|v| v.as_str())
-                        .ok_or_else(|| {
-                            ToolError::InvalidParameters("Missing 'path' parameter".into())
-                        })?;
-
-                    let operation = arguments
-                        .get("operation")
-                        .and_then(|v| v.as_str())
-                        .ok_or_else(|| {
-                            ToolError::InvalidParameters("Missing 'operation' parameter".into())
-                        })?;
-
-                    presentation_tool::make_presentation(path, operation, arguments.get("params"))
-                        .await
-                }
                 _ => Err(ToolError::NotFound(format!("Tool {} not found", tool_name))),
             }
         })

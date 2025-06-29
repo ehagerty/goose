@@ -110,6 +110,12 @@ pub fn format_messages(messages: &[Message], image_format: &ImageFormat) -> Vec<
                         }
                     }
                 }
+                MessageContent::ContextLengthExceeded(_) => {
+                    continue;
+                }
+                MessageContent::SummarizationRequested(_) => {
+                    continue;
+                }
                 MessageContent::ToolResponse(response) => {
                     match &response.tool_result {
                         Ok(contents) => {
@@ -188,6 +194,27 @@ pub fn format_messages(messages: &[Message], image_format: &ImageFormat) -> Vec<
                         }
                     }));
                 }
+                MessageContent::FrontendToolRequest(req) => {
+                    // Frontend tool requests are converted to text messages
+                    if let Ok(tool_call) = &req.tool_call {
+                        content_array.push(json!({
+                            "type": "text",
+                            "text": format!(
+                                "Frontend tool request: {} ({})",
+                                tool_call.name,
+                                serde_json::to_string_pretty(&tool_call.arguments).unwrap()
+                            )
+                        }));
+                    } else {
+                        content_array.push(json!({
+                            "type": "text",
+                            "text": format!(
+                                "Frontend tool request error: {}",
+                                req.tool_call.as_ref().unwrap_err()
+                            )
+                        }));
+                    }
+                }
             }
         }
 
@@ -222,15 +249,12 @@ pub fn format_tools(tools: &[Tool]) -> anyhow::Result<Vec<Value>> {
             return Err(anyhow!("Duplicate tool name: {}", tool.name));
         }
 
-        let mut description = tool.description.clone();
-        description.truncate(1024);
-
-        // OpenAI's tool description max str len is 1024
         result.push(json!({
             "type": "function",
             "function": {
                 "name": tool.name,
-                "description": description,
+                // do not silently truncate description
+                "description": tool.description,
                 "parameters": tool.input_schema,
             }
         }));
@@ -430,7 +454,8 @@ pub fn create_request(
     let model_name = model_config.model_name.to_string();
     let is_o1 = model_name.starts_with("o1") || model_name.starts_with("goose-o1");
     let is_o3 = model_name.starts_with("o3") || model_name.starts_with("goose-o3");
-    let is_claude_3_7_sonnet = model_name.contains("claude-3-7-sonnet"); // can be goose- or databricks-
+    let is_claude_sonnet =
+        model_name.contains("claude-3-7-sonnet") || model_name.contains("claude-4-sonnet"); // can be goose- or databricks-
 
     // Only extract reasoning effort for O1/O3 models
     let (model_name, reasoning_effort) = if is_o1 || is_o3 {
@@ -491,7 +516,7 @@ pub fn create_request(
 
     // Add thinking parameters for Claude 3.7 Sonnet model when requested
     let is_thinking_enabled = std::env::var("CLAUDE_THINKING_ENABLED").is_ok();
-    if is_claude_3_7_sonnet && is_thinking_enabled {
+    if is_claude_sonnet && is_thinking_enabled {
         // Minimum budget_tokens is 1024
         let budget_tokens = std::env::var("CLAUDE_THINKING_BUDGET")
             .unwrap_or_else(|_| "16000".to_string())
@@ -675,6 +700,7 @@ mod tests {
                 },
                 "required": ["input"]
             }),
+            None,
         );
 
         let spec = format_tools(&[tool])?;
@@ -766,6 +792,7 @@ mod tests {
                 },
                 "required": ["input"]
             }),
+            None,
         );
 
         let tool2 = Tool::new(
@@ -781,6 +808,7 @@ mod tests {
                 },
                 "required": ["input"]
             }),
+            None,
         );
 
         let result = format_tools(&[tool1, tool2]);
@@ -810,7 +838,7 @@ mod tests {
             0x0D, 0x0A, 0x1A, 0x0A, // PNG header
             0x00, 0x00, 0x00, 0x0D, // Rest of fake PNG data
         ];
-        std::fs::write(&png_path, &png_data)?;
+        std::fs::write(&png_path, png_data)?;
         let png_path_str = png_path.to_str().unwrap();
 
         // Create message with image path
