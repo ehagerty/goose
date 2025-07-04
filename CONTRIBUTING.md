@@ -4,7 +4,8 @@ Goose is open source!
 
 We welcome pull requests for general contributions! If you have a larger new feature or any questions on how to develop a fix, we recommend you open an issue before starting.
 
->[!TIP] Beyond code, check out [other ways to contribute](#other-ways-to-contribute)
+> [!TIP] 
+> Beyond code, check out [other ways to contribute](#other-ways-to-contribute)
 
 ## Prerequisites
 
@@ -43,11 +44,13 @@ And then once you have a connection to an LLM provider working, you can run a se
 ```
 
 These same commands can be recompiled and immediately run using `cargo run -p goose-cli` for iteration.
-As you make changes to the rust code, you can try it out on the CLI, or also run checks and tests:
+As you make changes to the rust code, you can try it out on the CLI, or also run checks, tests, and linter:
 
 ```
 cargo check  # do your changes compile
-cargo test  # do the tests pass with your changes.
+cargo test  # do the tests pass with your changes
+cargo fmt   # format your code
+cargo clippy  # run the linter
 ```
 
 ### Node
@@ -63,6 +66,45 @@ You should see the app open a window, and drop you into first time setup. When y
 you can talk to goose!
 
 You can now make changes in the code in ui/desktop to iterate on the GUI half of goose.
+
+## Creating a fork
+
+To fork the repository:
+
+1. Go to https://github.com/block/goose and click “Fork” (top-right corner).
+2. This creates https://github.com/<your-username>/goose under your GitHub account.
+3. Clone your fork (not the main repo):
+```
+git clone https://github.com/<your-username>/goose.git
+cd goose
+```
+4. Add the main repository as upstream:
+
+```
+git remote add upstream https://github.com/block/goose.git
+```
+
+5. Create a branch in your fork for your changes:
+
+```
+git checkout -b my-feature-branch
+```
+6. Sync your fork with the main repo:
+
+```
+git fetch upstream
+
+# Merge them into your local branch (e.g., 'main' or 'my-feature-branch')
+git checkout main
+git merge upstream/main
+```
+
+7. Push to your fork. Because you’re the owner of the fork, you have permission to push here.
+```
+git push origin my-feature-branch
+```
+
+8. Open a Pull Request from your branch on your fork to block/goose’s main branch.
 
 ## Keeping Your Fork Up-to-Date
 

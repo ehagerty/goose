@@ -6,13 +6,11 @@ export function BaseModal({
   title,
   children,
   actions,
-  onClose,
 }: {
   isOpen: boolean;
-  title: string;
+  title?: string;
   children: React.ReactNode;
   actions: React.ReactNode; // Buttons for actions
-  onClose: () => void;
 }) {
   if (!isOpen) return null;
 
@@ -21,9 +19,11 @@ export function BaseModal({
       <Card className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[440px] bg-white dark:bg-gray-800 rounded-xl shadow-xl overflow-hidden p-[16px] pt-[24px] pb-0">
         <div className="px-8 pb-0 space-y-8">
           {/* Header */}
-          <div className="flex">
-            <h2 className="text-2xl font-regular dark:text-white text-gray-900">{title}</h2>
-          </div>
+          {title && (
+            <div className="flex">
+              <h2 className="text-2xl font-regular dark:text-white text-gray-900">{title}</h2>
+            </div>
+          )}
 
           {/* Content */}
           {children && <div className="px-8">{children}</div>}

@@ -3,7 +3,7 @@ use axum::{extract::Query, response::Html, routing::get, Router};
 use base64::Engine;
 use chrono::{DateTime, Utc};
 use etcetera::{choose_app_strategy, AppStrategy};
-use lazy_static::lazy_static;
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use sha2::Digest;
@@ -11,9 +11,7 @@ use std::{collections::HashMap, fs, net::SocketAddr, path::PathBuf, sync::Arc};
 use tokio::sync::{oneshot, Mutex as TokioMutex};
 use url::Url;
 
-lazy_static! {
-    static ref OAUTH_MUTEX: TokioMutex<()> = TokioMutex::new(());
-}
+static OAUTH_MUTEX: Lazy<TokioMutex<()>> = Lazy::new(|| TokioMutex::new(()));
 
 #[derive(Debug, Clone)]
 struct OidcEndpoints {
@@ -298,7 +296,7 @@ impl OAuthFlow {
         // though it will ultimately only get used once
         let tx = Arc::new(tokio::sync::Mutex::new(Some(tx)));
 
-        // Setup a server that will recieve the redirect, capture the code, and display success/failure
+        // Setup a server that will receive the redirect, capture the code, and display success/failure
         let app = Router::new().route(
             "/",
             get(move |Query(params): Query<HashMap<String, String>>| {

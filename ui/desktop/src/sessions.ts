@@ -1,11 +1,16 @@
-import { getApiUrl, getSecretKey } from './config';
 import { Message } from './types/message';
+import { getSessionHistory, listSessions, SessionInfo } from './api';
+import { convertApiMessageToFrontendMessage } from './components/context_management';
 
 export interface SessionMetadata {
   description: string;
   message_count: number;
   total_tokens: number | null;
   working_dir: string; // Required in type, but may be missing in old sessions
+  // Add the accumulated token fields from the API
+  accumulated_input_tokens?: number | null;
+  accumulated_output_tokens?: number | null;
+  accumulated_total_tokens?: number | null;
 }
 
 // Helper function to ensure working directory is set
@@ -15,6 +20,9 @@ export function ensureWorkingDir(metadata: Partial<SessionMetadata>): SessionMet
     message_count: metadata.message_count || 0,
     total_tokens: metadata.total_tokens || null,
     working_dir: metadata.working_dir || process.env.HOME || '',
+    accumulated_input_tokens: metadata.accumulated_input_tokens || null,
+    accumulated_output_tokens: metadata.accumulated_output_tokens || null,
+    accumulated_total_tokens: metadata.accumulated_total_tokens || null,
   };
 }
 
@@ -54,36 +62,40 @@ export function generateSessionId(): string {
  * Fetches all available sessions from the API
  * @returns Promise with sessions data
  */
-export async function fetchSessions(): Promise<SessionsResponse> {
+/**
+ * Fetches all available sessions from the API
+ * @returns Promise with an array of Session objects
+ */
+export async function fetchSessions(): Promise<Session[]> {
   try {
-    const response = await fetch(getApiUrl('/sessions'), {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Secret-Key': getSecretKey(),
-      },
-    });
+    const response = await listSessions<true>();
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch sessions: ${response.status} ${response.statusText}`);
+    // Check if the response has the expected structure
+    if (response && response.data && response.data.sessions) {
+      // Since the API returns SessionInfo, we need to convert to Session
+      const sessions = response.data.sessions
+        .filter(
+          (sessionInfo: SessionInfo) =>
+            sessionInfo.metadata && sessionInfo.metadata.description !== ''
+        )
+        .map(
+          (sessionInfo: SessionInfo): Session => ({
+            id: sessionInfo.id,
+            path: sessionInfo.path,
+            modified: sessionInfo.modified,
+            metadata: ensureWorkingDir(sessionInfo.metadata),
+          })
+        );
+
+      // order sessions by 'modified' date descending
+      sessions.sort(
+        (a: Session, b: Session) => new Date(b.modified).getTime() - new Date(a.modified).getTime()
+      );
+
+      return sessions;
+    } else {
+      throw new Error('Unexpected response format from listSessions');
     }
-
-    // TODO: remove this logic once everyone migrates to the new sessions format
-    // for now, filter out sessions whose description is empty (old CLI sessions)
-    const rawSessions = await response.json();
-    const sessions = rawSessions.sessions
-      .filter((session: Session) => session.metadata.description !== '')
-      .map((session: Session) => ({
-        ...session,
-        metadata: ensureWorkingDir(session.metadata),
-      }));
-
-    // order sessions by 'modified' date descending
-    sessions.sort(
-      (a: Session, b: Session) => new Date(b.modified).getTime() - new Date(a.modified).getTime()
-    );
-
-    return { sessions };
   } catch (error) {
     console.error('Error fetching sessions:', error);
     throw error;
@@ -97,22 +109,17 @@ export async function fetchSessions(): Promise<SessionsResponse> {
  */
 export async function fetchSessionDetails(sessionId: string): Promise<SessionDetails> {
   try {
-    const response = await fetch(getApiUrl(`/sessions/${sessionId}`), {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Secret-Key': getSecretKey(),
-      },
+    const response = await getSessionHistory<true>({
+      path: { session_id: sessionId },
     });
 
-    if (!response.ok) {
-      throw new Error(`Failed to fetch session details: ${response.status} ${response.statusText}`);
-    }
-
-    const details = await response.json();
+    // Convert the SessionHistoryResponse to a SessionDetails object
     return {
-      ...details,
-      metadata: ensureWorkingDir(details.metadata),
+      session_id: response.data.sessionId,
+      metadata: ensureWorkingDir(response.data.metadata),
+      messages: response.data.messages.map((message) =>
+        convertApiMessageToFrontendMessage(message, true, true)
+      ), // slight diffs between backend and frontend Message obj
     };
   } catch (error) {
     console.error(`Error fetching session details for ${sessionId}:`, error);
