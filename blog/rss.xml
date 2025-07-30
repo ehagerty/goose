@@ -4,10 +4,60 @@
         <title>codename goose Blog</title>
         <link>https://block.github.io/goose/blog</link>
         <description>codename goose Blog</description>
-        <lastBuildDate>Mon, 28 Jul 2025 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Tue, 29 Jul 2025 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
+        <item>
+            <title><![CDATA[How OpenRouter Unlocked Our Workshop Strategy]]></title>
+            <link>https://block.github.io/goose/blog/2025/07/29/openrouter-unlocks-workshops</link>
+            <guid>https://block.github.io/goose/blog/2025/07/29/openrouter-unlocks-workshops</guid>
+            <pubDate>Tue, 29 Jul 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[How we used Open Router to provide frictionless LLM access for Goose workshops]]></description>
+            <content:encoded><![CDATA[<p><img decoding="async" loading="lazy" alt="Scaling AI Workshops" src="https://block.github.io/goose/assets/images/scaling-ai-workshops-open-router-2af052d2b72f502ba14b06c4d784c0cc.png" width="1206" height="633" class="img_ev3q"></p>
+<p>When my team launched <a href="https://block.github.io/goose/">Goose</a> in early January 2025, we knew we had something special. We built a free, open source AI agent that leverages the Model Context Protocol. It was inventive in its approach, offering developers a local solution with the flexibility to bring their LLM of choice.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="the-llm-cost-problem">The LLM Cost Problem<a href="https://block.github.io/goose/blog/2025/07/29/openrouter-unlocks-workshops#the-llm-cost-problem" class="hash-link" aria-label="Direct link to The LLM Cost Problem" title="Direct link to The LLM Cost Problem">​</a></h2>
+<p>After using the product internally for a few months, my teammates were eager to share Goose with the developer community through workshops and hackathons. We wanted to provide hands-on experiences where people could actually build with Goose, because that's how developers fall in love with a product.</p>
+<p>But we hit a thorny challenge: while Goose is free, high-performing LLMs are not.</p>
+<p>Free, local open source models exist, but the experience is variable and often requires high-end hardware. Many local models struggle with tool calling or have small context windows. It would be unfair to ask people to pay out of pocket just to try the tool.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="existing-solutions-we-considered">Existing Solutions We Considered<a href="https://block.github.io/goose/blog/2025/07/29/openrouter-unlocks-workshops#existing-solutions-we-considered" class="hash-link" aria-label="Direct link to Existing Solutions We Considered" title="Direct link to Existing Solutions We Considered">​</a></h2>
+<p>Our team initially looked into covering LLM usage costs. After talking to other organizations, here's what we found. People either:</p>
+<ul>
+<li>Manually distributed API keys</li>
+<li>Used one shared API key</li>
+<li>Relied on a partnership with a provider for credits</li>
+</ul>
+<p>For our small but scrappy team, these options felt insecure, inflexible, and unscalable. We were concerned that people would steal and misuse shared API keys, or that credits might not get distributed evenly. Manually sharing API keys would be tedious and time-consuming, taking away from the depth of the meetup.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="discovering-openrouter">Discovering OpenRouter<a href="https://block.github.io/goose/blog/2025/07/29/openrouter-unlocks-workshops#discovering-openrouter" class="hash-link" aria-label="Direct link to Discovering OpenRouter" title="Direct link to Discovering OpenRouter">​</a></h2>
+<p>When I came back from parental leave, I was ready to jump back in and tackle this problem head-on. I started by teaming up with Alex Hancock, an MCP steering committee member and Goose OSS engineer, on planning our first-ever meetup in Boston. My boss, Angie Jones, suggested the meetup would be the perfect moment to get people's hands on Goose.</p>
+<p>This gave me the motivation I needed to find a quick solution. I figured I could create a web app that would generate API keys for attendees. They could grab their key, which would already have a preset amount of credits.</p>
+<p>The only problem was that popular providers like OpenAI and Anthropic didn't allow me to set specific credit amounts per API key.</p>
+<p>Then I discovered <a href="https://openrouter.ai/" target="_blank" rel="noopener noreferrer">OpenRouter</a>: "a unified API platform that provides access to a wide range of large language models with intelligent routing and automatic fallbacks." You can use whatever model you want with the same API key. But the feature I really needed was its provisionary API key system, which allowed me to generate one master key and programmatically:</p>
+<ul>
+<li>Create individual API keys on demand</li>
+<li>Set specific credit limits per key ($5 per participant)</li>
+<li>Manage and disable keys as needed</li>
+<li>Support any model available through their platform</li>
+<li>Avoid the chaos of shared or static keys</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="building-the-web-app">Building the Web App<a href="https://block.github.io/goose/blog/2025/07/29/openrouter-unlocks-workshops#building-the-web-app" class="hash-link" aria-label="Direct link to Building the Web App" title="Direct link to Building the Web App">​</a></h2>
+<p>I built a simple web app around OpenRouter's API. Attendees could visit a link, click a button, and instantly get their own temporary API key. They could plug that into Goose and start building without having to set up an account on OpenRouter.</p>
+<div class="language-shell codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-shell codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">curl -X POST https://openrouter.ai/api/v1/keys \</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">     -H "Authorization: Bearer &lt;PROVISIONARY API KEY&gt;" \</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">     -H "Content-Type: application/json" \</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">     -d '{</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">  "name": "string"</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">}'</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>And it worked. People <em>actually</em> used Goose and loved the entire experience, from the meetup to the talks to Goose itself.</p>
+<p>We've now hosted meetups in Sydney, Berlin, Boston, Atlanta, San Francisco, Texas, and New York. You can read about our past experiences in our <a href="https://block.github.io/goose/blog/2025/03/21/goose-boston-meetup">Boston</a> and <a href="https://block.github.io/goose/blog/2025/04/17/goose-goes-to-NY">New York</a> blog posts.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="upcoming-denver-workshop">Upcoming Denver Workshop<a href="https://block.github.io/goose/blog/2025/07/29/openrouter-unlocks-workshops#upcoming-denver-workshop" class="hash-link" aria-label="Direct link to Upcoming Denver Workshop" title="Direct link to Upcoming Denver Workshop">​</a></h2>
+<p>We're bringing this hands-on Goose workshop to Denver on August 5.</p>
+<p>Join us for an evening in collaboration with Temporal and Dagger, where you'll get free API credits, build something tangible with Goose, and learn in-depth about MCP.</p>
+<p><strong>RSVP here:</strong> <a href="https://lu.ma/tylz1e9o" target="_blank" rel="noopener noreferrer">https://lu.ma/tylz1e9o</a></p>
+<p><img decoding="async" loading="lazy" alt="denver" src="https://block.github.io/goose/assets/images/denver-cea9e63039e8a23ada485fa12b67c0cc.png" width="800" height="800" class="img_ev3q"></p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="future-improvements">Future Improvements<a href="https://block.github.io/goose/blog/2025/07/29/openrouter-unlocks-workshops#future-improvements" class="hash-link" aria-label="Direct link to Future Improvements" title="Direct link to Future Improvements">​</a></h2>
+<p>This system isn't perfect. Right now, it's still a separate experience outside the Goose interface, and it doesn't scale well for events with different credit amounts or more complex needs.</p>
+<p>We're working on it. Goose engineer, Mic Neale recently opened a <a href="https://github.com/block/goose/pull/3507" target="_blank" rel="noopener noreferrer">pull request</a> to automate Goose's first-time setup. It simplifies the onboarding flow so new users can log into OpenRouter through their browser, securely authenticate, and get a pre-configured Goose setup without touching config files or copying API keys. It's a huge leap in user experience and lays the groundwork for future improvements.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="why-this-approach-matters">Why This Approach Matters<a href="https://block.github.io/goose/blog/2025/07/29/openrouter-unlocks-workshops#why-this-approach-matters" class="hash-link" aria-label="Direct link to Why This Approach Matters" title="Direct link to Why This Approach Matters">​</a></h2>
+<p>As more developers experiment with local agents and bring-your-own-model setups, we need infrastructure that matches that flexibility without compromising control. The combination of flexible API providers and programmatic key management might just be the missing piece in your event strategy.</p>
+<p>Want us to run a Goose workshop or hackathon? We’ll bring the API credits. You bring the builders.</p>
+]]></content:encoded>
+        </item>
         <item>
             <title><![CDATA[When AI Meets AI: Goose Desktop and CLI Collaborate]]></title>
             <link>https://block.github.io/goose/blog/2025/07/28/ai-to-ai</link>
@@ -1844,70 +1894,6 @@ Extract for developer conferences (attendance &gt; 500) occurring between 2022-2
 <p>This blog post included just a few of the ways I use Goose. If you're curious about what else it can do, check out the <a href="https://block.github.io/goose/prompt-library">Prompt Library</a> or just ask:</p>
 <p>What are 5 useful things you can help me with today?</p>
 <p>Let Goose surprise you. ✨</p>
-]]></content:encoded>
-        </item>
-        <item>
-            <title><![CDATA[Codename Goose Goes to New York]]></title>
-            <link>https://block.github.io/goose/blog/2025/04/17/goose-goes-to-NY</link>
-            <guid>https://block.github.io/goose/blog/2025/04/17/goose-goes-to-NY</guid>
-            <pubDate>Thu, 17 Apr 2025 00:00:00 GMT</pubDate>
-            <description><![CDATA[Goose lands in NYC for its second community meetup]]></description>
-            <content:encoded><![CDATA[<p><img decoding="async" loading="lazy" alt="blog cover" src="https://block.github.io/goose/assets/images/cover-6c131d275bcdb4d8651a140d62e2975f.png" width="2240" height="1260" class="img_ev3q"></p>
-<p>We brought Goose to New York City and it was one for the books.</p>
-<p>Over 100 people registered, plus 87 on the waitlist, and we had a packed room full of folks who were curious, thoughtful, and ready to dive in. Some were developers already exploring Goose and MCP, others were totally new to the world of AI agents. That’s the beauty of Goose, it’s for developers <em>and</em> non-developers.</p>
-<p>The energy was there from the moment the event began - music, pizza, and authentic networking. We had lightning talks, a Goose-themed game, hands-on hacking, and yeah… a few Ebbs IPAs might’ve ended up in people’s backpacks by the end of the night.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="why-we-brought-goose-to-nyc">Why We Brought Goose to NYC<a href="https://block.github.io/goose/blog/2025/04/17/goose-goes-to-NY#why-we-brought-goose-to-nyc" class="hash-link" aria-label="Direct link to Why We Brought Goose to NYC" title="Direct link to Why We Brought Goose to NYC">​</a></h2>
-<p>After the Boston meetup, we wanted to keep the momentum going and test things in a new city. New York felt like the perfect place. It’s a melting pot of people and has a really strong tech scene. Our goals were simple:</p>
-<p>✅ Keep building the Goose community<br>
-<!-- -->✅ Get real feedback and ideas from the community in person<br>
-<!-- -->✅ Have some fun while learning together</p>
-<p>NYC didn’t disappoint.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="in-case-you-missed-it">In Case You Missed It<a href="https://block.github.io/goose/blog/2025/04/17/goose-goes-to-NY#in-case-you-missed-it" class="hash-link" aria-label="Direct link to In Case You Missed It" title="Direct link to In Case You Missed It">​</a></h2>
-<div class="carousel-container"><div class="swiper swiper-container-test-carousel" style="width:100%"><div class="swiper-wrapper"><div class="swiper-slide"><img src="https://block.github.io/goose/assets/images/focus4-8232c187021a690519cfa1e8f1c18014.jpg" alt="Slide 1" class="carousel-image"></div><div class="swiper-slide"><img src="https://block.github.io/goose/assets/images/focus-4927104eb487e6b1f9480d8149e26c36.jpg" alt="Slide 2" class="carousel-image"></div><div class="swiper-slide"><img src="https://block.github.io/goose/assets/images/focus2-4ca4bc40c7a86ec46ec566d4d1fd2001.jpg" alt="Slide 3" class="carousel-image"></div><div class="swiper-slide"><img src="https://block.github.io/goose/assets/images/focus3-8ba8fb623d148fa5583c41c0a7a721a4.jpg" alt="Slide 4" class="carousel-image"></div><div class="swiper-slide"><img src="https://block.github.io/goose/assets/images/focus5-afe81c949e09dc788989d1c20c3a74fe.jpg" alt="Slide 5" class="carousel-image"></div></div><div class="swiper-button-prev"></div><div class="swiper-button-next"></div><div class="swiper-pagination"></div></div></div>
-<p>We kicked things off with food and free time to meet people, chat, and ask questions before jumping into the talks:</p>
-<ul>
-<li><strong><a href="https://www.linkedin.com/in/erinmikail/" target="_blank" rel="noopener noreferrer">Erin Mikail</a></strong> from Galileo ran a Goose-themed game that got people laughing <em>and</em> learning about the importance of agent evaluation.</li>
-<li><strong><a href="https://www.linkedin.com/in/ebonylouis/" target="_blank" rel="noopener noreferrer">I, Ebony Louis</a></strong> gave a walkthrough of Goose and MCP, showing how quick it is to get started with any MCP server.</li>
-<li><strong><a href="https://www.linkedin.com/in/alexjhancock/" target="_blank" rel="noopener noreferrer">Alex Hancock</a></strong> went deep on MCP, and how it powers secure, extendable agent workflows.</li>
-</ul>
-<p>Then came the best part — hack time. <strong>27 people got Goose up and running live</strong> during the event, which was amazing to see. It’s always fun watching that moment when it clicks for someone, ideas start flowing, people get inspired, and they walk away ready to actually <em>use</em> Goose.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="what-people-said">What People Said<a href="https://block.github.io/goose/blog/2025/04/17/goose-goes-to-NY#what-people-said" class="hash-link" aria-label="Direct link to What People Said" title="Direct link to What People Said">​</a></h2>
-<div class="carousel-container"><div class="swiper swiper-container-test-carousel" style="width:100%"><div class="swiper-wrapper"><div class="swiper-slide"><img src="https://block.github.io/goose/assets/images/swag2-6ed2a0029c159d14013e366f6f945268.jpg" alt="Slide 1" class="carousel-image"></div><div class="swiper-slide"><img src="https://block.github.io/goose/assets/images/swag1-7e7ee0095446a64f5dbcffe6b5b69460.jpg" alt="Slide 2" class="carousel-image"></div><div class="swiper-slide"><img src="https://block.github.io/goose/assets/images/swag-8eaec6e42aea06511f6334c6e9e21ec1.jpg" alt="Slide 3" class="carousel-image"></div><div class="swiper-slide"><img src="https://block.github.io/goose/assets/images/swag3-50d943bd7ee6e68c65ad0bed5e339f9a.jpg" alt="Slide 4" class="carousel-image"></div></div><div class="swiper-button-prev"></div><div class="swiper-button-next"></div><div class="swiper-pagination"></div></div></div>
-<blockquote>
-<p>“It took me less than 5 mins to get myself set up with a sample project and running the Goose CLI in GitHub Codespaces! Overall it felt great to be back in a physical venue for a hands-on event with an engaged community and a timely topic for discussion.”<br>
-<!-- -->— <em><a href="https://www.linkedin.com/in/nityan/" target="_blank" rel="noopener noreferrer">Nitya Narasimhan, Senior Cloud Advocate @ Microsoft</a></em></p>
-</blockquote>
-<blockquote>
-<p>“The live demos, open discussions, and practical exercises made it an exceptional learning experience. Feeling energized and inspired to explore how Goose and MCP can be leveraged in future data engineering projects!”<br>
-<!-- -->— <em><a href="https://www.linkedin.com/in/manireddy12/" target="_blank" rel="noopener noreferrer">Manikumarreddy Gajjela, Full Stack Developer @ Tetra Computing</a></em></p>
-</blockquote>
-<blockquote>
-<p>“Everyone seems bullish on Model Context Protocol (MCP) these days… Goose is an open-source, on-machine AI agent built to automate your tasks. The coolest part? You can even plug in your own hosted Ollama LLM with Goose!”<br>
-<!-- -->— <em><a href="https://www.linkedin.com/in/rijuldahiya/" target="_blank" rel="noopener noreferrer">Rijul Dahiya, Graduate Teaching Assistant @ NYU</a></em></p>
-</blockquote>
-<blockquote>
-<p>“Great event – great mix of introductory and technical material as well as fun, and I liked that it provided a bunch of time at the beginning and end that was unstructured.”<br>
-<!-- -->— <em><a href="https://www.linkedin.com/in/matthewhillnewyork/" target="_blank" rel="noopener noreferrer">Matthew Hill, Sr Director of AI Engineering @ Dataminr</a></em></p>
-</blockquote>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="moments-we-loved-️">Moments We Loved ❤️<a href="https://block.github.io/goose/blog/2025/04/17/goose-goes-to-NY#moments-we-loved-%EF%B8%8F" class="hash-link" aria-label="Direct link to Moments We Loved ❤️" title="Direct link to Moments We Loved ❤️">​</a></h2>
-<ul>
-<li>🍕 Pizza, music, and people catching up before things even kicked off</li>
-<li>🎮 The Goose game- yes, it got competitive and oddly dark lol</li>
-<li>🧳 Folks traveled from Philly and DC just to attend</li>
-<li>📸 Having a photographer to capture candid and fun moments</li>
-<li>🧠 A bunch of thoughtful “I’m not a dev but…” questions that we <em>loved</em> hearing</li>
-</ul>
-<div class="carousel-container"><div class="swiper swiper-container-test-carousel" style="width:100%"><div class="swiper-wrapper"><div class="swiper-slide"><img src="https://block.github.io/goose/assets/images/speaker1-45d20237329fb76d724e73b6ee1f7a89.jpg" alt="Slide 1" class="carousel-image"></div><div class="swiper-slide"><img src="https://block.github.io/goose/assets/images/speaker-bd71c5b83c6e0cd202ea8aa8af867b58.jpg" alt="Slide 2" class="carousel-image"></div><div class="swiper-slide"><img src="https://block.github.io/goose/assets/images/fun-340fa01a11fd04982ae7e2e612bded03.jpg" alt="Slide 3" class="carousel-image"></div><div class="swiper-slide"><img src="https://block.github.io/goose/assets/images/fun1-b0d7060f8629eec662b2c9f5a22dd7d0.jpg" alt="Slide 4" class="carousel-image"></div><div class="swiper-slide"><img src="https://block.github.io/goose/assets/images/focus2-4ca4bc40c7a86ec46ec566d4d1fd2001.jpg" alt="Slide 5" class="carousel-image"></div></div><div class="swiper-button-prev"></div><div class="swiper-button-next"></div><div class="swiper-pagination"></div></div></div>
-<p>At the end, people were asking when the next one is and yes, we may have let it slip early…</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="up-next-goose-flies-south-">Up Next: Goose Flies South 🛫<a href="https://block.github.io/goose/blog/2025/04/17/goose-goes-to-NY#up-next-goose-flies-south-" class="hash-link" aria-label="Direct link to Up Next: Goose Flies South 🛫" title="Direct link to Up Next: Goose Flies South 🛫">​</a></h2>
-<p>Our next Goose Meetup is already locked in!</p>
-<p>👉 <strong>Atlanta – Wednesday, April 30</strong><br>
-<!-- -->🕕 <strong>6:00 PM – 8:30 PM ET</strong><br>
-<!-- -->📍 <a href="https://lu.ma/x9ccqruq" target="_blank" rel="noopener noreferrer">RSVP here</a></p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="big-thanks-">Big Thanks 🙌<a href="https://block.github.io/goose/blog/2025/04/17/goose-goes-to-NY#big-thanks-" class="hash-link" aria-label="Direct link to Big Thanks 🙌" title="Direct link to Big Thanks 🙌">​</a></h2>
-<p>Huge shoutout to <strong><a href="https://www.linkedin.com/in/taniachakraborty/" target="_blank" rel="noopener noreferrer">Tania Chakraborty</a></strong> and <strong><a href="https://www.linkedin.com/in/anthonygiuliano1/" target="_blank" rel="noopener noreferrer">Anthony Giuliano</a></strong> for being there, and to everyone who came through, asked questions, helped out, and made it a night to remember.</p>
-<p>The community truly made this one special, people stayed after to chat, helped clean up without being asked, and brought such a good energy into the room. We couldn’t have asked for a better crowd.</p>
-<p>We’ll see you in Atlanta 👀</p>
 ]]></content:encoded>
         </item>
     </channel>
