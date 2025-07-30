@@ -955,6 +955,76 @@ The whole point was to offload the tedious stuff so we could focus on the work t
         </author>
     </entry>
     <entry>
+        <title type="html"><![CDATA[What's in my .goosehints file (and why it probably shouldn't be)]]></title>
+        <id>https://block.github.io/goose/blog/2025/06/05/whats-in-my-goosehints-file</id>
+        <link href="https://block.github.io/goose/blog/2025/06/05/whats-in-my-goosehints-file"/>
+        <updated>2025-06-05T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[A deep dive into .goosehints vs Memory Extension, and how to optimize your Goose configuration for better performance]]></summary>
+        <content type="html"><![CDATA[<p><img decoding="async" loading="lazy" alt="blog cover" src="https://block.github.io/goose/assets/images/blog-banner-7f0e5ed1cf875e64e3ebb3250932baaf.png" width="1809" height="950" class="img_ev3q"></p>
+<p>As Goose users, we have two main ways to provide persistent context to our AI assistant: the <code>.goosehints</code> file and the <a href="https://block.github.io/goose/docs/mcp/memory-mcp">Memory Extension</a> MCP server. Today, I'll share what's in my <code>.goosehints</code> file, why some of it should probably move to the Memory Extension, and how you can make that choice.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="ai-agents-and-memory">AI Agents and Memory<a href="https://block.github.io/goose/blog/2025/06/05/whats-in-my-goosehints-file#ai-agents-and-memory" class="hash-link" aria-label="Direct link to AI Agents and Memory" title="Direct link to AI Agents and Memory">​</a></h2>
+<p>Imagine ordering coffee at two different cafes. At the first cafe, you're a first-time customer, carefully explaining "medium mocha latte, fat-free milk, extra hot, no foam, with one pump of vanilla." At your regular coffee spot, though, the barista sees you coming and just says "the usual?"</p>
+<p>That stored knowledge – your preferences, quirks, and routine – makes the whole interaction faster and more pleasant for everyone.</p>
+<p>This is exactly the challenge we face with AI assistants. By default, they start each conversation (aka, "context window") fresh – no memory of your coding standards, documentation preferences, or how you like your pull requests structured. The same way you'd get tired of reciting your detailed coffee order every morning, it's inefficient to repeatedly explain to your AI assistant that you prefer Python's Black formatter, want detailed commit messages, and or how you want to construct a briefing going to everyone in the company.</p>
+<p>This is where persistent context comes in. Through tools like <code>.goosehints</code> and the <a href="https://block.github.io/goose/docs/mcp/memory-mcp">Memory Extension</a> MCP server, we can give our AI assistants the equivalent of a barista's "regular customer" knowledge. But just as you wouldn't want your barista memorizing your entire life story just to make your coffee, we need to be thoughtful about what context we make persistent. The key is finding the right balance between having enough context to work efficiently and not overwhelming our systems with unnecessary information.</p>
+<p>Let's explore how to strike that balance.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="what-is-goosehints">What is .goosehints?<a href="https://block.github.io/goose/blog/2025/06/05/whats-in-my-goosehints-file#what-is-goosehints" class="hash-link" aria-label="Direct link to What is .goosehints?" title="Direct link to What is .goosehints?">​</a></h3>
+<p><code>.goosehints</code> is a configuration file that lives in your Goose directory (usually <code>~/.config/goose/</code>). It can contain any information that you want Goose to process every time you interact with Goose, providing a foundation for how it interacts with you.</p>
+<p>You can read more about <code>.goosehints</code> in the <a href="https://block.github.io/goose/docs/guides/using-goosehints">Goose documentation</a>.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="what-is-the-memory-extension">What is the Memory Extension?<a href="https://block.github.io/goose/blog/2025/06/05/whats-in-my-goosehints-file#what-is-the-memory-extension" class="hash-link" aria-label="Direct link to What is the Memory Extension?" title="Direct link to What is the Memory Extension?">​</a></h3>
+<p>The <a href="https://block.github.io/goose/docs/mcp/memory-mcp">Memory Extension</a> is a dynamic storage system using the Model Context Protocol that allows you to store and retrieve context on-demand using tags or keywords. It lives in your <code>~/.goose/memory</code> directory (local) or <code>~/.config/goose/memory</code> (global).</p>
+<p>Unlike <code>.goosehints</code>, which is static and loaded entirely with every request, Memory Extension can be updated and accessed as needed, allowing for more flexible and user-specific configurations.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="how-are-goosehints-and-memory-extension-used-in-goose">How are .goosehints and Memory Extension used in Goose?<a href="https://block.github.io/goose/blog/2025/06/05/whats-in-my-goosehints-file#how-are-goosehints-and-memory-extension-used-in-goose" class="hash-link" aria-label="Direct link to How are .goosehints and Memory Extension used in Goose?" title="Direct link to How are .goosehints and Memory Extension used in Goose?">​</a></h2>
+<p>At a very high level, when you have a conversation with Goose, it processes your request in two main steps:</p>
+<p>Goose interprets your request to detect tags or keywords needed for possible Memory Extension lookups. Then it loads your entire <code>.goosehints</code> file, and sends that, along with all Memory Extension entries to the LLM to generate a response.</p>
+<p>Why send both? Because the LLM interaction is stateless, and needs the full context of both the goosehints and Memory Extension to generate an appropriate response. The <code>.goosehints</code> file provides static, project-wide context, while the Memory Extension provides dynamic, user-specific context.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="the-implications-of-goosehints-vs-memory-extension">The Implications of .goosehints vs Memory Extension<a href="https://block.github.io/goose/blog/2025/06/05/whats-in-my-goosehints-file#the-implications-of-goosehints-vs-memory-extension" class="hash-link" aria-label="Direct link to The Implications of .goosehints vs Memory Extension" title="Direct link to The Implications of .goosehints vs Memory Extension">​</a></h2>
+<p>Since the entire <code>.goosehints</code> file and all of the memories get sent with every request, why have two different ways to provide rules and context?</p>
+<p>The key difference lies in <strong>scope</strong> and <strong>flexibility</strong>:</p>
+<ul>
+<li>
+<p><strong>.goosehints</strong>: This file is your project's static context. It's great for defining overarching rules, standards, and documentation that apply to all interactions with Goose. However, because it's static, any changes require editing the file and reloading it. You CAN create a global <code>.goosehints</code> file that applies to all projects, but you can also create a project-specific <code>.goosehints</code> file that only applies to a specific project. This is useful for defining project-wide coding standards, documentation preferences, or other static rules that you want to apply consistently across all interactions.</p>
+</li>
+<li>
+<p><strong>Memory Extension</strong>: This is your dynamic context. It allows you to store and retrieve information on-the-fly, making it perfect for user-specific preferences, temporary context, or information that changes frequently. You can update memories without modifying the <code>.goosehints</code> file, providing greater flexibility. The memories are generally tied to the specific user, though they could be shared if your team chooses to do so (but this isn't the norm).</p>
+</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="where-i-went-wrong-with-my-goosehints">Where I went wrong with my .goosehints<a href="https://block.github.io/goose/blog/2025/06/05/whats-in-my-goosehints-file#where-i-went-wrong-with-my-goosehints" class="hash-link" aria-label="Direct link to Where I went wrong with my .goosehints" title="Direct link to Where I went wrong with my .goosehints">​</a></h2>
+<p>When I first started using Goose, I treated <code>.goosehints</code> like a catch-all for everything I wanted Goose to remember, because I didn't know about the Memory Extension. My <code>.goosehints</code> file included:</p>
+<ul>
+<li>rules on writing outlines for blog posts</li>
+<li>how I like Python code written and formatted</li>
+<li>notes about frontend development</li>
+<li>etc</li>
+</ul>
+<p>The file was enormous and hard to update.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="so-what-belongs-in-goosehints">So what "belongs" in .goosehints?<a href="https://block.github.io/goose/blog/2025/06/05/whats-in-my-goosehints-file#so-what-belongs-in-goosehints" class="hash-link" aria-label="Direct link to So what &quot;belongs&quot; in .goosehints?" title="Direct link to So what &quot;belongs&quot; in .goosehints?">​</a></h3>
+<p>Here's something I end nearly every AI prompt with:</p>
+<blockquote>
+<p>If you're not 95% sure how to complete these instructions, or that you'll be at least 95% factually accurate, <strong>do not guess or make things up</strong>. Stop and ask me for more information or direction. If you're finding resources online, give me 1 or 2 URLs that informed your response.</p>
+</blockquote>
+<p>I also like to end many of my prompts asking if Goose has any clarifying questions before doing the work I'm attempting:</p>
+<blockquote>
+<p>Based on the information I've provided, ask me any clarifying questions <strong>before</strong> doing any work, or tell me that you're ready to proceed.</p>
+</blockquote>
+<p>Since these are things that I definitely want to add to every request I make to Goose, I've simplified my .goosehints file to include only these types of rules and standards.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="everything-else-got-moved-into-the-memory-extension">Everything else got moved into the Memory Extension<a href="https://block.github.io/goose/blog/2025/06/05/whats-in-my-goosehints-file#everything-else-got-moved-into-the-memory-extension" class="hash-link" aria-label="Direct link to Everything else got moved into the Memory Extension" title="Direct link to Everything else got moved into the Memory Extension">​</a></h2>
+<p>The Memory Extension uses a tagging system to remember context based on keywords. You can give Goose a command to "remember" something, and Goose will write a Memory entry with appropriate tags. The next time you ask Goose to do something with Python, it will parse your request, look for relevant tags, and use appropriate Memory entries to send as part of the context for just that request.</p>
+<p>So all of my Python rules can be written as a command to Goose like this:</p>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">Remember that when I ask about Python, I want to conform to the following standards and guidelines:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- use Python 3.12+ syntax</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- use type hints for all function signatures</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- use f-strings for string formatting</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- use the latest Python features and libraries</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- use Flake8 for linting</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- use black for formatting</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- if I ask to build a CLI based tool, expect to take command line arguments and make a colorful interface using ANSI colors and the rich library</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- if I ask to build an API, expect to build a RESTful API use FastAPI and to send back data in JSON format</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>Now, Goose will only send these Python-related rules when I ask it to do something with Python. This is far more efficient.</p>
+<p>Here's the resulting Memory file that Goose made:</p>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain"># python standards development formatting linting api cli</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Python Development Standards:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Python version: 3.12+</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Mandatory type hints for all function signatures</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Use f-strings for string formatting</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Use latest Python features and libraries</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Code formatting: black</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- Linting: Flake8</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- CLI tools: Use command line arguments and rich library for colorful interface</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">- APIs: Use FastAPI for RESTful APIs with JSON responses</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>The first line starts with a hash <code>#</code> and a space-separated list of keywords and tags that it will use to discern when or whether to retrieve this content to send with a request to my LLM.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="to-hint-or-not-to-hint">To hint, or not to hint?<a href="https://block.github.io/goose/blog/2025/06/05/whats-in-my-goosehints-file#to-hint-or-not-to-hint" class="hash-link" aria-label="Direct link to To hint, or not to hint?" title="Direct link to To hint, or not to hint?">​</a></h2>
+<p>Since both the <code>.goosehints</code> file and the Memory Extension files are sent with every request, whether to use one or the other really comes down to how you want to manage your context. Since you can create a project-specific <code>.goosehints</code> file, you can use it to define project-wide rules and standards that you want to apply consistently across all interactions with Goose. This is useful for defining project-wide coding standards, documentation preferences, or other static rules that you want to apply consistently across all interactions. Meanwhile you can maintain a personal set of standards for writing and coding in your Memory Extension that you can update and change as needed without affecting the project-wide rules.</p>
+<p>Share your own <code>.goosehints</code> optimization stories in the <a href="http://discord.gg/block-opensource" target="_blank" rel="noopener noreferrer">Goose community on Discord</a>!</p>
+]]></content>
+        <author>
+            <name>W Ian Douglas</name>
+        </author>
+    </entry>
+    <entry>
         <title type="html"><![CDATA[Democratizing Detection Engineering at Block: Taking Flight with Goose and Panther MCP]]></title>
         <id>https://block.github.io/goose/blog/2025/06/02/goose-panther-mcp</id>
         <link href="https://block.github.io/goose/blog/2025/06/02/goose-panther-mcp"/>
@@ -1738,233 +1808,6 @@ We'd love to hear how others are approaching AI automation at scale.</p>
         <author>
             <name>Angie Jones</name>
             <uri>https://angiejones.tech</uri>
-        </author>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[11 Practical Ways I Use AI Agents Without Losing My Authenticity]]></title>
-        <id>https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai</id>
-        <link href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai"/>
-        <updated>2025-04-21T00:00:00.000Z</updated>
-        <summary type="html"><![CDATA[From conference planning to prepping podcasts, here's how I use AI Agents built on MCP for everyday tasks.]]></summary>
-        <content type="html"><![CDATA[<p><img decoding="async" loading="lazy" alt="mcp use cases" src="https://block.github.io/goose/assets/images/mcp-use-cases-758ecc959d6334783257fc9d6329e1f2.png" width="2240" height="1260" class="img_ev3q"></p>
-<p>"Stop using AI," reads yet another viral post. I get it. It's frustrating to review a colleague's auto-generated work, filled with AI's classic giveaways like generic code comments and phrases like "In today's fast-paced world..."</p>
-<p>Still, AI plays a pivotal role in my career. I don't rely on AI to do my work, but I use it to help me brainstorm and work more effciently.
-The introduction of <a href="https://modelcontextprotocol.io/" target="_blank" rel="noopener noreferrer">Model Context Protocol (MCP)</a> has made this even easier. MCP is an open standard that gives AI tools the context they need to be useful in the real world. It enables AI agents to interact with APIs, apps, and systems in a structured way. I use <a href="https://block.github.io/goose/">Codename goose</a>, an open source AI agent built on MCP.</p>
-<p>Here are 11 real ways I use AI Agents without sacrificing authenticity, creativity, or quality:</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="1--hands-free-coding">1. 🙌🏿 Hands-Free Coding<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#1--hands-free-coding" class="hash-link" aria-label="Direct link to 1. 🙌🏿 Hands-Free Coding" title="Direct link to 1. 🙌🏿 Hands-Free Coding">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="use-case">Use Case<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#use-case" class="hash-link" aria-label="Direct link to Use Case" title="Direct link to Use Case">​</a></h3>
-<p>I spoke to Goose instead of typing, using my voice as input to write code or run tasks.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="why-its-useful">Why It's Useful<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#why-its-useful" class="hash-link" aria-label="Direct link to Why It's Useful" title="Direct link to Why It's Useful">​</a></h3>
-<p>I have a lot of "my brain has the idea but my hands are full" moments. Whether I'm nursing my baby or recovering from carpal tunnel, this provides an accessible way for me to capture my thoughts without typing.</p>
-<p>Sidenote: I met an AI enthusiast at a meetup who said he sometimes gets coding ideas while driving. He's exploring using his voice to vibe code on the go. Stay safe out there. Don't code and drive! 🚗⛑️</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="how-to-try-it">How to Try It<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#how-to-try-it" class="hash-link" aria-label="Direct link to How to Try It" title="Direct link to How to Try It">​</a></h3>
-<ol>
-<li>Follow <a href="https://block.github.io/goose/docs/mcp/speech-mcp">this tutorial</a></li>
-<li>Enable the <a href="https://github.com/Kvadratni/speech-mcp" target="_blank" rel="noopener noreferrer"><code>Speech</code></a> and <a href="https://block.github.io/goose/extensions/detail?id=developer"><code>Developer</code></a> extensions</li>
-<li>Prompt Goose:<!-- -->
-<blockquote>
-<p>I'd like to speak instead of typing.</p>
-</blockquote>
-</li>
-</ol>
-<iframe class="aspect-ratio" src="https://www.youtube.com/embed/rurAp_WzOiY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"></iframe>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="2--prepping-podcast-agendas">2. 🎤 Prepping Podcast Agendas<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#2--prepping-podcast-agendas" class="hash-link" aria-label="Direct link to 2. 🎤 Prepping Podcast Agendas" title="Direct link to 2. 🎤 Prepping Podcast Agendas">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="use-case-1">Use Case<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#use-case-1" class="hash-link" aria-label="Direct link to Use Case" title="Direct link to Use Case">​</a></h3>
-<p>I gave Goose a YouTube video of a guest's conference talk. Then, I prompted Goose to create a transcript and generate thoughtful interview questions.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="why-its-useful-1">Why It's Useful<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#why-its-useful-1" class="hash-link" aria-label="Direct link to Why It's Useful" title="Direct link to Why It's Useful">​</a></h3>
-<p>I want guests to feel like I actually know their work, even if I don't have hours to prep. This lets me ask smarter questions and run a better show.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="how-to-try-it-1">How to Try It<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#how-to-try-it-1" class="hash-link" aria-label="Direct link to How to Try It" title="Direct link to How to Try It">​</a></h3>
-<ol>
-<li>Follow <a href="https://block.github.io/goose/docs/mcp/youtube-transcript-mcp">this tutorial</a></li>
-<li>Enable the <a href="https://github.com/jkawamoto/mcp-youtube-transcript" target="_blank" rel="noopener noreferrer"><code>YouTube Transcript</code></a> and <a href="https://block.github.io/goose/extensions/detail?id=developer"><code>Developer</code></a> extensions</li>
-<li>Prompt Goose:<!-- -->
-<blockquote>
-<p>Generate a transcript for this video <a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ" target="_blank" rel="noopener noreferrer">https://www.youtube.com/watch?v=dQw4w9WgXcQ</a>, then create relevant interview questions based on the content</p>
-</blockquote>
-</li>
-</ol>
-<hr>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="3--resize-images">3. 🖼 Resize Images<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#3--resize-images" class="hash-link" aria-label="Direct link to 3. 🖼 Resize Images" title="Direct link to 3. 🖼 Resize Images">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="use-case-2">Use Case<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#use-case-2" class="hash-link" aria-label="Direct link to Use Case" title="Direct link to Use Case">​</a></h3>
-<p>Speaker management platforms often have different image requirements for headshots. I used to spend an embarrassingly amount of time trying to resize my photo without ruining the aspect ratio. Now, I just ask Goose to do it.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="why-its-useful-2">Why It's Useful<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#why-its-useful-2" class="hash-link" aria-label="Direct link to Why It's Useful" title="Direct link to Why It's Useful">​</a></h3>
-<p>It saves me from wrestling with random online tools or bloated design apps. I get a clean, correctly sized image in seconds, and it looks exactly how I want it to.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="how-to-try-it-2">How to Try It<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#how-to-try-it-2" class="hash-link" aria-label="Direct link to How to Try It" title="Direct link to How to Try It">​</a></h3>
-<ol>
-<li>Enable the <a href="https://block.github.io/goose/extensions/detail?id=developer"><code>Developer</code></a> extension</li>
-<li>Prompt Goose:<!-- -->
-<blockquote>
-<p>Resize this image (~/Downloads/image.png) to 1000x1000 pixels. Maintain the aspect ratio and image quality.</p>
-</blockquote>
-</li>
-</ol>
-<hr>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="4--resume-review-against-job-listings">4. 📝 Resume Review Against Job Listings<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#4--resume-review-against-job-listings" class="hash-link" aria-label="Direct link to 4. 📝 Resume Review Against Job Listings" title="Direct link to 4. 📝 Resume Review Against Job Listings">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="use-case-3">Use Case<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#use-case-3" class="hash-link" aria-label="Direct link to Use Case" title="Direct link to Use Case">​</a></h3>
-<p>I've used Goose to compare my current resume to job listings I came across.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="why-its-useful-3">Why It's Useful<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#why-its-useful-3" class="hash-link" aria-label="Direct link to Why It's Useful" title="Direct link to Why It's Useful">​</a></h3>
-<p>I'm not currently looking for a job, but I like to stay prepared. My strategy involves keeping my resume current and competitive. I do this by comparing my current resume to job listings, but I don't have to do this manually anymore. Instead, Goose can quickly point out my strengths and weaknesses for specific job listings. This approach could help hiring managers review resumes faster as well.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="how-to-try-it-3">How to Try It<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#how-to-try-it-3" class="hash-link" aria-label="Direct link to How to Try It" title="Direct link to How to Try It">​</a></h3>
-<ol>
-<li>Follow <a href="https://block.github.io/goose/docs/mcp/pdf-mcp">this tutorial</a></li>
-<li>Enable the <a href="https://github.com/michaelneale/mcp-read-pdf" target="_blank" rel="noopener noreferrer"><code>PDF Reader</code></a> extension</li>
-<li>Prompt Goose:<!-- -->
-<blockquote>
-<p>Read the resume at ~/Downloads/resume.pdf and evaluate how well this candidate aligns with the following role requirements:</p>
-<ul>
-<li>5+ years of backend development experience</li>
-<li>Strong system design and distributed systems knowledge</li>
-<li>Cloud infrastructure experience (AWS preferred)</li>
-<li>Prior experience leading technical projects or teams</li>
-<li>Bonus: familiarity with LLMs or AI/ML tools</li>
-</ul>
-<p>Score each one out of 5, give supporting evidence, and summarize with a final fit rating.</p>
-</blockquote>
-</li>
-</ol>
-<iframe class="aspect-ratio" src="https://www.youtube.com/embed/EJf2_iZfaWk" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"></iframe>
-<hr>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="5--understanding-idioms">5. 🧠 Understanding Idioms<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#5--understanding-idioms" class="hash-link" aria-label="Direct link to 5. 🧠 Understanding Idioms" title="Direct link to 5. 🧠 Understanding Idioms">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="use-case-4">Use Case<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#use-case-4" class="hash-link" aria-label="Direct link to Use Case" title="Direct link to Use Case">​</a></h3>
-<p>I've asked Goose to explain idioms or references that I didn't understand.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="why-its-useful-4">Why It's Useful<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#why-its-useful-4" class="hash-link" aria-label="Direct link to Why It's Useful" title="Direct link to Why It's Useful">​</a></h3>
-<p>Because I wasn't born in America and I'm neurodivergent, I sometimes take idioms literally or misinterpret them. Instead of risking embarrassment at work, I quietly ask Goose to translate.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="how-to-try-it-4">How to Try It<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#how-to-try-it-4" class="hash-link" aria-label="Direct link to How to Try It" title="Direct link to How to Try It">​</a></h3>
-<ol>
-<li>Enable the <a href="https://block.github.io/goose/extensions/detail?id=developer"><code>Developer</code></a> extension</li>
-<li>Prompt Goose:<!-- -->
-<blockquote>
-<p>What does this phrase mean: "Who does Vegas have as the favorite?"</p>
-</blockquote>
-</li>
-</ol>
-<hr>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="6--querying-a-relational-database">6. 📊 Querying a Relational Database<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#6--querying-a-relational-database" class="hash-link" aria-label="Direct link to 6. 📊 Querying a Relational Database" title="Direct link to 6. 📊 Querying a Relational Database">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="use-case-5">Use Case<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#use-case-5" class="hash-link" aria-label="Direct link to Use Case" title="Direct link to Use Case">​</a></h3>
-<p>I asked Goose for insights about my data using natural language, and it wrote a Common Table Expression for me.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="why-its-useful-5">Why It's Useful<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#why-its-useful-5" class="hash-link" aria-label="Direct link to Why It's Useful" title="Direct link to Why It's Useful">​</a></h3>
-<p>SQL can get complex with joins, stored procedures, and subqueries. Goose helps me move faster and avoid errors by handling the query logic for me.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="how-to-try-it-5">How to Try It<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#how-to-try-it-5" class="hash-link" aria-label="Direct link to How to Try It" title="Direct link to How to Try It">​</a></h3>
-<ol>
-<li>Follow <a href="https://block.github.io/goose/docs/mcp/postgres-mcp">this tutorial</a></li>
-<li>Enable the <a href="https://github.com/modelcontextprotocol/servers/tree/HEAD/src/postgres" target="_blank" rel="noopener noreferrer"><code>PostgreSQL</code></a> and <a href="https://block.github.io/goose/extensions/detail?id=developer"><code>Developer</code></a> extensions</li>
-<li>Prompt Goose:<!-- -->
-<blockquote>
-<p>Find my top 3 blog posts by average weekly views over the past 90 days. Include title, URL, average weekly views, and whether they were promoted on social.</p>
-</blockquote>
-</li>
-</ol>
-<iframe class="aspect-ratio" src="https://www.youtube.com/embed/PZlYQ5IthYM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"></iframe>
-<hr>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="7--planning-my-conference-speaking-strategy">7. 🗓 Planning My Conference Speaking Strategy<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#7--planning-my-conference-speaking-strategy" class="hash-link" aria-label="Direct link to 7. 🗓 Planning My Conference Speaking Strategy" title="Direct link to 7. 🗓 Planning My Conference Speaking Strategy">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="use-case-6">Use Case<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#use-case-6" class="hash-link" aria-label="Direct link to Use Case" title="Direct link to Use Case">​</a></h3>
-<p>I've used Goose to analyze historical conference data so I could plan smarter for upcoming CFP deadlines.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="why-its-useful-6">Why It's Useful<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#why-its-useful-6" class="hash-link" aria-label="Direct link to Why It's Useful" title="Direct link to Why It's Useful">​</a></h3>
-<p>I tend to overbook myself or get anxious that I won't get accepted, so I apply to everything. Then I end up getting accepted to all of them and say yes without thinking, which leads to poor planning and rushed talks. With Goose, I can analyze patterns in CFP timelines and make more intentional choices.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="how-to-try-it-6">How to Try It<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#how-to-try-it-6" class="hash-link" aria-label="Direct link to How to Try It" title="Direct link to How to Try It">​</a></h3>
-<ol>
-<li>Follow <a href="https://block.github.io/goose/docs/mcp/agentql-mcp">this tutorial</a></li>
-<li>Enable the <a href="https://github.com/tinyfish-io/agentql-mcp" target="_blank" rel="noopener noreferrer"><code>AgentQL</code></a> extension</li>
-<li>Prompt Goose:<!-- -->
-<blockquote>
-<p>I'm a tech conference speaker planning my 2025-2026 submissions.
-Extract for developer conferences (attendance &gt; 500) occurring between 2022-2024:</p>
-<ul>
-<li>Conference name</li>
-<li>Conference dates</li>
-<li>CFP timeline</li>
-</ul>
-<p>To identify:</p>
-<ul>
-<li>Consistent monthly patterns</li>
-<li>Whether conferences stick to same months yearly</li>
-<li>If CFP windows are consistent year-to-year</li>
-<li>Any shifts in traditional timing</li>
-</ul>
-<p>Structure results as JSON</p>
-</blockquote>
-</li>
-</ol>
-<hr>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="8--tracking-down-a-buggy-commit">8. 🐞 Tracking Down a Buggy Commit<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#8--tracking-down-a-buggy-commit" class="hash-link" aria-label="Direct link to 8. 🐞 Tracking Down a Buggy Commit" title="Direct link to 8. 🐞 Tracking Down a Buggy Commit">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="use-case-7">Use Case<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#use-case-7" class="hash-link" aria-label="Direct link to Use Case" title="Direct link to Use Case">​</a></h3>
-<p>A feature broke, but I had made so many commits, I couldn't tell which one introduced the bug. I asked Goose to help me run <code>git bisect</code>, so we could identify the problematic code.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="why-its-useful-7">Why It's Useful<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#why-its-useful-7" class="hash-link" aria-label="Direct link to Why It's Useful" title="Direct link to Why It's Useful">​</a></h3>
-<p>The hardest part of debugging is often just figuring out where to look. Git bisect makes that faster, and Goose walked me through the process without needing to memorize the steps.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="how-to-try-it-7">How to Try It<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#how-to-try-it-7" class="hash-link" aria-label="Direct link to How to Try It" title="Direct link to How to Try It">​</a></h3>
-<ol>
-<li>Install the <a href="https://git-scm.com/book/en/v2/Getting-Started-Installing-Git" target="_blank" rel="noopener noreferrer">Git CLI</a></li>
-<li>Enable the <a href="https://block.github.io/goose/extensions/detail?id=developer"><code>Developer</code></a> extension</li>
-<li>Prompt Goose:<!-- -->
-<blockquote>
-<p>I don't know when I introduced a bug. Can you walk me through using git bisect to find the commit that caused it?</p>
-</blockquote>
-</li>
-</ol>
-<hr>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="9--learning-new-technologies">9. 👩🏾‍🏫 Learning New Technologies<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#9--learning-new-technologies" class="hash-link" aria-label="Direct link to 9. 👩🏾‍🏫 Learning New Technologies" title="Direct link to 9. 👩🏾‍🏫 Learning New Technologies">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="use-case-8">Use Case<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#use-case-8" class="hash-link" aria-label="Direct link to Use Case" title="Direct link to Use Case">​</a></h3>
-<p>I like to keep up with the latest technologies. Since MCP servers are popular, I used Goose's tutorial extension to walk through building my own MCP server.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="why-its-useful-8">Why It's Useful<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#why-its-useful-8" class="hash-link" aria-label="Direct link to Why It's Useful" title="Direct link to Why It's Useful">​</a></h3>
-<p>In addition to generating code, AI agents can help you learn how to code. Goose includes a built-in tutorial extension designed to walk users through technical concepts in a hands-on way.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="how-to-try-it-8">How to Try It<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#how-to-try-it-8" class="hash-link" aria-label="Direct link to How to Try It" title="Direct link to How to Try It">​</a></h3>
-<ol>
-<li>Follow <a href="https://block.github.io/goose/docs/mcp/tutorial-mcp">this tutorial</a></li>
-<li>Prompt Goose:<!-- -->
-<blockquote>
-<p>I'd like to learn how to build an extension or MCP server for Goose</p>
-</blockquote>
-</li>
-</ol>
-<hr>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="10--comparing-regulatory-documentation">10. 💼 Comparing Regulatory Documentation<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#10--comparing-regulatory-documentation" class="hash-link" aria-label="Direct link to 10. 💼 Comparing Regulatory Documentation" title="Direct link to 10. 💼 Comparing Regulatory Documentation">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="use-case-9">Use Case<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#use-case-9" class="hash-link" aria-label="Direct link to Use Case" title="Direct link to Use Case">​</a></h3>
-<p>I didn't do this myself, but I was impressed to learn that a community member used Goose to compare proposed and final versions of regulatory documents.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="why-its-useful-9">Why It's Useful<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#why-its-useful-9" class="hash-link" aria-label="Direct link to Why It's Useful" title="Direct link to Why It's Useful">​</a></h3>
-<p>Legal documents are often dense and repetitive. Goose can highlight what actually changed, helping users quickly spot how updates impact compliance or obligations.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="how-to-try-it-9">How to Try It<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#how-to-try-it-9" class="hash-link" aria-label="Direct link to How to Try It" title="Direct link to How to Try It">​</a></h3>
-<ol>
-<li>Enable the <a href="https://block.github.io/goose/extensions/detail?id=computercontroller"><code>Computer Controller</code></a> extension</li>
-<li>Prompt Goose:<!-- -->
-<blockquote>
-<p>Highlight the differences between these two versions of FinCEN's Investment Adviser AML regulations:</p>
-<p>Proposed version (2015): <a href="https://www.federalregister.gov/documents/2015/09/01/2015-21318" target="_blank" rel="noopener noreferrer">https://www.federalregister.gov/documents/2015/09/01/2015-21318</a></p>
-<p>Final version (2024): <a href="https://www.federalregister.gov/documents/2024/09/04/2024-19260" target="_blank" rel="noopener noreferrer">https://www.federalregister.gov/documents/2024/09/04/2024-19260</a></p>
-<p>Focus on key changes in requirements for investment advisers' AML/CFT programs and how they affect compliance obligations.</p>
-</blockquote>
-</li>
-</ol>
-<hr>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="11--prototyping-ideas-quickly">11. 🛠 Prototyping Ideas Quickly<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#11--prototyping-ideas-quickly" class="hash-link" aria-label="Direct link to 11. 🛠 Prototyping Ideas Quickly" title="Direct link to 11. 🛠 Prototyping Ideas Quickly">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="use-case-10">Use Case<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#use-case-10" class="hash-link" aria-label="Direct link to Use Case" title="Direct link to Use Case">​</a></h3>
-<p>I used Goose to build a working prototype and see the full application live in action.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="why-its-useful-10">Why It's Useful<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#why-its-useful-10" class="hash-link" aria-label="Direct link to Why It's Useful" title="Direct link to Why It's Useful">​</a></h3>
-<p>It's fast, functional, and lets me validate whether an idea is worth pursuing without spending hours coding from scratch.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="how-to-try-it-10">How to Try It<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#how-to-try-it-10" class="hash-link" aria-label="Direct link to How to Try It" title="Direct link to How to Try It">​</a></h3>
-<ol>
-<li>Enable the <a href="https://block.github.io/goose/extensions/detail?id=developer"><code>Developer</code></a> extension</li>
-<li>Prompt Goose:<!-- -->
-<blockquote>
-<p>Build a JavaScript webcam app with real-time filters</p>
-</blockquote>
-</li>
-</ol>
-<p>🎥 <strong>See it live:</strong><br>
-<!-- -->Watch The Great Goose Off where we challenged Goose to create creative apps from scratch, like:</p>
-<ul>
-<li>A Goose-shaped drawing tool</li>
-<li>A purposely chaotic authentication flow</li>
-</ul>
-<p>You'll see ideas go from prompt to prototype in one session.</p>
-<iframe class="aspect-ratio" src="https://www.youtube.com/embed/OsA3qhns7dg" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"></iframe>
-<hr>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="looking-for-more-examples">Looking for more examples?<a href="https://block.github.io/goose/blog/2025/04/21/practical-use-cases-of-ai#looking-for-more-examples" class="hash-link" aria-label="Direct link to Looking for more examples?" title="Direct link to Looking for more examples?">​</a></h2>
-<p>This blog post included just a few of the ways I use Goose. If you're curious about what else it can do, check out the <a href="https://block.github.io/goose/prompt-library">Prompt Library</a> or just ask:</p>
-<p>What are 5 useful things you can help me with today?</p>
-<p>Let Goose surprise you. ✨</p>
-]]></content>
-        <author>
-            <name>Rizel Scarlett</name>
         </author>
     </entry>
 </feed>
