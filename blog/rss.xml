@@ -4,10 +4,107 @@
         <title>codename goose Blog</title>
         <link>https://block.github.io/goose/blog</link>
         <description>codename goose Blog</description>
-        <lastBuildDate>Tue, 29 Jul 2025 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Tue, 05 Aug 2025 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
+        <item>
+            <title><![CDATA[MCP Jupyter: AI-Powered Machine Learning and Data Science]]></title>
+            <link>https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server</link>
+            <guid>https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server</guid>
+            <pubDate>Tue, 05 Aug 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[Enable AI agents to work directly with your Jupyter notebooks, leveraging persistent memory and stateful collaboration for enhanced ML and data science workflows]]></description>
+            <content:encoded><![CDATA[<p><img decoding="async" loading="lazy" alt="MCP Jupyter Server" src="https://block.github.io/goose/assets/images/data-goose-7fc60ab0a13a9e9b6c22172d6ac166ab.png" width="1200" height="630" class="img_ev3q"></p>
+<p>Machine learning and data science workflows are inherently iterative. You load data, explore patterns, build models, and refine your approach based on results. But traditional AI assistants lose context between interactions, forcing you to reload data and re-establish context repeatedly—making data-heavy development slow and expensive.</p>
+<p>The <a href="https://github.com/block/mcp-jupyter" target="_blank" rel="noopener noreferrer"><strong>MCP Jupyter Server</strong></a> solves this by enabling AI agents like Goose to work directly with your Jupyter notebooks, maintaining persistent memory and state across interactions while letting the AI interact with your data through code execution rather than raw data transfer.</p>
+<iframe class="aspect-ratio" src="https://www.youtube.com/embed/0i6gB_mWaRM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="the-memory-and-context-problem">The Memory and Context Problem<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#the-memory-and-context-problem" class="hash-link" aria-label="Direct link to The Memory and Context Problem" title="Direct link to The Memory and Context Problem">​</a></h2>
+<p>Traditional AI coding assistants face a fundamental limitation: they lose context between interactions. This in part stems from their design to accomplish well-described individual tasks like refactoring a piece of code, compiling and running its tests, and commiting the result version control. In contrast, data science workflows are often open-ended and require extensive exploration and interactivity. This creates several challenges for using AI with data-heavy ML workflows:</p>
+<ul>
+<li><strong>Constant data reloading</strong>: Each interaction requires re-loading or describing your dataset</li>
+<li><strong>Expensive iteration</strong>: Large datasets are slow and costly to process repeatedly</li>
+<li><strong>Context size</strong>: The raw data may be too large to be fit in context</li>
+<li><strong>Not designed for interactive work</strong>: It is harder to have the assistant do some steps and then transfer control back to the human or vice versa</li>
+</ul>
+<p>To address these challenges, we created the MCP Jupyter Server.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="a-better-approach-persistent-state">A Better Approach: Persistent State<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#a-better-approach-persistent-state" class="hash-link" aria-label="Direct link to A Better Approach: Persistent State" title="Direct link to A Better Approach: Persistent State">​</a></h2>
+<p>The MCP Jupyter Server takes a different approach. Instead of losing context between interactions, it maintains persistent memory and lets the AI interact with your data through Jupyter code cell execution. This creates a powerful paradigm:</p>
+<ul>
+<li><strong>Persistent memory</strong>: Variables and state are maintained across all interactions</li>
+<li><strong>Efficient iterations</strong>: No need to reload data or re-establish context</li>
+<li><strong>Code-based data interaction</strong>: AI explores data through execution, not given the raw data in context</li>
+<li><strong>True pair programming</strong>: Seamless collaboration within the same notebook context</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="transforming-ml-workflows">Transforming ML Workflows<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#transforming-ml-workflows" class="hash-link" aria-label="Direct link to Transforming ML Workflows" title="Direct link to Transforming ML Workflows">​</a></h2>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="exploratory-data-analysis">Exploratory Data Analysis<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#exploratory-data-analysis" class="hash-link" aria-label="Direct link to Exploratory Data Analysis" title="Direct link to Exploratory Data Analysis">​</a></h3>
+<p>Instead of describing your dataset, let the AI explore it directly:</p>
+<blockquote>
+<p><span style="color:#2563eb;font-weight:bold">User:</span> "Help me understand this customer dataset"</p>
+<p><span style="color:#059669;font-weight:bold">AI:</span> "Let me explore your data structure first"</p>
+<p><em><span style="color:#6b7280;font-style:italic">[AI executes: df.info(), df.describe(), df.head()]</span></em></p>
+<p><span style="color:#059669;font-weight:bold">AI:</span> "I can see you have 50,000 customers with 12 features. The data includes demographics (age, income), behavioral metrics (purchase_frequency, avg_order_value), and some missing values in the 'phone_number' column. Would you like me to create visualizations for the key relationships, like age vs income or purchase patterns?"</p>
+<p><span style="color:#2563eb;font-weight:bold">User:</span> "Yes, show me the age and income distributions, and any correlations"</p>
+<p><span style="color:#059669;font-weight:bold">AI:</span> "Perfect! I'll create histograms for age and income, plus a correlation heatmap"</p>
+<p><em><span style="color:#6b7280;font-style:italic">[AI generates and displays visualizations]</span></em></p>
+</blockquote>
+<p>The AI can see your actual column names, data types, and distributions—leading to much more relevant suggestions.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="interactive-model-development">Interactive Model Development<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#interactive-model-development" class="hash-link" aria-label="Direct link to Interactive Model Development" title="Direct link to Interactive Model Development">​</a></h3>
+<p>The AI becomes a true collaborator in your modeling process:</p>
+<blockquote>
+<p><span style="color:#2563eb;font-weight:bold">User:</span> "This model isn't performing well"</p>
+<p><span style="color:#059669;font-weight:bold">AI:</span> "Let me check the current metrics and feature importance"</p>
+<p><em><span style="color:#6b7280;font-style:italic">[AI executes your existing model evaluation code]</span></em></p>
+<p><span style="color:#059669;font-weight:bold">AI:</span> "I see the accuracy is 72% and the most important features are 'price' and 'location'. The model seems to be overfitting - would you like me to try regularization or reduce the feature set?"</p>
+<p><span style="color:#2563eb;font-weight:bold">User:</span> "Try regularization first"</p>
+<p><span style="color:#059669;font-weight:bold">AI:</span> "I'll add L2 regularization and test different alpha values"</p>
+<p><em><span style="color:#6b7280;font-style:italic">[AI implements and tests changes iteratively]</span></em></p>
+<p><span style="color:#059669;font-weight:bold">AI:</span> "Great! With alpha=0.1, accuracy improved to 78% and the validation curve looks much better. Should I tune it further or try ensemble methods?"</p>
+</blockquote>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="real-time-debugging">Real-time Debugging<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#real-time-debugging" class="hash-link" aria-label="Direct link to Real-time Debugging" title="Direct link to Real-time Debugging">​</a></h3>
+<p>When errors occur, the assistant has full context:</p>
+<blockquote>
+<p><span style="color:#2563eb;font-weight:bold">User:</span> "I'm getting a KeyError in cell 5"</p>
+<p><span style="color:#059669;font-weight:bold">AI:</span> "Let me check what columns are available in your dataframe"</p>
+<p><em><span style="color:#6b7280;font-style:italic">[AI executes: df.columns, df.info()]</span></em></p>
+<p><span style="color:#059669;font-weight:bold">AI:</span> "I see the issue - you're trying to access 'customer_id' but the actual column name is 'CustomerID' with capital letters. Also, I notice you have 'purchase_date' as a string - should I convert that to datetime while I fix the KeyError?"</p>
+<p><span style="color:#2563eb;font-weight:bold">User:</span> "Yes, fix both issues"</p>
+<p><span style="color:#059669;font-weight:bold">AI:</span> "Done! I've updated the column reference and converted purchase_date to datetime. The cell should run properly now."</p>
+</blockquote>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="continuous-collaboration">Continuous Collaboration<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#continuous-collaboration" class="hash-link" aria-label="Direct link to Continuous Collaboration" title="Direct link to Continuous Collaboration">​</a></h3>
+<p>Imagine a scenario where you are working on a new dataset:</p>
+<blockquote>
+<p><span style="color:#2563eb;font-weight:bold">User:</span> <em><span style="color:#6b7280;font-style:italic">[Executes: df = pd.read_csv('sales_data.csv')]</span></em></p>
+<p><span style="color:#2563eb;font-weight:bold">User:</span> "Let me check the data types and look for any anomalies"</p>
+<p><span style="color:#059669;font-weight:bold">AI:</span> "I'll analyze your sales data structure"</p>
+<p><em><span style="color:#6b7280;font-style:italic">[AI executes: df.info(), df.describe(include='all')]</span></em></p>
+<p><span style="color:#059669;font-weight:bold">AI:</span> "I found a few issues: 'CustomerID' is stored as text but should be numeric, and there are 847 missing values in 'SalesAmount'. Would you like me to convert 'CustomerID' to numeric and fill the missing 'SalesAmount' values with the median?"</p>
+<p><span style="color:#2563eb;font-weight:bold">User:</span> "Yes, please do that and show me the updated info"</p>
+<p><span style="color:#059669;font-weight:bold">AI:</span> "Done! CustomerID is now numeric and SalesAmount gaps are filled. Your dataset is clean and ready for modeling."</p>
+</blockquote>
+<p><em><span style="color:#6b7280;font-style:italic">[Later in the session, after you've trained a model...]</span></em></p>
+<blockquote>
+<p><span style="color:#2563eb;font-weight:bold">User:</span> "How is my model performing?"</p>
+<p><span style="color:#059669;font-weight:bold">AI:</span> "Let me generate the key metrics for your trained model"</p>
+<p><em><span style="color:#6b7280;font-style:italic">[AI accesses the existing model variable and generates evaluation metrics]</span></em></p>
+<p><span style="color:#059669;font-weight:bold">AI:</span> "Your Random Forest achieved 0.84 precision and 0.81 recall. The confusion matrix shows some false positives in the high-value sales category. Would you like me to adjust the decision threshold or try feature engineering?"</p>
+</blockquote>
+<p>This fluid back-and-forth, where the assistant understands and builds upon the existing notebook state, allows for seamless collaboration without the need for constant context re-establishment or data reloading.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="example-notebook">Example notebook<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#example-notebook" class="hash-link" aria-label="Direct link to Example notebook" title="Direct link to Example notebook">​</a></h2>
+<p>Here you can see an example notebook that was handled by the MCP Jupyter Server.  The server</p>
+<p><strong><a href="https://github.com/block/mcp-jupyter/blob/main/demos/demo.ipynb" target="_blank" rel="noopener noreferrer">📓 View the Complete Demo Notebook</a></strong></p>
+<p>The demo walks through a typical data science workflow:</p>
+<ul>
+<li><strong>Install Missing Libraries</strong>: Installing missing libraries for the notebook</li>
+<li><strong>Data Generation</strong>: Creating synthetic data for analysis</li>
+<li><strong>Model Training</strong>: Fitting a linear regression model with scikit-learn</li>
+<li><strong>Results Analysis</strong>: Extracting model coefficients and performance metrics</li>
+<li><strong>Visualization</strong>: Creating plots with seaborn</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="getting-started">Getting Started<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#getting-started" class="hash-link" aria-label="Direct link to Getting Started" title="Direct link to Getting Started">​</a></h2>
+<p>The MCP Jupyter Server integrates seamlessly with existing workflows and can also be used with the notebook viewer in VS Code based IDEs.</p>
+<p>For detailed setup and configuration, check out the <a href="https://block.github.io/mcp-jupyter/" target="_blank" rel="noopener noreferrer">complete documentation</a>.</p>
+]]></content:encoded>
+        </item>
         <item>
             <title><![CDATA[How OpenRouter Unlocked Our Workshop Strategy]]></title>
             <link>https://block.github.io/goose/blog/2025/07/29/openrouter-unlocks-workshops</link>
@@ -1658,85 +1755,6 @@ A: It's too dynamic to give one solid answer. Integration and migrations can var
 A: There's a learning curve associated with any technology. This can be compounded when you consider that MCP is still relatively new and evolving. The greater community needs strategies around testing and debugging MCP, as well as considering security and data privacy. This means that what you learn today will need to be re-evaluated even a few short months from now.</p>
 <p>Q: <strong>How mature and production-ready is MCP for enterprise-level AI integration?</strong><br>
 A: Your approach on this may vary depending on whether you're building your own MCP server, or whether you're using third-party MCP servers in your integration. Developers should evaluate all of the benefits of MCP and consider the work being done around security and data privacy. Focus on a small pilot project or non-critical system initially to assess its suitability for your specific needs. Stay updated on <a href="https://modelcontextprotocol.io/development/roadmap" target="_blank" rel="noopener noreferrer">MCP's development roadmap</a> and community feedback.</p>
-]]></content:encoded>
-        </item>
-        <item>
-            <title><![CDATA[MCP in the Enterprise: Real World Adoption at Block]]></title>
-            <link>https://block.github.io/goose/blog/2025/04/21/mcp-in-enterprise</link>
-            <guid>https://block.github.io/goose/blog/2025/04/21/mcp-in-enterprise</guid>
-            <pubDate>Mon, 21 Apr 2025 00:00:00 GMT</pubDate>
-            <description><![CDATA[How Block is using MCP to power real world automation company-wide.]]></description>
-            <content:encoded><![CDATA[<p><img decoding="async" loading="lazy" alt="blog cover" src="https://block.github.io/goose/assets/images/mcp-for-enterprise-5912379e407d5f5139b2636dcfc138f5.png" width="1200" height="630" class="img_ev3q"></p>
-<p>At Block, we've been exploring how to make AI agents genuinely useful in a business setting. Not just for demos or prototypes, but for real, everyday work.
-As one of the early collaborators on the <a href="https://www.anthropic.com/news/model-context-protocol" target="_blank" rel="noopener noreferrer">Model Context Protocol (MCP)</a>, we partnered with Anthropic to help shape and define the open standard that bridges AI agents with real-world tools and data.</p>
-<p>MCP lets AI agents interact with APIs, tools, and data systems through a common interface. It eliminates the guesswork by exposing deterministic tool definitions, so the agent doesn't have to guess how to call an API.
-Instead, it focuses on what we actually want... results!</p>
-<p>While others are still experimenting, we've rolled this out company-wide at Block, and with real impact.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="why-we-chose-mcp-at-block">Why We Chose MCP at Block<a href="https://block.github.io/goose/blog/2025/04/21/mcp-in-enterprise#why-we-chose-mcp-at-block" class="hash-link" aria-label="Direct link to Why We Chose MCP at Block" title="Direct link to Why We Chose MCP at Block">​</a></h2>
-<p>We didn't want to build one-off integrations or hardwire AI into a specific vendor ecosystem.
-Like most enterprise companies, our needs span engineering, design, security, compliance, customer support, sales, and more.
-We wanted flexibility.</p>
-<p>MCP gives us that.
-It's model-agnostic and tool-agnostic, allowing our AI agent to interact with internal APIs, open source tools, and even off-the-shelf SaaS products, all through the same protocol.</p>
-<p>It also aligns well with our <a href="https://block.github.io/goose/blog/2025/03/31/securing-mcp">security philosophy</a>.
-MCP allows us to define which models can invoke which tools, and lets us annotate tools as "read-only" or "destructive" to require user confirmation when necessary.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="how-we-configure-and-secure-mcp">How We Configure and Secure MCP<a href="https://block.github.io/goose/blog/2025/04/21/mcp-in-enterprise#how-we-configure-and-secure-mcp" class="hash-link" aria-label="Direct link to How We Configure and Secure MCP" title="Direct link to How We Configure and Secure MCP">​</a></h2>
-<p>We developed <a href="https://block.github.io/goose/"><strong>Goose</strong></a>, an open source, MCP-compatible AI agent. Thousands of Block employees use the tool daily.
-Available as both a CLI and desktop app, Goose comes with default access to a curated set of approved MCP servers.
-Most employees report saving 50–75% of their time on common tasks, and several have shared that work which once took days can now be completed in just a few hours.</p>
-<p>To ensure a secure and reliable experience, all MCP servers used internally are authored by our own engineers.
-This allows us to tailor each integration to our systems and use cases from development tools to compliance workflows.</p>
-<p>Some of our most widely used MCPs include:</p>
-<ul>
-<li><strong>Snowflake</strong> for querying internal data</li>
-<li><strong>GitHub and Jira</strong> for software development workflows</li>
-<li><strong>Slack and Google Drive</strong> for information gathering and task coordination</li>
-<li><strong>Internal APIs</strong> for specialized use cases like compliance checks and support triage</li>
-</ul>
-<p>In addition to tool access, Goose relies on large language models (LLMs) to interpret prompts and plan actions.
-We use Databricks as our LLM hosting platform, enabling Goose to interact with both Claude and OpenAI models through secure, enterprise-managed endpoints.
-We've established corporate agreements with model providers that include data usage protections, and we restrict Goose from being used with certain categories of sensitive data, in line with internal policies.</p>
-<p>For service-level authorization, we use OAuth to securely distribute tokens.
-Goose is pre-configured to authenticate with commonly used services, and tokens are stored securely using native system keychains.
-Currently, OAuth flows are implemented directly within locally run MCP servers, a practical but temporary solution.
-We’re actively exploring more scalable, decoupled patterns for the future.</p>
-<p>Additionally, some servers enforce LLM allowlists or restrict tool output from being shared across systems to further minimize data exposure risks.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="real-stories-with-real-impact">Real Stories with Real Impact<a href="https://block.github.io/goose/blog/2025/04/21/mcp-in-enterprise#real-stories-with-real-impact" class="hash-link" aria-label="Direct link to Real Stories with Real Impact" title="Direct link to Real Stories with Real Impact">​</a></h2>
-<p>Goose has become an everyday tool for teams across Block.
-With MCP servers acting as flexible connectors, employees are using automation in increasingly creative and practical ways to remove bottlenecks and focus on higher-value work.</p>
-<p>Our engineers are using MCP-powered tools to migrate legacy codebases, refactor and simplify complex logic, generate unit tests, streamline dependency upgrades, and speed up triage workflows.
-Goose helps developers work across unfamiliar systems, reduce repetitive coding tasks, and deliver improvements faster than traditional approaches.</p>
-<p>Data and operations teams are using Goose to query internal systems, summarize large datasets, automate reporting, and surface relevant context from multiple sources.
-In many cases, this reduces the reliance on manual data pulls or lengthy back-and-forths with specialists, making insights more accessible to everyone.</p>
-<p>Meanwhile, teams in design, product, support, and risk are utilizing Goose in ways that remove overhead from their daily work.
-Whether it's generating documentation, triaging tickets, or creating prototypes, MCP-based workflows are proving adaptable beyond engineering.</p>
-<p>This shift is helping eliminate the mechanical work that slows us down.
-As more teams experiment, they discover new ways to collaborate with Goose and reshape how things get done.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="what-weve-learned-so-far">What We've Learned So Far<a href="https://block.github.io/goose/blog/2025/04/21/mcp-in-enterprise#what-weve-learned-so-far" class="hash-link" aria-label="Direct link to What We've Learned So Far" title="Direct link to What We've Learned So Far">​</a></h2>
-<p>Rolling out MCP tooling company-wide required more than just technical setup. We invested in:</p>
-<ul>
-<li>Pre-installed agent access and default server bundles</li>
-<li>Weekly education sessions from our internal Developer Relations team</li>
-<li>Internal communication channels to seek help as well as share and celebrate wins</li>
-</ul>
-<p>Some of our takeaways:</p>
-<ul>
-<li>The easier we made it to start - by pre-installing Goose, bundling MCPs, and auto-configuring models - the faster adoption took off</li>
-<li>People get more creative once they see what's possible, especially when they can remix or build on what others have already done</li>
-<li>Centralized onboarding and prompt sharing saves time and helps scale best practices</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="whats-next">What's Next<a href="https://block.github.io/goose/blog/2025/04/21/mcp-in-enterprise#whats-next" class="hash-link" aria-label="Direct link to What's Next" title="Direct link to What's Next">​</a></h2>
-<p>We're continuing to expand use cases outside of traditional engineering teams. MCP is helping unblock marketing, sales, and support workflows, and we're just getting started.</p>
-<p>We're also investing in:</p>
-<ul>
-<li>More secure defaults and tooling restrictions based on context</li>
-<li>Human-in-the-loop features for higher risk operations</li>
-<li>Encouraging open source MCP contributions from across the company</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="want-to-learn-more">Want to Learn More?<a href="https://block.github.io/goose/blog/2025/04/21/mcp-in-enterprise#want-to-learn-more" class="hash-link" aria-label="Direct link to Want to Learn More?" title="Direct link to Want to Learn More?">​</a></h2>
-<p>If you're curious about Goose or MCP, check out the <a href="https://block.github.io/goose/docs/quickstart">Goose documentation</a> or <a href="https://spec.modelcontextprotocol.io/" target="_blank" rel="noopener noreferrer">MCP spec</a>.
-We'd love to hear how others are approaching AI automation at scale.</p>
-<div style="display:none"><p><img decoding="async" loading="lazy" src="https://block.github.io/goose/assets/images/mcp-for-enterprise-social-bb8a18872fedc0046ef72bb413dea851.png" width="1200" height="630" class="img_ev3q"></p></div>
 ]]></content:encoded>
         </item>
     </channel>
