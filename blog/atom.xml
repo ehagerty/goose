@@ -8,6 +8,123 @@
     <subtitle>codename goose Blog</subtitle>
     <icon>https://block.github.io/goose/img/favicon.ico</icon>
     <entry>
+        <title type="html"><![CDATA[Transforming AI Assistance from Automation to Education: The Story Behind Goose Mentor Mode]]></title>
+        <id>https://block.github.io/goose/blog/2025/08/18/transforming-ai-assistance-goose-mentor-mode</id>
+        <link href="https://block.github.io/goose/blog/2025/08/18/transforming-ai-assistance-goose-mentor-mode"/>
+        <updated>2025-08-18T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[How a Junior developer's AI Agent confusion, led to creating an educational MCP extension that transforms Goose from an automation tool into a learning mentor.]]></summary>
+        <content type="html"><![CDATA[<p><img decoding="async" loading="lazy" alt="Goose Mentor Mode Header" src="https://block.github.io/goose/assets/images/goose-mentor-mode-header-77058a250a163440d791e057ef3196ea.png" width="2816" height="1536" class="img_ev3q"></p>
+<p>Kim is fresh out of the academy and has spent only 18 months learning development. When I asked her how she felt about Goose she had mixed reactions. While she found it cool that it could do so much for her, she wasn’t actually sure of <em>what</em> it was doing for her half the time, and also <em>why</em>. When she asked Goose to fix a broken build, or chase a bug, It would complete the task and claim ‘Success!’. Which is great, however she felt she wasn’t actually learning as much as when she was in the academy. Add on that sometimes she didn’t even know <em>what</em> to ask Goose to do sometimes.</p>
+<p>That afternoon I started to see if I could get Goose to be more than just a ‘magic box’ for my Junior Devs. What if Goose could instead act as a mentor and also teach as well as speeding up development?</p>
+<p>Working as an Engineering Manager in the enterprise space, I have around 16 developers in my team. Like a lot of the industry right now I’ve been seeing where AI can fit within our processes, and what efficiencies it can provide. In July of this year I picked up Goose and quickly saw the incredible potential it had for both myself and my team. Excited to see what was possible, I quickly granted access to all my developers, hooked them up with a few different models, and then let them play for a couple of weeks.</p>
+<p>Within my team I have a vast range of developer experience. From Tech Leads, all the way down to fresh graduates. The Seniors and Tech Leads were marvelling at the speed with which they could now progress their work. My mid level Devs were also amazed at how fast they could debug broken builds. It wasn’t until one of my regular catch up meetings with one of my Junior Graduates did I hear something different.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="the-problem-ai-that-does-instead-of-teaches"><strong>The Problem: AI That Does Instead of Teaches</strong><a href="https://block.github.io/goose/blog/2025/08/18/transforming-ai-assistance-goose-mentor-mode#the-problem-ai-that-does-instead-of-teaches" class="hash-link" aria-label="Direct link to the-problem-ai-that-does-instead-of-teaches" title="Direct link to the-problem-ai-that-does-instead-of-teaches">​</a></h2>
+<p>Traditional AI coding assistants operate on a simple premise: user asks, AI delivers. While this maximizes immediate productivity, it creates several long-term problems:</p>
+<ul>
+<li><strong>Dependency Development</strong>: Developers become reliant on AI for problems they should understand</li>
+<li><strong>Lost Learning Opportunities</strong>: Every request could be a chance to build knowledge, but instead becomes just task completion</li>
+<li><strong>One-Size-Fits-All</strong>: No differentiation between a junior developer learning authentication and a senior developer implementing it under deadline pressure</li>
+<li><strong>Context Blindness</strong>: AI treats "how do I implement JWT?" the same whether it's asked by someone with 6 months or 6 years of experience</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="the-vision-goose-mentor-mode"><strong>The Vision: Goose Mentor Mode</strong><a href="https://block.github.io/goose/blog/2025/08/18/transforming-ai-assistance-goose-mentor-mode#the-vision-goose-mentor-mode" class="hash-link" aria-label="Direct link to the-vision-goose-mentor-mode" title="Direct link to the-vision-goose-mentor-mode">​</a></h2>
+<p>The mission behind Goose Mentor Mode is simple but transformative: <strong>Transform AI assistance from automation to education while maintaining the efficiency developers need</strong>.</p>
+<p>The core philosophy centers on four principles:</p>
+<ol>
+<li><strong>Discovery Over Delivery</strong>: Help users understand <em>why</em>, not just <em>how</em></li>
+<li><strong>Adaptive Learning</strong>: Adjust approach based on experience and context</li>
+<li><strong>Progressive Complexity</strong>: Build understanding layer by layer</li>
+<li><strong>Retention Focus</strong>: Emphasize learning that sticks</li>
+</ol>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="current-features-a-proof-of-concept"><strong>Current Features: A Proof of Concept</strong><a href="https://block.github.io/goose/blog/2025/08/18/transforming-ai-assistance-goose-mentor-mode#current-features-a-proof-of-concept" class="hash-link" aria-label="Direct link to current-features-a-proof-of-concept" title="Direct link to current-features-a-proof-of-concept">​</a></h2>
+<p>The core of how I envision the system functioning is by configuring some basic assistance levels:</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="-four-adaptive-assistance-levels"><strong>🎯 Four Adaptive Assistance Levels</strong><a href="https://block.github.io/goose/blog/2025/08/18/transforming-ai-assistance-goose-mentor-mode#-four-adaptive-assistance-levels" class="hash-link" aria-label="Direct link to -four-adaptive-assistance-levels" title="Direct link to -four-adaptive-assistance-levels">​</a></h3>
+<p>Think of the Assistance Modes as a dial that can balance the speed of learning against the speed of delivery.</p>
+<p><strong>GUIDED Mode</strong> - For deep learning through discovery</p>
+<ul>
+<li>Uses Socratic questioning to guide users to solutions</li>
+<li>Perfect for new concepts and skill building</li>
+<li><em>Example</em>: "What do you think JWT stands for? How might stateless authentication work?"</li>
+</ul>
+<p><strong>EXPLAINED Mode</strong> - Education with implementation</p>
+<ul>
+<li>Provides detailed explanations alongside working code</li>
+<li>Ideal for time-sensitive tasks with learning value</li>
+<li><em>Example</em>: "Here's how JWT works... [detailed explanation] + working code"</li>
+</ul>
+<p><strong>ASSISTED Mode</strong> - Quick help with learning context</p>
+<ul>
+<li>Direct assistance with educational insights</li>
+<li>Best for experienced developers needing quick help</li>
+<li><em>Example</em>: "Use this JWT library. Key security considerations: [brief points]"</li>
+</ul>
+<p><strong>AUTOMATED Mode</strong> - Efficient task completion</p>
+<ul>
+<li>Direct solutions without educational overhead</li>
+<li>For production pressure and repeated tasks</li>
+<li><em>Example</em>: "Here's the complete JWT implementation."</li>
+</ul>
+<h3></h3>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="-learning-detection"><strong>🧠 Learning Detection</strong><a href="https://block.github.io/goose/blog/2025/08/18/transforming-ai-assistance-goose-mentor-mode#-learning-detection" class="hash-link" aria-label="Direct link to -learning-detection" title="Direct link to -learning-detection">​</a></h3>
+<p>Right now the system is in the PoC phase so I’m only using keyword checks for learning detection. I’m experimenting with semantic analysis to see if I can ‘intelligently’ do this, but that may prove overkill, or even bloat and slow down the system.</p>
+<ul>
+<li><strong>19 Technical Concepts</strong> across 7 categories (security, database, API, architecture, testing, performance, DevOps)</li>
+<li><strong>6 Intent Categories</strong> for understanding request types (help requests, learning inquiries, debugging, etc.)</li>
+<li><strong>Context-Aware Analysis</strong> that distinguishes between "authentication error" vs "authentication best practices"</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="-comprehensive-progress-tracking"><strong>📊 Comprehensive Progress Tracking</strong><a href="https://block.github.io/goose/blog/2025/08/18/transforming-ai-assistance-goose-mentor-mode#-comprehensive-progress-tracking" class="hash-link" aria-label="Direct link to -comprehensive-progress-tracking" title="Direct link to -comprehensive-progress-tracking">​</a></h3>
+<p>Ideally I can have long running progress tracking for each individual user that tracks over time. Right now this tracking is basic and only based on the current concept being ‘taught’.<br>
+<!-- -->Some features of a fully implemented solution may include:</p>
+<ul>
+<li>Learning velocity tracking across concepts</li>
+<li>Skill gap identification based on request patterns</li>
+<li>Personalized learning path recommendations</li>
+<li>Knowledge retention analysis over time</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="️-developer-centric-configuration"><strong>⚙️ Developer-Centric Configuration</strong><a href="https://block.github.io/goose/blog/2025/08/18/transforming-ai-assistance-goose-mentor-mode#%EF%B8%8F-developer-centric-configuration" class="hash-link" aria-label="Direct link to ️-developer-centric-configuration" title="Direct link to ️-developer-centric-configuration">​</a></h3>
+<p>Easy setup through environment variables that integrate seamlessly with Goose Desktop:</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">DEFAULT_ASSISTANCE_LEVEL=guided          # Customize default behavior</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">LEARNING_PHASE=skill_building           # Set learning context</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">TIMELINE_PRESSURE=low                   # Adjust for project pressure</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">ENABLE_VALIDATION_CHECKPOINTS=true     # Control learning validation</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">DEVELOPER_EXPERIENCE_MONTHS=6           # Personalize experience</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="-1"><a href="https://block.github.io/goose/blog/2025/08/18/transforming-ai-assistance-goose-mentor-mode#-1" class="hash-link" aria-label="Direct link to -1" title="Direct link to -1">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="future-features-the-roadmap-ahead"><strong>Future Features: The Roadmap Ahead</strong><a href="https://block.github.io/goose/blog/2025/08/18/transforming-ai-assistance-goose-mentor-mode#future-features-the-roadmap-ahead" class="hash-link" aria-label="Direct link to future-features-the-roadmap-ahead" title="Direct link to future-features-the-roadmap-ahead">​</a></h2>
+<p>This being just a Proof of Concept it is very early days for the extension. I currently have a couple of my junior developers testing it out and providing feedback. Below is a list of ideas I’ve put together with help from Goose on what a future roadmap may look like.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="phase-1-enhanced-intelligence-in-progress"><strong>Phase 1: Enhanced Intelligence (In Progress)</strong><a href="https://block.github.io/goose/blog/2025/08/18/transforming-ai-assistance-goose-mentor-mode#phase-1-enhanced-intelligence-in-progress" class="hash-link" aria-label="Direct link to phase-1-enhanced-intelligence-in-progress" title="Direct link to phase-1-enhanced-intelligence-in-progress">​</a></h3>
+<ul>
+<li><strong>Multi-Signal Learning Detection</strong>: Combining semantic analysis, intent classification, and behavioral patterns</li>
+<li><strong>Adaptive Thresholds</strong>: Self-tuning confidence scoring based on user feedback</li>
+<li><strong>Context-Aware Mentoring</strong>: Decision engine that factors in user profile, project pressure, and learning phase</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="phase-2-external-learning-integration"><strong>Phase 2: External Learning Integration</strong><a href="https://block.github.io/goose/blog/2025/08/18/transforming-ai-assistance-goose-mentor-mode#phase-2-external-learning-integration" class="hash-link" aria-label="Direct link to phase-2-external-learning-integration" title="Direct link to phase-2-external-learning-integration">​</a></h3>
+<ul>
+<li><strong>Contextual Documentation Links</strong>: Automatic linking to relevant documentation both online or possibly backed by Enterprise systems such as Confluence.</li>
+<li><strong>Tutorial Recommendations</strong>: Personalized learning path suggestions</li>
+<li><strong>Best Practice Libraries</strong>: Code pattern examples and educational resources</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="phase-3-advanced-analytics"><strong>Phase 3: Advanced Analytics</strong><a href="https://block.github.io/goose/blog/2025/08/18/transforming-ai-assistance-goose-mentor-mode#phase-3-advanced-analytics" class="hash-link" aria-label="Direct link to phase-3-advanced-analytics" title="Direct link to phase-3-advanced-analytics">​</a></h3>
+<ul>
+<li><strong>Learning Velocity Tracking</strong>: Measure skill development across concepts</li>
+<li><strong>Team Insights</strong>: Collaborative learning opportunities and knowledge sharing</li>
+<li><strong>Skill Gap Analysis</strong>: Identify areas for focused learning</li>
+<li><strong>Dynamic Assistance Adjustment</strong>: Real-time adaptation based on learning progress</li>
+</ul>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="phase-4-team-coordination"><strong>Phase 4: Team Coordination</strong><a href="https://block.github.io/goose/blog/2025/08/18/transforming-ai-assistance-goose-mentor-mode#phase-4-team-coordination" class="hash-link" aria-label="Direct link to phase-4-team-coordination" title="Direct link to phase-4-team-coordination">​</a></h3>
+<ul>
+<li><strong>Multi-Developer Insights</strong>: Team knowledge mapping and skill distribution</li>
+<li><strong>Collaborative Learning</strong>: Peer learning recommendations</li>
+<li><strong>Knowledge Sharing</strong>: Team-wide pattern recognition and best practices</li>
+<li><strong>Privacy-Preserving Analytics</strong>: Aggregated insights with individual privacy protection</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="community-impact"><strong>Community Impact</strong><a href="https://block.github.io/goose/blog/2025/08/18/transforming-ai-assistance-goose-mentor-mode#community-impact" class="hash-link" aria-label="Direct link to community-impact" title="Direct link to community-impact">​</a></h2>
+<p>Although I did come up with the idea while at work, I quickly decided this would be a personal project outside of my organisation. This feels like something that should ideally be open source and open for wider adoption if it has merit. Right now the source code is available on github, as well as on PyPI for download.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="the-bigger-picture-changing-how-we-think-about-ai"><strong>The Bigger Picture: Changing How We Think About AI</strong><a href="https://block.github.io/goose/blog/2025/08/18/transforming-ai-assistance-goose-mentor-mode#the-bigger-picture-changing-how-we-think-about-ai" class="hash-link" aria-label="Direct link to the-bigger-picture-changing-how-we-think-about-ai" title="Direct link to the-bigger-picture-changing-how-we-think-about-ai">​</a></h2>
+<p>Goose Mentor Mode represents more than just a new extension—it's a proof of concept for a fundamentally different relationship between developers and AI. Instead of creating dependency, it builds capability. Instead of providing fish, it teaches fishing.</p>
+<p>The early results suggest this approach resonates with developers who want to grow, not just get things done. As AI becomes more prevalent in software development, tools like Goose Mentor Mode point toward a future where AI enhances human capability rather than replacing human thinking.</p>
+<hr>
+<p><em>Goose Mentor Mode is open source and available on <a href="https://pypi.org/project/goose-mentor-mode/" target="_blank" rel="noopener noreferrer">PyPI</a>. Join the conversation on <a href="https://github.com/joeeuston-dev/goose-mentor-mode" target="_blank" rel="noopener noreferrer">GitHub</a> and help shape the future of educational AI assistance.</em></p>
+]]></content>
+        <author>
+            <name>Joe Euston</name>
+        </author>
+    </entry>
+    <entry>
         <title type="html"><![CDATA[The AI Skeptic’s Guide to Context Windows]]></title>
         <id>https://block.github.io/goose/blog/2025/08/18/understanding-context-windows</id>
         <link href="https://block.github.io/goose/blog/2025/08/18/understanding-context-windows"/>
@@ -1902,46 +2019,6 @@ The whole point was to offload the tedious stuff so we could focus on the work t
         </author>
         <author>
             <name>Glenn Edwards</name>
-        </author>
-    </entry>
-    <entry>
-        <title type="html"><![CDATA[3 Prompts to Test for Agent Readiness]]></title>
-        <id>https://block.github.io/goose/blog/2025/05/22/llm-agent-readiness</id>
-        <link href="https://block.github.io/goose/blog/2025/05/22/llm-agent-readiness"/>
-        <updated>2025-05-22T00:00:00.000Z</updated>
-        <summary type="html"><![CDATA[A series of prompts to test an LLM's capabilities to be used with AI agents]]></summary>
-        <content type="html"><![CDATA[<p><img decoding="async" loading="lazy" alt="blog cover" src="https://block.github.io/goose/assets/images/llm-agent-test-86ce2379ce4dde48ae1448f0f9d75c1f.png" width="1200" height="630" class="img_ev3q"></p>
-<p><a href="https://block.github.io/goose/">Goose</a> is LLM-agnostic, meaning you can plug in the model of your choice. However, not every LLM is suitable to work with agents. Some may be great at <em>answering</em> things, but not actually <em>doing</em> things. If you're considering which model to use with an agent, these 3 prompts can quickly give you a sense of the model's capabilities.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="tool-calling">Tool Calling<a href="https://block.github.io/goose/blog/2025/05/22/llm-agent-readiness#tool-calling" class="hash-link" aria-label="Direct link to Tool Calling" title="Direct link to Tool Calling">​</a></h2>
-<p>This initial prompt tests for tool calling capabilities. Its ask is forceful to reduce a shy model's hesitation to make function calls.</p>
-<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">Create a file at ~/workspace/loose-goose/tool-test.txt with the contents "Hello World".</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Use the write tool. Do not ask for confirmation. Just do it.</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
-<p>✅ tool-test.txt was created</p>
-<p>❌ the agent responds by telling you the code to write yourself</p>
-<p><strong>Example of successful response</strong></p>
-<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">─── text_editor | developer ──────────────────────────</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">path: ~/workspace/loose-goose/tool-test.txt</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">command: write</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">file_text: Hello World</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">The file has been created successfully with the following content:</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">"Hello World"</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
-<p>The model emits a structured tool call in JSON.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="memory-awareness">Memory Awareness<a href="https://block.github.io/goose/blog/2025/05/22/llm-agent-readiness#memory-awareness" class="hash-link" aria-label="Direct link to Memory Awareness" title="Direct link to Memory Awareness">​</a></h2>
-<p>Next, test whether the agent can recall what it’s doing. It's critical that the model can remember previous actions and continues logically.</p>
-<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">Now append a new line that says: "I know what I'm doing"</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
-<p>✅ tool-test.txt was updated</p>
-<p>❌ the agent responds by asking you which file</p>
-<p><strong>Example of successful response</strong></p>
-<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">─── text_editor | developer ──────────────────────────</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">path: ~/workspace/loose-goose/tool-test.txt</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">command: write</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">file_text: Hello World</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">I know what I'm doing</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
-<p>The agent appends the new line directly to the same file, without needing a reminder of the path.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="file-system-reasoning">File system reasoning<a href="https://block.github.io/goose/blog/2025/05/22/llm-agent-readiness#file-system-reasoning" class="hash-link" aria-label="Direct link to File system reasoning" title="Direct link to File system reasoning">​</a></h2>
-<p>The last prompt tests whether the model can infer file locations by resolving relative and absolute paths based on context. You don't want the agent deleting important directories because the model is hallucinating about where it is.</p>
-<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">What is the current content of tool-test.txt?</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
-<p>✅ content of tool-test.txt</p>
-<p>❌ confusion about where to find the file</p>
-<p><strong>Example of successful response</strong></p>
-<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">─── text_editor | developer ──────────────────────────</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">path: ~/workspace/loose-goose/tool-test.txt</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">command: read</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">Hello World</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">I know what I'm doing</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
-<p>The model correctly infers the path from previous context and uses the read tool to get the current contents.</p>
-<hr>
-<p>If a model passes this multi-turn prompt sequence, it's safe to assume that it is suitable for agentic AI.</p>
-]]></content>
-        <author>
-            <name>Angie Jones</name>
-            <uri>https://angiejones.tech</uri>
         </author>
     </entry>
 </feed>
