@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://www.googletagmanager.com">
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZS5D6SB4ZJ"></script>
 <script>function gtag(){dataLayer.push(arguments)}window.dataLayer=window.dataLayer||[],gtag("js",new Date),gtag("config","G-ZS5D6SB4ZJ",{anonymize_ip:!0})</script><link rel="stylesheet" href="/goose/assets/css/styles.a8779ca4.css">
-<script src="/goose/assets/js/runtime~main.ecdc8e93.js" defer="defer"></script>
+<script src="/goose/assets/js/runtime~main.e33500c6.js" defer="defer"></script>
 <script src="/goose/assets/js/main.0117508b.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -19,7 +19,7 @@
 <p>To begin, you will need to modify the <code>Dockerfile</code> and <code>docker-compose.yml</code> files to suit your requirements. Some changes you might consider include:</p>
 <ul>
 <li>
-<p><strong>Required:</strong> Setting your API key, provider, and model in the <code>docker-compose.yml</code> file as environment variables because the keyring settings do not work on Ubuntu in Docker. This example uses the Google API key and its corresponding settings, but you can <a href="https://github.com/block/goose/blob/main/ui/desktop/src/components/settings/models/hardcoded_stuff.tsx" target="_blank" rel="noopener noreferrer">find your own list of API keys</a> and the <a href="https://github.com/block/goose/blob/main/ui/desktop/src/components/settings/models/hardcoded_stuff.tsx" target="_blank" rel="noopener noreferrer">corresponding settings</a>.</p>
+<p><strong>Required:</strong> Setting your API key, provider, and model in the <code>docker-compose.yml</code> file as environment variables because the keyring settings do not work on Ubuntu in Docker. This example uses the Google API key and its corresponding settings, but you can <a href="https://github.com/block/goose/blob/main/ui/desktop/src/components/settings/providers/ProviderRegistry.tsx" target="_blank" rel="noopener noreferrer">find your own list of supported providers and their API keys</a> in the provider registry.</p>
 </li>
 <li>
 <p><strong>Optional:</strong> Changing the base image to a different Linux distribution in the <code>Dockerfile</code>. This example uses Ubuntu, but you can switch to another distribution such as CentOS, Fedora, or Alpine.</p>
