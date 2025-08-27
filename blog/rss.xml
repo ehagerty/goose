@@ -4,15 +4,72 @@
         <title>codename goose Blog</title>
         <link>https://block.github.io/goose/blog</link>
         <description>codename goose Blog</description>
-        <lastBuildDate>Mon, 25 Aug 2025 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Thu, 28 Aug 2025 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
         <item>
+            <title><![CDATA[When AI Becomes Your New Team Member: The Story of Goose Janitor]]></title>
+            <link>https://block.github.io/goose/blog/2025/08/28/ai-teammate</link>
+            <guid>https://block.github.io/goose/blog/2025/08/28/ai-teammate</guid>
+            <pubDate>Thu, 28 Aug 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[How an engineering team is trialling autonomous AI-powered technical debt cleanup]]></description>
+            <content:encoded><![CDATA[<p><img decoding="async" loading="lazy" alt="blog banner" src="https://block.github.io/goose/assets/images/goose-janitor-129889884d9265d001fe12cbfde03d57.png" width="1200" height="630" class="img_ev3q"></p>
+<p>Over the years, Block's iOS engineers have felt the pain of technical debt accumulating. Feature flags are a specific example of this. Even when successfully rolled out, they tend to linger in the codebase, each one a small weight slowing down development.</p>
+<p>In the early stages of 2025, with a renewed focus on developer acceleration, the Foundation iOS team decided to organize 'Feature Flag Removal Month' - an opportunity for teams in the large iOS monorepo to come together and delete <em>possibly hundreds of thousands of lines of dead code</em>.</p>
+<p>With the serendipitous launch of Goose recipes around the same time, the team wondered could a dedicated recipe aid this effort? <a href="https://www.linkedin.com/in/gemmakbarlow/" target="_blank" rel="noopener noreferrer">Gemma Barlow</a>, a newer iOS engineer on the team, wanted to find out.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="phase-1-making-knowledge-ai-accessible">Phase 1: Making Knowledge AI-Accessible<a href="https://block.github.io/goose/blog/2025/08/28/ai-teammate#phase-1-making-knowledge-ai-accessible" class="hash-link" aria-label="Direct link to Phase 1: Making Knowledge AI-Accessible" title="Direct link to Phase 1: Making Knowledge AI-Accessible">​</a></h2>
+<p>Gemma's first move was to utilize an existing system of <code>.mdc</code>, <code>.goosehints</code> and other symlinked context documents to capture how to safely remove feature flags from the repository.</p>
+<p>She added documentation that allows AI agents to glean enough context to perform their removal work accurately.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="phase-2-validation-across-generations">Phase 2: Validation Across Generations<a href="https://block.github.io/goose/blog/2025/08/28/ai-teammate#phase-2-validation-across-generations" class="hash-link" aria-label="Direct link to Phase 2: Validation Across Generations" title="Direct link to Phase 2: Validation Across Generations">​</a></h2>
+<p>Given AI documentation is designed to work with a variety of tools in use at Block, further iteration and validation was needed. Several weeks of tests and trials later, it was confirmed the approach was accurate enough to be useful <em>and</em> it could handle the three different generations of feature flag implementations that had accumulated:</p>
+<ul>
+<li>super legacy flags the team used way back yonder</li>
+<li>legacy flags that were newer but are now old</li>
+<li>current implementation of feature flags</li>
+</ul>
+<p>This documentation alone would help teams clean up faster. But now, AI could also understand and safely navigate the complexity of real world legacy systems in most scenarios, a win for developer velocity! 🎉</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="phase-3-building-an-ai-team-member">Phase 3: Building an AI Team Member<a href="https://block.github.io/goose/blog/2025/08/28/ai-teammate#phase-3-building-an-ai-team-member" class="hash-link" aria-label="Direct link to Phase 3: Building an AI Team Member" title="Direct link to Phase 3: Building an AI Team Member">​</a></h2>
+<p>This was great progress. Gemma could have stopped here.</p>
+<p>But instead, she utilized Goose recipes to create <strong>Goose Janitor</strong>.</p>
+<p>Goose Janitor acts as new AI team member whose responsibility is to tidy up the code after we're done experimenting. It was heavily inspired by existing <a href="https://block.github.io/goose/recipes/detail/?id=clean-up-feature-flag">Goose recipes</a> and internal discussions and experimentation occurring elsewhere in Block. Here's how it is run:</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_biex"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain">goose run \</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">--recipe .goose/recipes/goose-janitor-flag-removal.yaml \</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">--params feature_flag_key=log-observer-is-enabled \</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">--params variant_to_remain=true \</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">--params create_pr=false</span><br></span></code></pre><div class="buttonGroup__atx"><button type="button" aria-label="Copy code to clipboard" title="Copy" class="clean-btn"><span class="copyButtonIcons_eSgA" aria-hidden="true"><svg viewBox="0 0 24 24" class="copyButtonIcon_y97N"><path fill="currentColor" d="M19,21H8V7H19M19,5H8A2,2 0 0,0 6,7V21A2,2 0 0,0 8,23H19A2,2 0 0,0 21,21V7A2,2 0 0,0 19,5M16,1H4A2,2 0 0,0 2,3V17H4V3H16V1Z"></path></svg><svg viewBox="0 0 24 24" class="copyButtonSuccessIcon_LjdS"><path fill="currentColor" d="M21,7L9,19L3.5,13.5L4.91,12.09L9,16.17L19.59,5.59L21,7Z"></path></svg></span></button></div></div></div>
+<p>The recipe:</p>
+<ul>
+<li>Runs completely autonomously (no human intervention needed)</li>
+<li>Handles different flag implementations, ranging in complexity</li>
+<li>Attempts refactoring for outdated code paths</li>
+<li>Can automatically create draft pull requests, via the Github CLI</li>
+<li>Integrates with <a href="https://github.com/block/xcode-index-mcp" target="_blank" rel="noopener noreferrer">Xcode Index MCP</a> for deep iOS project understanding</li>
+<li>Plans, implements, builds and tests locally to improve the accuracy of the flag removal result</li>
+</ul>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="the-bigger-picture-ai-first-development">The Bigger Picture: AI-First Development<a href="https://block.github.io/goose/blog/2025/08/28/ai-teammate#the-bigger-picture-ai-first-development" class="hash-link" aria-label="Direct link to The Bigger Picture: AI-First Development" title="Direct link to The Bigger Picture: AI-First Development">​</a></h2>
+<p>Recipes like Goose Janitor represent a fundamental shift in how we think about AI in software development. They can be deployed to:</p>
+<ul>
+<li>Understand complex legacy codebases</li>
+<li>Make safe refactoring decisions</li>
+<li>Integrate seamlessly with existing development workflows</li>
+<li>Provide developer velocity improvements</li>
+<li>Scale across large codebases</li>
+</ul>
+<p>Teams at Block are confident that Goose Janitor will be of assistance in production scale cleanup work.</p>
+<p>This is exactly the kind of work AI should handle: tedious, repetitive, but requiring deep codebase knowledge. By automating portions of their work, developers can focus on what they do best, which is building new features and solving novel problems while AI keeps the codebase clean and maintainable.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="the-ai-first-mindset">The AI-First Mindset<a href="https://block.github.io/goose/blog/2025/08/28/ai-teammate#the-ai-first-mindset" class="hash-link" aria-label="Direct link to The AI-First Mindset" title="Direct link to The AI-First Mindset">​</a></h2>
+<p>This story illustrates what an AI-first approach to legacy codebases looks like in practice.</p>
+<p>Start by making tribal knowledge AI-accessible. Test and validate that AI can actually handle the complexity with enough accuracy to prove useful. Even if manual intervention is required for complex cases, a first pass performed by AI can be a useful boost to productivity. Build automation that scales across teams and focus human energy on high value creative work.</p>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="whats-next">What's Next?<a href="https://block.github.io/goose/blog/2025/08/28/ai-teammate#whats-next" class="hash-link" aria-label="Direct link to What's Next?" title="Direct link to What's Next?">​</a></h2>
+<p>The success of Goose Janitor opens up fascinating possibilities. What other forms of technical debt could benefit from this approach? What other "AI team members" could we build to handle routine but knowledge intensive work?</p>
+<p>As we move toward an AI-first future, stories like Gemma's show us the path. Not just using AI tools, but thinking systematically about how to make our codebases and processes AI-ready.</p>
+<p>The future of software development is mixed teams where AI agents are autonomous contributors, handling the maintenance work that keeps our systems healthy while humans focus on building the future.</p>
+<hr>
+<p>Want the tweak the base recipe for your own needs? Check out <a href="https://block.github.io/goose/recipes/detail/?id=clean-up-feature-flag">Clean up feature flag</a> in our Recipe Cookbook!</p>
+]]></content:encoded>
+        </item>
+        <item>
             <title><![CDATA[Your First Goose Experience Is On Us]]></title>
-            <link>https://block.github.io/goose/blog/2025/08/25/get-started-for-free-with-tetrate</link>
-            <guid>https://block.github.io/goose/blog/2025/08/25/get-started-for-free-with-tetrate</guid>
-            <pubDate>Mon, 25 Aug 2025 00:00:00 GMT</pubDate>
+            <link>https://block.github.io/goose/blog/2025/08/27/get-started-for-free-with-tetrate</link>
+            <guid>https://block.github.io/goose/blog/2025/08/27/get-started-for-free-with-tetrate</guid>
+            <pubDate>Wed, 27 Aug 2025 00:00:00 GMT</pubDate>
             <description><![CDATA[New Goose users receive $10 in Tetrate Agent Router credits for instant access to multiple models including GPT-5 and Sonnet-4.]]></description>
             <content:encoded><![CDATA[<p><img decoding="async" loading="lazy" src="https://block.github.io/goose/assets/images/tetrate-header-9e2afbf5d1ce961d5f25547a7439c65f.png" width="1600" height="840" class="img_ev3q"></p>
 <p>You shouldn’t need a credit card to vibe code with Goose. While Goose is completely free to use, the reality is that most performant LLMs aren't. You want to experience Goose in action without breaking the bank or jumping through hoops. We've been thinking about how to make that first step easier for newcomers to Goose.</p>
@@ -26,15 +83,15 @@
 <li><strong>A unified model layer</strong> powered by Tetrate</li>
 <li><strong>Stable routing</strong> built on <a href="https://www.envoyproxy.io/" target="_blank" rel="noopener noreferrer">Envoy</a>, an open source proxy for high-scale systems</li>
 </ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="tetrates-agent-router-service">Tetrate's Agent Router Service<a href="https://block.github.io/goose/blog/2025/08/25/get-started-for-free-with-tetrate#tetrates-agent-router-service" class="hash-link" aria-label="Direct link to Tetrate's Agent Router Service" title="Direct link to Tetrate's Agent Router Service">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="tetrates-agent-router-service">Tetrate's Agent Router Service<a href="https://block.github.io/goose/blog/2025/08/27/get-started-for-free-with-tetrate#tetrates-agent-router-service" class="hash-link" aria-label="Direct link to Tetrate's Agent Router Service" title="Direct link to Tetrate's Agent Router Service">​</a></h2>
 <p>Tetrate's Agent Router Service provides unified access to a comprehensive collection of AI models including open source options to cutting-edge frontier models like GPT-5, Sonnet-4, and Grok-4.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="from-cloud-infrastructure-to-ai-model-routing">From Cloud Infrastructure to AI Model Routing<a href="https://block.github.io/goose/blog/2025/08/25/get-started-for-free-with-tetrate#from-cloud-infrastructure-to-ai-model-routing" class="hash-link" aria-label="Direct link to From Cloud Infrastructure to AI Model Routing" title="Direct link to From Cloud Infrastructure to AI Model Routing">​</a></h3>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="from-cloud-infrastructure-to-ai-model-routing">From Cloud Infrastructure to AI Model Routing<a href="https://block.github.io/goose/blog/2025/08/27/get-started-for-free-with-tetrate#from-cloud-infrastructure-to-ai-model-routing" class="hash-link" aria-label="Direct link to From Cloud Infrastructure to AI Model Routing" title="Direct link to From Cloud Infrastructure to AI Model Routing">​</a></h3>
 <p>Tetrate brings years of expertise in routing and infrastructure to the AI space. As major contributors to open source projects like Istio and Envoy, they understand how to build reliable, scalable routing systems. Now they're applying this same expertise to LLM traffic management.</p>
 <p>LLM requests are inherently stateless, making them ideal for intelligent routing across multiple providers and models. This allows you to optimize for cost, speed, availability, or quality, or even use multiple models to cross-check results. Terminology in this space is still settling. Goose refers to Tetrate as a “provider” for consistency, though under the hood it is a router service that connects to other providers. That layer abstracts away model selection, auth, and host config, keeping your setup clean.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="why-this-collaboration-matters">Why This Collaboration Matters<a href="https://block.github.io/goose/blog/2025/08/25/get-started-for-free-with-tetrate#why-this-collaboration-matters" class="hash-link" aria-label="Direct link to Why This Collaboration Matters" title="Direct link to Why This Collaboration Matters">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="why-this-collaboration-matters">Why This Collaboration Matters<a href="https://block.github.io/goose/blog/2025/08/27/get-started-for-free-with-tetrate#why-this-collaboration-matters" class="hash-link" aria-label="Direct link to Why This Collaboration Matters" title="Direct link to Why This Collaboration Matters">​</a></h2>
 <p>Our goal is simple: make Goose accessible to everyone, immediately. That means removing barriers to getting started. Tetrate's generous credit offering and seamless integration help us achieve exactly that.</p>
 <p>It also reflects Tetrate's ongoing commitment to open source and making AI development more accessible to developers worldwide.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="explore-the-full-model-catalog">Explore the Full Model Catalog<a href="https://block.github.io/goose/blog/2025/08/25/get-started-for-free-with-tetrate#explore-the-full-model-catalog" class="hash-link" aria-label="Direct link to Explore the Full Model Catalog" title="Direct link to Explore the Full Model Catalog">​</a></h2>
+<h2 class="anchor anchorWithStickyNavbar_LWe7" id="explore-the-full-model-catalog">Explore the Full Model Catalog<a href="https://block.github.io/goose/blog/2025/08/27/get-started-for-free-with-tetrate#explore-the-full-model-catalog" class="hash-link" aria-label="Direct link to Explore the Full Model Catalog" title="Direct link to Explore the Full Model Catalog">​</a></h2>
 <p>While Goose auto-configures with Sonnet-4 by default, you have access to Tetrate's entire model catalog through the interface:</p>
 <p><img decoding="async" loading="lazy" alt="providers" src="https://block.github.io/goose/assets/images/providers-6844e6c8b32483ebd1ad41b09d121274.png" width="596" height="381" class="img_ev3q">
 <img decoding="async" loading="lazy" alt="gpt5" src="https://block.github.io/goose/assets/images/gpt5-d26792af57990f0add1edec491b11827.png" width="933" height="717" class="img_ev3q"></p>
@@ -1801,74 +1858,6 @@ The whole point was to offload the tedious stuff so we could focus on the work t
 <p><em>Questions? Join our <a href="https://github.com/block/goose" target="_blank" rel="noopener noreferrer">GitHub discussions</a> or <a href="https://discord.gg/block-opensource" target="_blank" rel="noopener noreferrer">Discord</a>. Learn more about Dagger at <a href="https://dagger.io/" target="_blank" rel="noopener noreferrer">dagger.io</a>.</em></p>
 <!-- -->
 <div style="width:100%;max-width:800px;margin:0 auto"><iframe width="560" height="315" src="https://www.youtube.com/embed/pGce9T4E5Yw?si=1D3Aoa6oiFgJ0E5w" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen=""></iframe></div>
-]]></content:encoded>
-        </item>
-        <item>
-            <title><![CDATA[Why I Used Goose to Build a Chaotic Emotion Detection App]]></title>
-            <link>https://block.github.io/goose/blog/2025/06/17/goose-emotion-detection-app</link>
-            <guid>https://block.github.io/goose/blog/2025/06/17/goose-emotion-detection-app</guid>
-            <pubDate>Tue, 17 Jun 2025 00:00:00 GMT</pubDate>
-            <description><![CDATA[The joys of experimenting with computer vision using Goose, an MCP host]]></description>
-            <content:encoded><![CDATA[<p><img decoding="async" loading="lazy" alt="blog cover" src="https://block.github.io/goose/assets/images/emotion-powered-ui-83b0e779f22a3a060eef7bb29e04090d.png" width="2240" height="1260" class="img_ev3q"></p>
-<p>Developers deserve to have fun. There was a time when the internet felt magical. I remember going to the library just to create a character on The Doll Palace. At home, I'd spend hours changing fonts with WordArt. But as I grew up, the industry did too. We've shifted away from marquees and glittery cursors. Grown-up me started using ones and zeros to build reliable systems for insurance, banking, and healthcare companies. There's pride in that, but it's harder to justify doing something just because it's fun.</p>
-<p>That's why I tapped into my inner child and used <a href="https://block.github.io/goose/">Goose</a> to <a href="https://chaotic-emotion-detector-production.up.railway.app/" target="_blank" rel="noopener noreferrer">build a UI that reacts to users' emotions</a>.</p>
-<p>Sometimes I want to write every line of code. Other times, I just want a quick dopamine hit from seeing my idea go from vision to execution in minutes. Other developers may relate to this feeling, and it's partly why AI agents and vibe coding have become so popular. They've rekindled that sense of playful experimentation that motivates our minds to solve problems more creatively.</p>
-<p>In an <a href="https://www.oreilly.com/radar/takeaways-from-coding-with-ai/" target="_blank" rel="noopener noreferrer">article</a> by Tim O’Reilly on AI-assisted coding, Kent Beck and Nikola Balic share their enthusiasm:</p>
-<blockquote>
-<p>"This is the most fun I've ever had." - Beck</p>
-</blockquote>
-<blockquote>
-<p>"It brought back the joy of programming." - Balic</p>
-</blockquote>
-<p>Playing with code and experimenting with technology motivates our minds to solve problems more creatively.</p>
-<p>To celebrate the return of joyful programming, I started a livestream series called <a href="https://www.youtube.com/watch?v=wS5-4hXcnL4&amp;list=PLyMFt_U2IX4v-yCUa11zgRGDgJbUUWKan" target="_blank" rel="noopener noreferrer"><strong>The Great Goose Off</strong></a>, where two people compete to prompt Goose, an open source AI agent, to create the silliest, most chaotic apps possible.</p>
-<p>Participants face challenges like building:</p>
-<ul>
-<li>A login form you can't log into</li>
-<li>Error messages that are sassy</li>
-<li>Buttons that run away from your cursor</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="my-strategy">My Strategy<a href="https://block.github.io/goose/blog/2025/06/17/goose-emotion-detection-app#my-strategy" class="hash-link" aria-label="Direct link to My Strategy" title="Direct link to My Strategy">​</a></h2>
-<p>Hosting The Great Goose Off gave me a new perspective on Goose. It is good at writing code, but it is even better at being silly. That inspired me to build a computer vision app that not only detects emotion but responds to it. I used Goose as my creative partner to shape how the interface would behave.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="let-the-agent-lead">Let the Agent Lead<a href="https://block.github.io/goose/blog/2025/06/17/goose-emotion-detection-app#let-the-agent-lead" class="hash-link" aria-label="Direct link to Let the Agent Lead" title="Direct link to Let the Agent Lead">​</a></h3>
-<p>I observed that participants (of The Great Goose Off) who were not engineers often created the most imaginative applications. They gave Goose room to interpret prompts without narrowing its scope too early. This resulted in outputs that felt fresh and unpredictable. I took a similar approach. I gave high-level instructions and allowed the agent to explore how to implement them.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="choosing-a-performant-model">Choosing a Performant Model<a href="https://block.github.io/goose/blog/2025/06/17/goose-emotion-detection-app#choosing-a-performant-model" class="hash-link" aria-label="Direct link to Choosing a Performant Model" title="Direct link to Choosing a Performant Model">​</a></h3>
-<p>As my manager Angie Jones says, Claude Sonnet 4 was “born to code.” I chose it because it helps Goose pivot quickly when something breaks. It’s also great at documenting code and anticipating next steps. That came in handy when the face-api CDN failed to load. Goose immediately switched to downloading the models locally instead.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="prompt-chaining">Prompt Chaining<a href="https://block.github.io/goose/blog/2025/06/17/goose-emotion-detection-app#prompt-chaining" class="hash-link" aria-label="Direct link to Prompt Chaining" title="Direct link to Prompt Chaining">​</a></h3>
-<p>Instead of trying to build everything in one huge prompt like "Create a face detection app that uses webcam input to detect emotions and makes the UI react chaotically with color changes, screen shakes, and spinning elements," I broke the complex task down into smaller, sequential subtasks:</p>
-<ul>
-<li><strong>First prompt</strong>: "Create a webcam application in JavaScript"</li>
-<li><strong>Second prompt</strong>: "Enable a face detection mode using face-api.js"</li>
-<li><strong>Third prompt</strong>: "Enable an emotion detection mode"</li>
-<li><strong>Fourth prompt</strong>: "Can we add a 'Chaotic Mode' toggle to the app? When enabled, the UI should react in silly ways when an emotion is detected from the webcam. Some fun ideas for chaotic reactions (based on emotion changes):<!-- -->
-<ul>
-<li>Change the background color</li>
-<li>Randomly reposition or rotate buttons</li>
-<li>Add screen shake or CSS filters (like invert or hue-rotate)</li>
-<li>Trigger emoji overlays"</li>
-</ul>
-</li>
-</ul>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="version-control">Version Control<a href="https://block.github.io/goose/blog/2025/06/17/goose-emotion-detection-app#version-control" class="hash-link" aria-label="Direct link to Version Control" title="Direct link to Version Control">​</a></h3>
-<p>After each step, I committed changes to GitHub to enable easy rollbacks if needed. This iterative approach allowed me to test functionality incrementally and refine the application's behavior.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="the-result">The Result<a href="https://block.github.io/goose/blog/2025/06/17/goose-emotion-detection-app#the-result" class="hash-link" aria-label="Direct link to The Result" title="Direct link to The Result">​</a></h2>
-<p>In the end, Goose and I built a delightfully chaotic application where the interface responds to my facial expressions. For example:</p>
-<ul>
-<li>If I make an angry face, the screen turns red and starts to shake</li>
-<li>If I smile, multiple colorful hues appear across the interface</li>
-<li>If I look disgusted, the entire layout spins around</li>
-</ul>
-<!-- -->
-<div style="width:100%;max-width:800px;margin:0 auto"><iframe width="560" height="315" src="https://www.youtube.com/embed/ieniCTqbnV0?autoplay=1&amp;mute=1&amp;loop=1&amp;playlist=ieniCTqbnV0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="its-okay-to-have-fun">It’s Okay to Have Fun<a href="https://block.github.io/goose/blog/2025/06/17/goose-emotion-detection-app#its-okay-to-have-fun" class="hash-link" aria-label="Direct link to It’s Okay to Have Fun" title="Direct link to It’s Okay to Have Fun">​</a></h2>
-<p>It's okay to not build for utility sometimes. In fact, our industry needs more delightful chaos. I believe that maintaining a sense of wonder and fun keeps us passionate about what we do.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="try-it-out">Try it Out<a href="https://block.github.io/goose/blog/2025/06/17/goose-emotion-detection-app#try-it-out" class="hash-link" aria-label="Direct link to Try it Out" title="Direct link to Try it Out">​</a></h2>
-<ul>
-<li>Use the <a href="https://chaotic-emotion-detector-production.up.railway.app/" target="_blank" rel="noopener noreferrer">app</a></li>
-<li>Fork the <a href="https://github.com/blackgirlbytes/chaotic-emotion-detector" target="_blank" rel="noopener noreferrer">GitHub Repository</a></li>
-<li>Use the <a href="goose://recipe?config=eyJpZCI6InVudGl0bGVkIiwibmFtZSI6IlVudGl0bGVkIFJlY2lwZSIsImRlc2NyaXB0aW9uIjoiTWFrZSB5b3VyIFVJIHJlYWN0IHRvIHlvdXIgZW1vdGlvbnMiLCJpbnN0cnVjdGlvbnMiOiJJIGhlbHAgYnVpbGQgaW50ZXJhY3RpdmUgd2ViIGFwcGxpY2F0aW9ucyB1c2luZyB2YW5pbGxhIEphdmFTY3JpcHQsIEhUTUwsIGFuZCBDU1MuIEkgY3JlYXRlIGNvbXBsZXRlLCBmdW5jdGlvbmFsIGFwcGxpY2F0aW9ucyB3aXRoIG1vZGVybiBVSSBkZXNpZ24sIHJlYWwtdGltZSBmZWF0dXJlcywgYW5kIGVuZ2FnaW5nIHVzZXIgaW50ZXJhY3Rpb25zLiBXaGVuIGJ1aWxkaW5nIHdlYmNhbSBvciBjYW1lcmEtYmFzZWQgYXBwbGljYXRpb25zLCBJIGludGVncmF0ZSBhZHZhbmNlZCBmZWF0dXJlcyBsaWtlIGZhY2UgZGV0ZWN0aW9uIHVzaW5nIEZhY2UtQVBJLmpzIGxpYnJhcnksIGVtb3Rpb24gcmVjb2duaXRpb24sIGFuZCBjcmVhdGl2ZSBVSSByZXNwb25zZXMuIEkgcHJvdmlkZSBhbGwgbmVjZXNzYXJ5IGZpbGVzIGluY2x1ZGluZyBIVE1MIHN0cnVjdHVyZSwgQ1NTIHN0eWxpbmcsIEphdmFTY3JpcHQgZnVuY3Rpb25hbGl0eSwgYW5kIGEgc2ltcGxlIE5vZGUuanMgc2VydmVyLiBJIGFsc28gZG93bmxvYWQgYW5kIHNlcnZlIHJlcXVpcmVkIG1vZGVsIGZpbGVzIGxvY2FsbHkgZm9yIGJldHRlciBwZXJmb3JtYW5jZSBhbmQgcmVsaWFiaWxpdHkuIFRoZSBhcHBsaWNhdGlvbnMgYXJlIGRlc2lnbmVkIHRvIGJlIHByaXZhY3ktZm9jdXNlZCB3aXRoIGxvY2FsIHN0b3JhZ2UgYW5kIHByb2Nlc3NpbmcuIiwiYWN0aXZpdGllcyI6WyJCdWlsZCB3ZWJjYW0gYXBwcyIsIkFkZCBmYWNlIGRldGVjdGlvbiIsIkNyZWF0ZSBlbW90aW9uIHJlY29nbml0aW9uIiwiRGVzaWduIGNoYW90aWMgVUkgZWZmZWN0cyIsIkltcGxlbWVudCBsb2NhbCBmaWxlIHNlcnZlcnMiXSwicHJvbXB0IjoiIiwidGl0bGUiOiJDaGFvdGljIEVtb3Rpb24gRGV0ZWN0b3IiLCJleHRlbnNpb25zIjpbXX0=" target="_blank" rel="noopener noreferrer">recipe</a> to build your own. Please note, that you must install <a href="https://block.github.io/goose/docs/getting-started/installation">Goose</a> to use the recipe.</li>
-</ul>
-<p>Happy experimenting!</p>
 ]]></content:encoded>
         </item>
     </channel>
