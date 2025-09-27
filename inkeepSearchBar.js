@@ -6,7 +6,7 @@
     inkeepSearchBarScript.crossOrigin = "anonymous";
     document.body.appendChild(inkeepSearchBarScript);
     inkeepSearchBarScript.addEventListener("load", function () {
-      const inkeepConfigSearchBar = {"baseSettings":{"apiKey":"","integrationId":"","organizationId":"","primaryBrandColor":"#1E1E1E"},"aiChatSettings":{"chatSubjectName":"goose","botAvatarSrcUrl":"","getHelpCallToActions":[{"name":"GitHub","url":"https://github.com/block/goose","icon":{"builtIn":"FaGithub"}}],"quickQuestions":["What is Goose?"]}};
+      const inkeepConfigSearchBar = {"baseSettings":{"apiKey":"","integrationId":"","organizationId":"","primaryBrandColor":"#1E1E1E"},"aiChatSettings":{"chatSubjectName":"goose","botAvatarSrcUrl":"","getHelpCallToActions":[{"name":"GitHub","url":"https://github.com/block/goose","icon":{"builtIn":"FaGithub"}}],"quickQuestions":["What is goose?"]}};
       (function listenerFunction({ inkeepConfig, componentType }) {
   if (!inkeepConfig) {
     throw new Error(
