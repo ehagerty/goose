@@ -4,10 +4,49 @@
         <title>goose Blog</title>
         <link>https://block.github.io/goose/blog</link>
         <description>goose Blog</description>
-        <lastBuildDate>Wed, 08 Oct 2025 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Tue, 14 Oct 2025 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
+        <item>
+            <title><![CDATA[Designing AI for Users, Not Just LLMs]]></title>
+            <link>https://block.github.io/goose/blog/2025/10/14/designing-ai-for-humans</link>
+            <guid>https://block.github.io/goose/blog/2025/10/14/designing-ai-for-humans</guid>
+            <pubDate>Tue, 14 Oct 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[Building intent-based AI experiences with MCP-UI.]]></description>
+            <content:encoded><![CDATA[<p><img decoding="async" loading="lazy" alt="Designing AI For Users" src="https://block.github.io/goose/assets/images/design-ai-de5d0af69d8d21111dd271624ac7cab3.png" width="2240" height="1260" class="img_ev3q"></p>
+<p>My mom was doing her usual Sunday ritual she had her pen, paper, calculator, and a pile of receipts. I’ve tried to get her to use every budgeting app out there, but she’s old school and always says the same thing:</p>
+<blockquote>
+<p>“They’re all too complicated.”</p>
+</blockquote>
+<p>Last month, halfway through crunching numbers, she sighed and said,</p>
+<blockquote>
+<p>“I just wish I could see where my money’s going.”</p>
+</blockquote>
+<p>So I opened <a href="http://block.github.io/goose/docs/quickstart" target="_blank" rel="noopener noreferrer"><strong>goose</strong></a>, added her notes, and turned on <a href="https://block.github.io/goose/docs/mcp/autovisualiser-mcp" target="_blank" rel="noopener noreferrer"><strong>Auto Visualiser</strong></a>. In seconds, her budget became this colorful, interactive chart. She hovered over each slice, analyzing where her money was going.</p>
+<p>Now, I'm not saying this is some groundbreaking use case. There are plenty of apps that do this. What stood out to me was how simple it felt. My mom didn’t need to learn anything new or adapt to someone else’s design. The visualization just appeared, and she got it immediately.</p>
+<p>It wasn’t about the tech working. It was about AI finally showing up in a way that made sense to her.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="when-ai-starts-showing-not-just-talking"><strong>When AI Starts Showing, Not Just Talking</strong><a href="https://block.github.io/goose/blog/2025/10/14/designing-ai-for-humans#when-ai-starts-showing-not-just-talking" class="hash-link" aria-label="Direct link to when-ai-starts-showing-not-just-talking" title="Direct link to when-ai-starts-showing-not-just-talking">​</a></h3>
+<p>We’ve made huge progress with agentic AI. Agents can plan, reason, and act, but they often still communicate like terminals with walls of text, and no real interaction. That’s where <a href="https://mcpui.dev/guide/getting-started" target="_blank" rel="noopener noreferrer"><strong>MCP-UI</strong></a> changes everything.</p>
+<p>MCP-UI gives agents a visual language <em>and</em> a way for users to interact directly within the chat window. Before this, conversations with AI consisted of a chain of prompts and responses. Now, users can actually engage with their agent through the interface itself. A button can launch a new prompt without the user typing anything. A dropdown can run a tool call in the background. A link can open a page or resource for them instantly. Even notifications can be exchanged between this embedded UI and the host application to keep everything in sync.</p>
+<p>This is what turns an AI chat into an interface layer. Instead of describing what it can do, the agent can present real, clickable options and respond to them in real time. That makes AI conversations feel fluid and interactive.</p>
+<p>Instead of saying, ‘Here’s your data,’ your agent can show it, let you act on it, and react to what you choose.</p>
+<h3 class="anchor anchorWithStickyNavbar_LWe7" id="why-this-matters-for-builders"><strong>Why This Matters for Builders</strong><a href="https://block.github.io/goose/blog/2025/10/14/designing-ai-for-humans#why-this-matters-for-builders" class="hash-link" aria-label="Direct link to why-this-matters-for-builders" title="Direct link to why-this-matters-for-builders">​</a></h3>
+<p>As developers, we often design for the model first, thinking about prompt structure or JSON formatting. But the next big step for agents is how well they can anticipate what the user wants to do and needs to see.</p>
+<p>We’re already seeing this shift across the industry. Google’s new AI Mode is transforming search into an intent-driven experience. Instead of sending users to links, it now shows tickets, seat maps, and purchase buttons directly in the results. The web is becoming dynamic, adapting to what users are trying to do.</p>
+<p>MCP-UI brings that same evolution into the agent world. It extends the <a href="https://modelcontextprotocol.io/docs/getting-started/intro" target="_blank" rel="noopener noreferrer">Model Context Protocol</a> so your MCP server can return more than just data. It can render interactive components right inside your agent's chat. Whether it’s a chart, button, table, or form, the agent can display live, usable views of your service instead of describing them in text.</p>
+<p>goose’s built-in Auto Visualiser is one example of this in action, automatically turning structured output into interactive visuals using MCP-UI behind the scenes.</p>
+<p>But the potential goes much further. When developers build their own MCP servers, they get full control over <em>how</em>  their data appears. They can design interfaces that reflect their brand or product style, ensuring users interacting with their API through an AI agent still get a familiar experience. Imagine a Shopify MCP server returning product listings that look like their storefront, or a Notion MCP server displaying content in its block layout inside the chat.</p>
+<p>Both point to the same future: one where AI doesn’t just reply with text, but responds with the right interface for the moment. Instead of fixed screens, we get dynamic, intent-based experiences that adapt to what the user needs in real time.</p>
+<p>That’s what Agentic UX is really about: building AI that responds to what the user intends to do.</p>
+<p>If you’re building your own MCP server, start by thinking about the experience you want your users to have. Then experiment with MCP-UI and design the flow you’d expect if you were the one using it. For a full walkthrough, see <a href="https://block.github.io/goose/blog/2025/09/08/turn-any-mcp-server-mcp-ui-compatible" target="_blank" rel="noopener noreferrer">How To Make An MCP Server MCP-UI Compatible</a>.</p>
+<hr>
+<p>I have a feeling that next month, when my mom sits down to balance her bills, she’s going to ask me:</p>
+<blockquote>
+<p>“You brought that goose thing again?”</p>
+</blockquote>
+]]></content:encoded>
+        </item>
         <item>
             <title><![CDATA[Build Your Own Recipe Cookbook Generator for goose]]></title>
             <link>https://block.github.io/goose/blog/2025/10/08/recipe-cookbook-generator</link>
@@ -1432,103 +1471,6 @@ Perfect for those marathon coding sessions where you need sustained performance 
 <hr>
 <p><em>Want to see this in action? Check out the full workshop video where we build AI BriefMe live:</em></p>
 <iframe class="aspect-ratio" src="https://www.youtube.com/embed/_w5m3h9jY-w?start=5310" title="Vibe Coding with Goose Workshop" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe>
-]]></content:encoded>
-        </item>
-        <item>
-            <title><![CDATA[MCP Jupyter: AI-Powered Machine Learning and Data Science]]></title>
-            <link>https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server</link>
-            <guid>https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server</guid>
-            <pubDate>Tue, 05 Aug 2025 00:00:00 GMT</pubDate>
-            <description><![CDATA[Enable AI agents to work directly with your Jupyter notebooks, leveraging persistent memory and stateful collaboration for enhanced ML and data science workflows]]></description>
-            <content:encoded><![CDATA[<p><img decoding="async" loading="lazy" alt="MCP Jupyter Server" src="https://block.github.io/goose/assets/images/data-goose-7fc60ab0a13a9e9b6c22172d6ac166ab.png" width="1200" height="630" class="img_ev3q"></p>
-<p>Machine learning and data science workflows are inherently iterative. You load data, explore patterns, build models, and refine your approach based on results. But traditional AI assistants lose context between interactions, forcing you to reload data and re-establish context repeatedly—making data-heavy development slow and expensive.</p>
-<p>The <a href="https://github.com/block/mcp-jupyter" target="_blank" rel="noopener noreferrer"><strong>MCP Jupyter Server</strong></a> solves this by enabling AI agents like Goose to work directly with your Jupyter notebooks, maintaining persistent memory and state across interactions while letting the AI interact with your data through code execution rather than raw data transfer.</p>
-<iframe class="aspect-ratio" src="https://www.youtube.com/embed/0i6gB_mWaRM" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"></iframe>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="the-memory-and-context-problem">The Memory and Context Problem<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#the-memory-and-context-problem" class="hash-link" aria-label="Direct link to The Memory and Context Problem" title="Direct link to The Memory and Context Problem">​</a></h2>
-<p>Traditional AI coding assistants face a fundamental limitation: they lose context between interactions. This in part stems from their design to accomplish well-described individual tasks like refactoring a piece of code, compiling and running its tests, and commiting the result version control. In contrast, data science workflows are often open-ended and require extensive exploration and interactivity. This creates several challenges for using AI with data-heavy ML workflows:</p>
-<ul>
-<li><strong>Constant data reloading</strong>: Each interaction requires re-loading or describing your dataset</li>
-<li><strong>Expensive iteration</strong>: Large datasets are slow and costly to process repeatedly</li>
-<li><strong>Context size</strong>: The raw data may be too large to be fit in context</li>
-<li><strong>Not designed for interactive work</strong>: It is harder to have the assistant do some steps and then transfer control back to the human or vice versa</li>
-</ul>
-<p>To address these challenges, we created the MCP Jupyter Server.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="a-better-approach-persistent-state">A Better Approach: Persistent State<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#a-better-approach-persistent-state" class="hash-link" aria-label="Direct link to A Better Approach: Persistent State" title="Direct link to A Better Approach: Persistent State">​</a></h2>
-<p>The MCP Jupyter Server takes a different approach. Instead of losing context between interactions, it maintains persistent memory and lets the AI interact with your data through Jupyter code cell execution. This creates a powerful paradigm:</p>
-<ul>
-<li><strong>Persistent memory</strong>: Variables and state are maintained across all interactions</li>
-<li><strong>Efficient iterations</strong>: No need to reload data or re-establish context</li>
-<li><strong>Code-based data interaction</strong>: AI explores data through execution, not given the raw data in context</li>
-<li><strong>True pair programming</strong>: Seamless collaboration within the same notebook context</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="transforming-ml-workflows">Transforming ML Workflows<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#transforming-ml-workflows" class="hash-link" aria-label="Direct link to Transforming ML Workflows" title="Direct link to Transforming ML Workflows">​</a></h2>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="exploratory-data-analysis">Exploratory Data Analysis<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#exploratory-data-analysis" class="hash-link" aria-label="Direct link to Exploratory Data Analysis" title="Direct link to Exploratory Data Analysis">​</a></h3>
-<p>Instead of describing your dataset, let the AI explore it directly:</p>
-<blockquote>
-<p><span style="color:#2563eb;font-weight:bold">User:</span> "Help me understand this customer dataset"</p>
-<p><span style="color:#059669;font-weight:bold">AI:</span> "Let me explore your data structure first"</p>
-<p><em><span style="color:#6b7280;font-style:italic">[AI executes: df.info(), df.describe(), df.head()]</span></em></p>
-<p><span style="color:#059669;font-weight:bold">AI:</span> "I can see you have 50,000 customers with 12 features. The data includes demographics (age, income), behavioral metrics (purchase_frequency, avg_order_value), and some missing values in the 'phone_number' column. Would you like me to create visualizations for the key relationships, like age vs income or purchase patterns?"</p>
-<p><span style="color:#2563eb;font-weight:bold">User:</span> "Yes, show me the age and income distributions, and any correlations"</p>
-<p><span style="color:#059669;font-weight:bold">AI:</span> "Perfect! I'll create histograms for age and income, plus a correlation heatmap"</p>
-<p><em><span style="color:#6b7280;font-style:italic">[AI generates and displays visualizations]</span></em></p>
-</blockquote>
-<p>The AI can see your actual column names, data types, and distributions—leading to much more relevant suggestions.</p>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="interactive-model-development">Interactive Model Development<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#interactive-model-development" class="hash-link" aria-label="Direct link to Interactive Model Development" title="Direct link to Interactive Model Development">​</a></h3>
-<p>The AI becomes a true collaborator in your modeling process:</p>
-<blockquote>
-<p><span style="color:#2563eb;font-weight:bold">User:</span> "This model isn't performing well"</p>
-<p><span style="color:#059669;font-weight:bold">AI:</span> "Let me check the current metrics and feature importance"</p>
-<p><em><span style="color:#6b7280;font-style:italic">[AI executes your existing model evaluation code]</span></em></p>
-<p><span style="color:#059669;font-weight:bold">AI:</span> "I see the accuracy is 72% and the most important features are 'price' and 'location'. The model seems to be overfitting - would you like me to try regularization or reduce the feature set?"</p>
-<p><span style="color:#2563eb;font-weight:bold">User:</span> "Try regularization first"</p>
-<p><span style="color:#059669;font-weight:bold">AI:</span> "I'll add L2 regularization and test different alpha values"</p>
-<p><em><span style="color:#6b7280;font-style:italic">[AI implements and tests changes iteratively]</span></em></p>
-<p><span style="color:#059669;font-weight:bold">AI:</span> "Great! With alpha=0.1, accuracy improved to 78% and the validation curve looks much better. Should I tune it further or try ensemble methods?"</p>
-</blockquote>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="real-time-debugging">Real-time Debugging<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#real-time-debugging" class="hash-link" aria-label="Direct link to Real-time Debugging" title="Direct link to Real-time Debugging">​</a></h3>
-<p>When errors occur, the assistant has full context:</p>
-<blockquote>
-<p><span style="color:#2563eb;font-weight:bold">User:</span> "I'm getting a KeyError in cell 5"</p>
-<p><span style="color:#059669;font-weight:bold">AI:</span> "Let me check what columns are available in your dataframe"</p>
-<p><em><span style="color:#6b7280;font-style:italic">[AI executes: df.columns, df.info()]</span></em></p>
-<p><span style="color:#059669;font-weight:bold">AI:</span> "I see the issue - you're trying to access 'customer_id' but the actual column name is 'CustomerID' with capital letters. Also, I notice you have 'purchase_date' as a string - should I convert that to datetime while I fix the KeyError?"</p>
-<p><span style="color:#2563eb;font-weight:bold">User:</span> "Yes, fix both issues"</p>
-<p><span style="color:#059669;font-weight:bold">AI:</span> "Done! I've updated the column reference and converted purchase_date to datetime. The cell should run properly now."</p>
-</blockquote>
-<h3 class="anchor anchorWithStickyNavbar_LWe7" id="continuous-collaboration">Continuous Collaboration<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#continuous-collaboration" class="hash-link" aria-label="Direct link to Continuous Collaboration" title="Direct link to Continuous Collaboration">​</a></h3>
-<p>Imagine a scenario where you are working on a new dataset:</p>
-<blockquote>
-<p><span style="color:#2563eb;font-weight:bold">User:</span> <em><span style="color:#6b7280;font-style:italic">[Executes: df = pd.read_csv('sales_data.csv')]</span></em></p>
-<p><span style="color:#2563eb;font-weight:bold">User:</span> "Let me check the data types and look for any anomalies"</p>
-<p><span style="color:#059669;font-weight:bold">AI:</span> "I'll analyze your sales data structure"</p>
-<p><em><span style="color:#6b7280;font-style:italic">[AI executes: df.info(), df.describe(include='all')]</span></em></p>
-<p><span style="color:#059669;font-weight:bold">AI:</span> "I found a few issues: 'CustomerID' is stored as text but should be numeric, and there are 847 missing values in 'SalesAmount'. Would you like me to convert 'CustomerID' to numeric and fill the missing 'SalesAmount' values with the median?"</p>
-<p><span style="color:#2563eb;font-weight:bold">User:</span> "Yes, please do that and show me the updated info"</p>
-<p><span style="color:#059669;font-weight:bold">AI:</span> "Done! CustomerID is now numeric and SalesAmount gaps are filled. Your dataset is clean and ready for modeling."</p>
-</blockquote>
-<p><em><span style="color:#6b7280;font-style:italic">[Later in the session, after you've trained a model...]</span></em></p>
-<blockquote>
-<p><span style="color:#2563eb;font-weight:bold">User:</span> "How is my model performing?"</p>
-<p><span style="color:#059669;font-weight:bold">AI:</span> "Let me generate the key metrics for your trained model"</p>
-<p><em><span style="color:#6b7280;font-style:italic">[AI accesses the existing model variable and generates evaluation metrics]</span></em></p>
-<p><span style="color:#059669;font-weight:bold">AI:</span> "Your Random Forest achieved 0.84 precision and 0.81 recall. The confusion matrix shows some false positives in the high-value sales category. Would you like me to adjust the decision threshold or try feature engineering?"</p>
-</blockquote>
-<p>This fluid back-and-forth, where the assistant understands and builds upon the existing notebook state, allows for seamless collaboration without the need for constant context re-establishment or data reloading.</p>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="example-notebook">Example notebook<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#example-notebook" class="hash-link" aria-label="Direct link to Example notebook" title="Direct link to Example notebook">​</a></h2>
-<p>Here you can see an example notebook that was handled by the MCP Jupyter Server.  The server</p>
-<p><strong><a href="https://github.com/block/mcp-jupyter/blob/main/demos/demo.ipynb" target="_blank" rel="noopener noreferrer">📓 View the Complete Demo Notebook</a></strong></p>
-<p>The demo walks through a typical data science workflow:</p>
-<ul>
-<li><strong>Install Missing Libraries</strong>: Installing missing libraries for the notebook</li>
-<li><strong>Data Generation</strong>: Creating synthetic data for analysis</li>
-<li><strong>Model Training</strong>: Fitting a linear regression model with scikit-learn</li>
-<li><strong>Results Analysis</strong>: Extracting model coefficients and performance metrics</li>
-<li><strong>Visualization</strong>: Creating plots with seaborn</li>
-</ul>
-<h2 class="anchor anchorWithStickyNavbar_LWe7" id="getting-started">Getting Started<a href="https://block.github.io/goose/blog/2025/08/04/mcp-jupyter-server#getting-started" class="hash-link" aria-label="Direct link to Getting Started" title="Direct link to Getting Started">​</a></h2>
-<p>The MCP Jupyter Server integrates seamlessly with existing workflows and can also be used with the notebook viewer in VS Code based IDEs.</p>
-<p>For detailed setup and configuration, check out the <a href="https://block.github.io/mcp-jupyter/" target="_blank" rel="noopener noreferrer">complete documentation</a>.</p>
 ]]></content:encoded>
         </item>
     </channel>
