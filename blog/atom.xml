@@ -269,7 +269,7 @@
 <h2 class="anchor anchorWithStickyNavbar_LWe7" id="-key-rules">✅ Key Rules<a href="https://block.github.io/goose/blog/2025/09/26/hacktoberfest-2025#-key-rules" class="hash-link" aria-label="Direct link to ✅ Key Rules" title="Direct link to ✅ Key Rules">​</a></h2>
 <ol>
 <li>Read the <a href="https://github.com/block/.github/blob/main/CODE_OF_CONDUCT.md" target="_blank" rel="noopener noreferrer">code of conduct</a>.</li>
-<li>Refer to the <a href="https://github.com/block/goose/blob/main/ai-assisted-coding-guide.md" target="_blank" rel="noopener noreferrer">Responsible AI-Assisted Coding Guide</a>, <a href="https://github.com/block/goose/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">Contributing Guide</a> &amp; <a href="https://github.com/block/goose/blob/main/README.md" target="_blank" rel="noopener noreferrer">README</a> for your contributions.</li>
+<li>Refer to the <a href="https://github.com/block/goose/blob/main/HOWTOAI.md" target="_blank" rel="noopener noreferrer">Responsible AI-Assisted Coding Guide</a>, <a href="https://github.com/block/goose/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener noreferrer">Contributing Guide</a> &amp; <a href="https://github.com/block/goose/blob/main/README.md" target="_blank" rel="noopener noreferrer">README</a> for your contributions.</li>
 <li>Choose a task from this project's Hacktoberfest <a href="https://github.com/block/goose/issues/4705" target="_blank" rel="noopener noreferrer">Project Hub</a>. Each issue has the 🏷️ <code>hacktoberfest</code> label.</li>
 <li>Comment ".take" on the corresponding issue to get assigned the task.</li>
 <li>Fork the repository and create a new branch for your work.</li>
