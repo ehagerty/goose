@@ -72,7 +72,7 @@
       src: 'https://youtube.com/embed/Kxj-vFBO_9U',
       title: 'Building A MCP-UI Server',
       description: 'Learn how to build your own MCP-UI server from scratch',
-      duration: ''
+      duration: '40:07'
     },
     { 
       type: 'iframe', 

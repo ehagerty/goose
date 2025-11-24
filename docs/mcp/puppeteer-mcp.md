@@ -2,7 +2,7 @@
 
 Server archived
 
-This tutorial covers how to add the [Puppeteer MCP Server](https://www.pulsemcp.com/servers/merajmehrabi-puppeteer) as a Goose extension, enabling Goose to interact with websites - navigating pages, filling forms, clicking buttons, taking screenshots, and executing JavaScript in a real browser environment.
+This tutorial covers how to add the [Puppeteer MCP Server](https://www.pulsemcp.com/servers/merajmehrabi-puppeteer) as a goose extension, enabling goose to interact with websites - navigating pages, filling forms, clicking buttons, taking screenshots, and executing JavaScript in a real browser environment.
 
 :::tip TLDR
 <Tabs groupId="interface">
@@ -94,7 +94,7 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
     └ 
   ```  
 
-  5. Enter the number of seconds Goose should wait for actions to complete before timing out. Default is 300s
+  5. Enter the number of seconds goose should wait for actions to complete before timing out. Default is 300s
    ```sh
     ┌   goose-configure 
     │
@@ -178,16 +178,16 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 </Tabs>
 
 ## Example Usage
-In this example, I’ll show you how to use Goose with the Puppeteer Extension to perform an accessibility audit on a website. By automating browser interactions, Goose can navigate the site, test keyboard navigation, check color contrast, analyze ARIA attributes, and generate a detailed report with recommendations and code fixes.
+In this example, I’ll show you how to use goose with the Puppeteer Extension to perform an accessibility audit on a website. By automating browser interactions, goose can navigate the site, test keyboard navigation, check color contrast, analyze ARIA attributes, and generate a detailed report with recommendations and code fixes.
 
 This allows you to quickly identify and resolve accessibility issues without manually inspecting each page.
 
 <Tabs groupId="interface">
   <TabItem value="ui" label="goose Desktop" default>
-   1. Open a new session in Goose Desktop
+   1. Open a new session in goose Desktop
   </TabItem>
   <TabItem value="cli" label="goose CLI">
-  1. Open a terminal and start a new Goose session:
+  1. Open a terminal and start a new goose session:
 
   ```sh
   goose session
@@ -196,7 +196,7 @@ This allows you to quickly identify and resolve accessibility issues without man
   </TabItem>
 </Tabs>
 
-### Goose Prompt
+### goose Prompt
 ```
 Can you check if my website is accessible? Please conduct a full accessibility audit, focusing on the following:
 
@@ -216,7 +216,7 @@ Here is the website to test: https://broken-workshop.dequelabs.com/. I want to e
 
 ```
 
-### Goose Output
+### goose Output
 
 :::note Desktop
 I'll help you conduct a comprehensive accessibility audit of the website. I'll use a combination of automated and manual testing approaches to evaluate different accessibility aspects.
@@ -399,7 +399,7 @@ This audit reveals several critical accessibility issues that should be addresse
 
 ### Further Automation with GitHub Extension
 
-You can take this accessibility audit a step further by combining the [GitHub Extension](/docs/mcp/github-mcp) with the Puppeteer Extension. With this setup, Goose doesn’t just find issues and apply fixes, it can also handle the entire Git workflow for you. The GitHub Extension allows Goose to commit changes, create a pull request, and even generate a PR description, so all you have to do is review and merge.
+You can take this accessibility audit a step further by combining the [GitHub Extension](/docs/mcp/github-mcp) with the Puppeteer Extension. With this setup, goose doesn’t just find issues and apply fixes, it can also handle the entire Git workflow for you. The GitHub Extension allows goose to commit changes, create a pull request, and even generate a PR description, so all you have to do is review and merge.
 
 1. Enable the GitHub extension by following the steps in the **[GitHub Extension Tutorial](/docs/mcp/github-mcp#configuration)**.
 
@@ -407,18 +407,18 @@ You can take this accessibility audit a step further by combining the [GitHub Ex
 Ensure your GitHub Personal Access Token has the necessary permissions for repository access and pull request creation when using this combined approach. 
 :::
 
-2. Ask Goose to:
+2. Ask goose to:
 
    - Create a new branch
    - Commit the accessibility improvements
    - Open a pull request
 
-### Goose prompt:
+### goose prompt:
 
 ```
 Can you create a new branch called 'accessibility-improvements', apply the accessibility fixes you suggested, and open a pull request with these changes?
 ```
-Goose will then:
+goose will then:
    - ✅ Create a branch: `accessibility-improvements`
    - ✅ Apply the recommended accessibility fixes
    - ✅ Commit the changes with a descriptive message

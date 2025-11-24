@@ -1,6 +1,6 @@
 <h1 className={styles.pageTitle}>Managing Tools</h1>
 <p className={styles.pageDescription}>
-  Tools are specific functions within <a href="/goose/docs/getting-started/using-extensions">extensions</a> that give Goose its capabilities. Learn to control and customize how these tools work for you.
+  Tools are specific functions within <a href="/goose/docs/getting-started/using-extensions">extensions</a> that give goose its capabilities. Learn to control and customize how these tools work for you.
 </p>
 
 <div className={styles.categorySection}>
@@ -8,7 +8,7 @@
   <div className={styles.cardGrid}>
     <Card 
       title="Tool Permissions"
-      description="Configure fine-grained permissions to control which tools Goose can use and when, ensuring secure and controlled automation."
+      description="Configure fine-grained permissions to control which tools goose can use and when, ensuring secure and controlled automation."
       link="/docs/guides/managing-tools/tool-permissions"
     />
     <Card 

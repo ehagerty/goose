@@ -1,4 +1,4 @@
-The Goose benchmarking system allows you to evaluate goose performance on complex tasks with one or more system
+The goose benchmarking system allows you to evaluate goose performance on complex tasks with one or more system
 configurations.<br></br>
 This guide covers how to use the `goose bench` command to run benchmarks and analyze results.
 
@@ -188,7 +188,7 @@ RUST_LOG=debug goose bench bench-config.json
 
 ### Tool Shimming
 
-Tool shimming allows you to use a non-tool-capable models with Goose, provided Ollama is installed on the
+Tool shimming allows you to use a non-tool-capable models with goose, provided Ollama is installed on the
 system.
 
 See this guide for important details on [tool shimming](/docs/experimental/ollama).

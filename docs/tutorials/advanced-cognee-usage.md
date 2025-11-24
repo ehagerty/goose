@@ -1,10 +1,10 @@
-# Advanced Cognee Usage with Goose
+# Advanced Cognee Usage with goose
 
-This tutorial covers advanced usage patterns for the Cognee extension with Goose, including automated memory management, knowledge graph optimization, and various integration strategies.
+This tutorial covers advanced usage patterns for the Cognee extension with goose, including automated memory management, knowledge graph optimization, and various integration strategies.
 
 ## Overview
 
-While the basic [Cognee MCP setup](../mcp/cognee-mcp.md) gets you started, this tutorial explores how to make Goose autonomously use the knowledge graph and optimize your workflow.
+While the basic [Cognee MCP setup](../mcp/cognee-mcp.md) gets you started, this tutorial explores how to make goose autonomously use the knowledge graph and optimize your workflow.
 
 ## Key Concepts
 
@@ -80,7 +80,7 @@ You are an LLM agent with access to a Cognee knowledge graph for memory.
 - Only process files returned by `rg --files`
 ````
 
-Start Goose with instructions:
+Start goose with instructions:
 ```bash
 goose run -i ~/.config/goose/cognee-instructions.md -s
 ```
@@ -88,7 +88,7 @@ goose run -i ~/.config/goose/cognee-instructions.md -s
 </TabItem>
 <TabItem value="method2" label="Method 2">
 
-### Goosehints File
+### goosehints File
 
 For faster startup with higher token usage, add to your `.goosehints` file:
 
@@ -131,14 +131,14 @@ Combine with the [Memory MCP extension](../mcp/memory-mcp.md) for hybrid approac
 For software development projects:
 
 ```bash
-# Start Goose with Cognee
+# Start goose with Cognee
 goose session
 
-# In Goose, analyze your codebase
-> Goose, please codify this repository and then help me understand the architecture
+# In goose, analyze your codebase
+> goose, please codify this repository and then help me understand the architecture
 ```
 
-Goose will:
+goose will:
 1. Run `cognee-mcp__codify` on your repository
 2. Build a code knowledge graph
 3. Answer architecture questions using the graph
@@ -149,7 +149,7 @@ For research and documentation:
 
 ```bash
 # Cognify research documents
-> Goose, please cognify the contents of these research papers: paper1.pdf, paper2.pdf, paper3.pdf
+> goose, please cognify the contents of these research papers: paper1.pdf, paper2.pdf, paper3.pdf
 
 # Later, query relationships
 > What are the connections between the methodologies in these papers?
@@ -207,10 +207,10 @@ Monitor and manage your knowledge graph:
 
 ```bash
 # Check status
-> Goose, what's the status of the cognify pipeline?
+> goose, what's the status of the cognify pipeline?
 
 # Selective pruning (if needed)
-> Goose, can you help me identify outdated information in the knowledge graph?
+> goose, can you help me identify outdated information in the knowledge graph?
 ```
 
 ## Troubleshooting
@@ -232,8 +232,8 @@ tail -f ~/.local/share/cognee/logs/cognee.log
 curl http://localhost:8000/health
 
 # Verify knowledge graph status
-# In Goose session:
-> Goose, run cognify_status and codify_status
+# In goose session:
+> goose, run cognify_status and codify_status
 ```
 
 ## Best Practices
@@ -243,10 +243,10 @@ curl http://localhost:8000/health
 1. **Use nodesets** for organizing different types of information:
    ```bash
    # Developer rules
-   > Goose, add these coding standards to the 'developer_rules' nodeset
+   > goose, add these coding standards to the 'developer_rules' nodeset
    
    # Project-specific info  
-   > Goose, cognify this project documentation with nodeset 'project_alpha'
+   > goose, cognify this project documentation with nodeset 'project_alpha'
    ```
 
 2. **Regular maintenance**:
@@ -266,7 +266,7 @@ curl http://localhost:8000/health
 
 ```bash
 # Setup
-> Goose, codify this repository and remember that I prefer: functional programming patterns, comprehensive tests, and clear documentation
+> goose, codify this repository and remember that I prefer: functional programming patterns, comprehensive tests, and clear documentation
 
 # Usage
 > Review this pull request and check it against my coding preferences
@@ -276,7 +276,7 @@ curl http://localhost:8000/health
 
 ```bash
 # Before meeting
-> Goose, cognify the agenda and participant backgrounds from these documents
+> goose, cognify the agenda and participant backgrounds from these documents
 
 # During/after meeting
 > Based on the knowledge graph, what are the key action items and how do they relate to our previous discussions?
@@ -286,10 +286,10 @@ curl http://localhost:8000/health
 
 ```bash
 # Literature review
-> Goose, cognify these 10 research papers and create a knowledge graph of the relationships between their methodologies
+> goose, cognify these 10 research papers and create a knowledge graph of the relationships between their methodologies
 
 # Synthesis
 > What are the emerging patterns in the research and what gaps exist?
 ```
 
-This advanced usage guide should help you maximize the potential of Cognee with Goose for sophisticated knowledge management and automation workflows.
+This advanced usage guide should help you maximize the potential of Cognee with goose for sophisticated knowledge management and automation workflows.

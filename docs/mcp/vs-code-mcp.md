@@ -1,6 +1,6 @@
 <YouTubeShortEmbed videoUrl="https://www.youtube.com/embed/gddEgvCLrgU" />
 
-This tutorial covers how to add the [VS Code MCP Server](https://github.com/block/vscode-mcp) as a Goose extension to enable VS Code integration, file operations, and development workflow management.
+This tutorial covers how to add the [VS Code MCP Server](https://github.com/block/vscode-mcp) as a goose extension to enable VS Code integration, file operations, and development workflow management.
 
 :::tip TLDR
 
@@ -119,7 +119,7 @@ Note that you'll need [Node.js](https://nodejs.org/) installed on your system to
 
 ## Example Usage
 
-The VS Code MCP extension enables Goose to interact with your VS Code environment, managing files, projects, and development workflows. 
+The VS Code MCP extension enables goose to interact with your VS Code environment, managing files, projects, and development workflows. 
 
 The key strength of the VS Code MCP Server is its ability to:
 
@@ -129,10 +129,10 @@ The key strength of the VS Code MCP Server is its ability to:
 - Provide immediate visual feedback in the editor
 
 :::note
-Every time you start a Goose session with the VS Code MCP server enabled, it checks to see if a matching project is open in VS Code. If not, it will prompt you to open the project before proceeding.
+Every time you start a goose session with the VS Code MCP server enabled, it checks to see if a matching project is open in VS Code. If not, it will prompt you to open the project before proceeding.
 :::
 
-### Goose Prompt
+### goose Prompt
 
 ```
 Update the contributing guide with instructions on how to start docusaurus dev server
