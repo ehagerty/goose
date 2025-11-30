@@ -4,10 +4,47 @@
         <title>goose Blog</title>
         <link>https://block.github.io/goose/blog</link>
         <description>goose Blog</description>
-        <lastBuildDate>Wed, 26 Nov 2025 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Sun, 30 Nov 2025 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
+        <item>
+            <title><![CDATA[Announcing Advent of AI]]></title>
+            <link>https://block.github.io/goose/blog/2025/11/30/announcing-advent-of-ai</link>
+            <guid>https://block.github.io/goose/blog/2025/11/30/announcing-advent-of-ai</guid>
+            <pubDate>Sun, 30 Nov 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[We're launching an advent calendar of AI engineering challenges to help you build applicable projects with goose.]]></description>
+            <content:encoded><![CDATA[<p><img decoding="async" loading="lazy" alt="blog cover" src="https://block.github.io/goose/assets/images/advent-of-ai-header-7076e6e92caf243b488ff6ea0082c48e.png" width="1206" height="633" class="img_ev3q"></p>
+<p>You've heard the buzz: AI is reshaping our work. Maybe you've tinkered with ChatGPT, or your company is pushing you to "level up." But between the hype and the endless tutorials, a gnawing question remains: how do you move from theory to building something real?</p>
+<p>The answer is practice. Not just following steps, but creating, problem-solving, and learning by doing.</p>
+<p>That's why we're launching <a href="https://adventofai.dev/" target="_blank" rel="noopener noreferrer" class="">Advent of AI</a>, a 17-day challenge series starting December 1st. Whether you're a beginner taking your first steps or an advanced developer exploring AI agents, this is for you. Each weekday, you'll get a new, hands-on project designed to transform you from an AI spectator into a confident builder.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="heres-your-mission">Here's Your Mission<a href="https://block.github.io/goose/blog/2025/11/30/announcing-advent-of-ai#heres-your-mission" class="hash-link" aria-label="Direct link to Here's Your Mission" title="Direct link to Here's Your Mission" translate="no">​</a></h2>
+<p>Step into the role of the lead AI engineer at a bustling Winter Festival. You're the go-to person when systems fail, and they're failing fast. Each day brings a new challenge from the festival community:</p>
+<p><strong>Day 1:</strong> Build Madame Zelda an AI fortune generator that can handle the growing crowd when her app crashes.</p>
+<p><strong>Day 6:</strong> Set up automated GitHub issue triage with CI/CD pipelines to manage the festival's overwhelmed bug tracker.</p>
+<p><strong>Day 11:</strong> Create an automated poster generator to free Elena from 8 hours of daily Photoshop work.</p>
+<p><strong>Day 14:</strong> Use MCP sampling to build a council of AI personalities that debate and vote on the perfect festival mascot.</p>
+<p><strong>Day 17:</strong> Deploy a cross-platform wishlist app using MCP-UI so vendors know exactly what visitors want.</p>
+<p>You'll master core AI engineering skills like building gesture-controlled interfaces, data visualizations, multi-agent systems, and production deployments using goose. These foundational skills will prepare you to work with any AI agent. Complete all 17 days, and you'll have built a comprehensive portfolio showcasing everything from basic automation to sophisticated multi-agent systems.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="designed-for-all-skill-levels">Designed for All Skill Levels<a href="https://block.github.io/goose/blog/2025/11/30/announcing-advent-of-ai#designed-for-all-skill-levels" class="hash-link" aria-label="Direct link to Designed for All Skill Levels" title="Direct link to Designed for All Skill Levels" translate="no">​</a></h2>
+<p><strong>For Beginners:</strong> Every challenge includes clear guidance and resources to get you started. You'll learn core concepts from the ground up in a practical, project-based way.</p>
+<p><strong>For Advanced Builders:</strong> Looking for an extra test? Each main challenge includes bonus objectives that push you further: optimizing for performance, adding complex features, or integrating with advanced tools.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="how-it-works">How It Works<a href="https://block.github.io/goose/blog/2025/11/30/announcing-advent-of-ai#how-it-works" class="hash-link" aria-label="Direct link to How It Works" title="Direct link to How It Works" translate="no">​</a></h2>
+<ol>
+<li class=""><strong>Daily Challenges:</strong> Every weekday brings a new story-driven problem to solve</li>
+<li class=""><strong>Your Creative Solutions:</strong> There's no single "right" answer - we want to see your unique approach</li>
+<li class=""><strong>Community Sharing:</strong> Join the #adventofai channel on our Discord to share and collaborate</li>
+<li class=""><strong>Solution Videos:</strong> We'll post our approach on YouTube the day after each challenge</li>
+</ol>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="ready-to-build">Ready to Build?<a href="https://block.github.io/goose/blog/2025/11/30/announcing-advent-of-ai#ready-to-build" class="hash-link" aria-label="Direct link to Ready to Build?" title="Direct link to Ready to Build?" translate="no">​</a></h2>
+<ol>
+<li class="">Sign up at <a href="https://adventofai.dev/" target="_blank" rel="noopener noreferrer" class="">adventofai.dev</a> for daily notifications</li>
+<li class="">Install goose using the <a class="" href="https://block.github.io/goose/docs/quickstart">quickstart guide</a></li>
+<li class="">Join the community on <a href="https://discord.gg/block-opensource" target="_blank" rel="noopener noreferrer" class="">Discord</a></li>
+</ol>
+<p>The first challenge unlocks December 1st at 12 PM ET. The Winter Festival needs your skills. Let's build something amazing together.</p>
+]]></content:encoded>
+        </item>
         <item>
             <title><![CDATA[MCPs for Developers Who Think They Don't Need MCPs]]></title>
             <link>https://block.github.io/goose/blog/2025/11/26/mcp-for-devs</link>
@@ -1367,54 +1404,6 @@ If not, you’ll either need to wait for more SDKs to drop or build your own bin
 <hr>
 <p><em>Want to see the final result? Check out my portfolio at <a href="https://taniachakraborty.com/" target="_blank" rel="noopener noreferrer" class="">taniachakraborty.com</a>. Let me know how many shrimp jokes you find.</em></p>
 <hr>
-]]></content:encoded>
-        </item>
-        <item>
-            <title><![CDATA[How PulseMCP Automated Their Newsletter Workflow with Goose]]></title>
-            <link>https://block.github.io/goose/blog/2025/08/13/pulse-mcp-automates-recipe</link>
-            <guid>https://block.github.io/goose/blog/2025/08/13/pulse-mcp-automates-recipe</guid>
-            <pubDate>Wed, 13 Aug 2025 00:00:00 GMT</pubDate>
-            <description><![CDATA[PulseMCP used Goose recipes, subagents, and subrecipes to automate the boring parts of their newsletter workflow]]></description>
-            <content:encoded><![CDATA[<p><img decoding="async" loading="lazy" alt="pulsemcp" src="https://block.github.io/goose/assets/images/pulsemcp-65abe93bd65402c122b395ae6bdadf95.png" width="1600" height="840" class="img_ev3q"></p>
-<p><em>"The best AI agent workflows go beyond demos. They deliver real productivity."</em></p>
-<p>The DevRel team at Block is a huge fan of <a href="https://pulsemcp.com/" target="_blank" rel="noopener noreferrer" class="">PulseMCP</a>. Their weekly newsletter has been an amazing way for us to discover trending MCP servers and stay in the loop with any changes within the ecosystem. When the PulseMCP creators, Mike and Tadas, shared their goals of using Goose to help <a href="https://www.pulsemcp.com/building-agents-with-goose" target="_blank" rel="noopener noreferrer" class="">automate the boring parts of their newsletter workflow</a>, we were excited to see what they'd build.</p>
-<p>Their implementation showcased exactly why we built Goose's feature set the way we did, and they documented the entire journey to help others learn from their experience.</p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="the-challenge">The Challenge<a href="https://block.github.io/goose/blog/2025/08/13/pulse-mcp-automates-recipe#the-challenge" class="hash-link" aria-label="Direct link to The Challenge" title="Direct link to The Challenge" translate="no">​</a></h2>
-<p>Every week, the PulseMCP team faced the same time-consuming workflow: sourcing relevant news from multiple platforms, organizing and removing duplicates, drafting compelling narratives, polishing for quality and accuracy, publishing across multiple channels, and managing email distribution. This repetitive workflow seemed perfect for AI automation, but was complex enough that most attempts fail.</p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="the-solution-why-sequential-beats-monolithic">The Solution: Why Sequential Beats Monolithic<a href="https://block.github.io/goose/blog/2025/08/13/pulse-mcp-automates-recipe#the-solution-why-sequential-beats-monolithic" class="hash-link" aria-label="Direct link to The Solution: Why Sequential Beats Monolithic" title="Direct link to The Solution: Why Sequential Beats Monolithic" translate="no">​</a></h2>
-<p>Instead of building one massive "do-everything" agent (which inevitably fails on complex tasks), PulseMCP broke their workflow into six distinct phases. Each phase gets handled by focused <a class="" href="https://block.github.io/goose/docs/guides/recipes/session-recipes">recipes</a>, <a class="" href="https://block.github.io/goose/docs/guides/recipes/subrecipes">subrecipes</a> and <a class="" href="https://block.github.io/goose/docs/guides/subagents">subagents</a> with clear inputs, outputs, and a single job.</p>
-<p>This approach has three main benefits: debugging becomes easier when agents have single responsibilities, results become more predictable with clear handoffs between stages, and humans stay in control of the editorial process while automating the tedious work.</p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="the-six-agent-pipeline">The Six-Agent Pipeline<a href="https://block.github.io/goose/blog/2025/08/13/pulse-mcp-automates-recipe#the-six-agent-pipeline" class="hash-link" aria-label="Direct link to The Six-Agent Pipeline" title="Direct link to The Six-Agent Pipeline" translate="no">​</a></h2>
-<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="1-sourcer-agent"><strong>1. Sourcer Agent</strong><a href="https://block.github.io/goose/blog/2025/08/13/pulse-mcp-automates-recipe#1-sourcer-agent" class="hash-link" aria-label="Direct link to 1-sourcer-agent" title="Direct link to 1-sourcer-agent" translate="no">​</a></h3>
-<p>Automatically scans GitHub, Reddit, and HackerNews for relevant content through MCP integration while humans curate the most interesting finds throughout the week.</p>
-<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="2-organizer-agent"><strong>2. Organizer Agent</strong><a href="https://block.github.io/goose/blog/2025/08/13/pulse-mcp-automates-recipe#2-organizer-agent" class="hash-link" aria-label="Direct link to 2-organizer-agent" title="Direct link to 2-organizer-agent" translate="no">​</a></h3>
-<p>Removes duplicates, categorizes items, and adds context, turning raw links into organized content.</p>
-<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="3-drafter-agent"><strong>3. Drafter Agent</strong><a href="https://block.github.io/goose/blog/2025/08/13/pulse-mcp-automates-recipe#3-drafter-agent" class="hash-link" aria-label="Direct link to 3-drafter-agent" title="Direct link to 3-drafter-agent" translate="no">​</a></h3>
-<p>Merges statistics and context into human-written narratives, handling tedious data assembly while preserving the editorial voice.</p>
-<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="4-polisher-agent"><strong>4. Polisher Agent</strong><a href="https://block.github.io/goose/blog/2025/08/13/pulse-mcp-automates-recipe#4-polisher-agent" class="hash-link" aria-label="Direct link to 4-polisher-agent" title="Direct link to 4-polisher-agent" translate="no">​</a></h3>
-<p>Handles typo checking, link verification, and consistency reviews that would otherwise take hours of human attention.</p>
-<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="5-publisher-agent"><strong>5. Publisher Agent</strong><a href="https://block.github.io/goose/blog/2025/08/13/pulse-mcp-automates-recipe#5-publisher-agent" class="hash-link" aria-label="Direct link to 5-publisher-agent" title="Direct link to 5-publisher-agent" translate="no">​</a></h3>
-<p>Manages the technical publishing: HTML formatting, CMS uploads, and content deployment through MCP servers.</p>
-<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="6-sender-agent"><strong>6. Sender Agent</strong><a href="https://block.github.io/goose/blog/2025/08/13/pulse-mcp-automates-recipe#6-sender-agent" class="hash-link" aria-label="Direct link to 6-sender-agent" title="Direct link to 6-sender-agent" translate="no">​</a></h3>
-<p>Handles email campaign setup, preview generation, and distribution scheduling.</p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="helping-humans-not-replacing-them">Helping Humans, Not Replacing Them<a href="https://block.github.io/goose/blog/2025/08/13/pulse-mcp-automates-recipe#helping-humans-not-replacing-them" class="hash-link" aria-label="Direct link to Helping Humans, Not Replacing Them" title="Direct link to Helping Humans, Not Replacing Them" translate="no">​</a></h2>
-<p>What's remarkable isn't just that PulseMCP automated their newsletter but how they kept human creativity while eliminating boring work. Humans still make editorial decisions, craft narratives, and maintain creative control, while agents handle repetitive tasks that drain human energy.</p>
-<p>The result is a workflow that's both more efficient and higher quality. Agents never tire of checking links or formatting content, freeing humans to focus on strategic thinking and creative storytelling.</p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="a-glimpse-of-the-future">A Glimpse of the Future<a href="https://block.github.io/goose/blog/2025/08/13/pulse-mcp-automates-recipe#a-glimpse-of-the-future" class="hash-link" aria-label="Direct link to A Glimpse of the Future" title="Direct link to A Glimpse of the Future" translate="no">​</a></h2>
-<p>The PulseMCP team envisions agents that "build these recipes on your behalf." Imagine describing your workflow in natural language and having AI automatically generate the agent architecture and integration points.</p>
-<p>We're already seeing hints of this capability. As Tadas demonstrated this by prompting:</p>
-<blockquote>
-<p>"Hey Goose: I have these AI agent log files that are hard to read. Can you build me a simple web server with a pretty UI where I can parse through these as a human?"*</p>
-</blockquote>
-<p>This points toward a future where AI handles the mechanics while humans focus on strategy, creativity, and judgment.</p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="the-blueprint-is-available">The Blueprint is Available<a href="https://block.github.io/goose/blog/2025/08/13/pulse-mcp-automates-recipe#the-blueprint-is-available" class="hash-link" aria-label="Direct link to The Blueprint is Available" title="Direct link to The Blueprint is Available" translate="no">​</a></h2>
-<p>The PulseMCP team documented everything in a comprehensive 95-page handbook that serves as both inspiration and implementation guide. Their work proves that successful AI agent deployment isn't about replacing humans or building complex AI systems but about thoughtful workflow design, clear boundaries, and practical patterns.</p>
-<p><strong><a href="https://www.pulsemcp.com/building-agents-with-goose" target="_blank" rel="noopener noreferrer" class="">Read the complete PulseMCP handbook: "A Human, A Goose, and Some Agents"</a></strong></p>
-<p>Their detailed case study includes complete agent architectures, actual YAML recipe files, production deployment lessons, and a practical cheatsheet for building your own agents.</p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="whats-next">What's Next?<a href="https://block.github.io/goose/blog/2025/08/13/pulse-mcp-automates-recipe#whats-next" class="hash-link" aria-label="Direct link to What's Next?" title="Direct link to What's Next?" translate="no">​</a></h2>
-<p>The PulseMCP implementation proves we're past the demo phase of AI agents. Real productivity gains are happening right now, in production workflows, through thoughtful human-AI collaboration. Organizations that master these patterns will have a significant advantage.</p>
-<hr>
-<p><em>Want to build your own AI agent workflows? <a href="https://block.github.io/goose/" target="_blank" rel="noopener noreferrer" class="">Get started with Goose</a> and join the community of developers building the future of human-AI collaboration.</em></p>
 ]]></content:encoded>
         </item>
     </channel>
