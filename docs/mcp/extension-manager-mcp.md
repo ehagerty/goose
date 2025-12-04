@@ -4,9 +4,7 @@ Simply describe your task, and goose will handle the extension management automa
 
 ## Configuration
 
-:::info
-The Extension Manager extension is a built-in goose platform extension and is already enabled by default when goose is installed.
-:::
+<PlatformExtensionNote/>
 
 <Tabs groupId="interface">
   <TabItem value="ui" label="goose Desktop" default>
@@ -76,13 +74,13 @@ The resource tools (`list_resources` and `read_resource`) are only available whe
 
 Let's enable an extension when we need it. In this example, we'll enable the GitHub extension to work with repositories.
 
-#### goose Prompt
+### goose Prompt
 
 ```
 List all my GitHub repositories
 ```
 
-#### goose Output
+### goose Output
 
 :::note Desktop
 

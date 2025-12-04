@@ -4,13 +4,11 @@ goose automatically knows to use the Todo extension if it has to do tasks that h
 
 At the start of the task, goose will create an internal checklist, read and update progress as it works, and verify that all tasks are completed.
 
-This tutorial will cover enabling and using the Todo MCP Server, which is a built-in goose extension.
+This tutorial will cover enabling and using the Todo extension.
 
 ## Configuration
 
-:::info
-The Todo extension is already enabled by default when goose is installed.
-:::
+<PlatformExtensionNote/>
 
 <Tabs groupId="interface">
   <TabItem value="ui" label="goose Desktop" default>
