@@ -4,10 +4,40 @@
         <title>goose Blog</title>
         <link>https://block.github.io/goose/blog</link>
         <description>goose Blog</description>
-        <lastBuildDate>Thu, 04 Dec 2025 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Wed, 10 Dec 2025 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
+        <item>
+            <title><![CDATA[How to Stop Your AI Agent From Making Unwanted Code Changes]]></title>
+            <link>https://block.github.io/goose/blog/2025/12/10/stop-ai-agent-unwanted-changes</link>
+            <guid>https://block.github.io/goose/blog/2025/12/10/stop-ai-agent-unwanted-changes</guid>
+            <pubDate>Wed, 10 Dec 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[Teach your AI agent how to commit early and often so you can control changes, roll back safely, and keep clean snapshots of your codebase.]]></description>
+            <content:encoded><![CDATA[<p><img decoding="async" loading="lazy" alt="goose, revert this change!" src="https://block.github.io/goose/assets/images/header-image-ce224702149226ea0924fac736eef2fa.png" width="1206" height="633" class="img_ev3q"></p>
+<p>AI agents are often described as brilliant, overeager interns. They're desperate to help, but sometimes that enthusiasm leads to changes you never asked for. This is by design: the large language models powering agents are trained to be helpful. But in code, unchecked helpfulness can create chaos. Even with clear instructions and a meticulous plan, you might hear, "Let me just change this too…" A modification that's either unnecessary or, worse, never surfaced for review.</p>
+<p>Sure, you can scour <code>git diff</code> to find and revert issues. But in a multi-step process touching dozens of files, untangling one small, unwanted change becomes a manual nightmare. I've spent hours combing through 70 files to undo a single "helpful" adjustment. Asking the agent to revert is often futile, as conversational memory isn't a snapshot of your codebase.</p>
+<p>This problem has a classic engineering solution. We commit early and often to create checkpoints, enabling easy rollbacks and clean collaboration. So, why don't we enforce the same discipline on our AI agents? Here’s the workflow I use with <a class="" href="https://block.github.io/goose/">goose</a> to ensure we're creating snapshots of the codebase:</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="1-set-up-version-control">1. Set Up Version Control<a href="https://block.github.io/goose/blog/2025/12/10/stop-ai-agent-unwanted-changes#1-set-up-version-control" class="hash-link" aria-label="Direct link to 1. Set Up Version Control" title="Direct link to 1. Set Up Version Control" translate="no">​</a></h3>
+<p>I set up the <a href="https://cli.github.com/" target="_blank" rel="noopener noreferrer" class="">GitHub CLI</a> (<code>gh</code>). I've found Goose interacts with it flawlessly. The <a class="" href="https://block.github.io/goose/docs/mcp/github-mcp">GitHub MCP Server</a> is a good alternative.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="2-branch-first">2. Branch First<a href="https://block.github.io/goose/blog/2025/12/10/stop-ai-agent-unwanted-changes#2-branch-first" class="hash-link" aria-label="Direct link to 2. Branch First" title="Direct link to 2. Branch First" translate="no">​</a></h3>
+<p>Always start on a new feature branch. Never let an agent commit directly to main.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="3-set-rules-in-a-context-file">3. Set Rules in a Context File<a href="https://block.github.io/goose/blog/2025/12/10/stop-ai-agent-unwanted-changes#3-set-rules-in-a-context-file" class="hash-link" aria-label="Direct link to 3. Set Rules in a Context File" title="Direct link to 3. Set Rules in a Context File" translate="no">​</a></h3>
+<p>This is the key. I use a <a class="" href="https://block.github.io/goose/docs/guides/using-goosehints"><code>.goosehints</code></a> or <a class="" href="https://block.github.io/goose/docs/guides/using-goosehints#custom-context-files"><code>AGENTS.md</code></a> file with one critical instruction:</p>
+<blockquote>
+<p>"Every time you make a change, make a commit with a clear message."</p>
+</blockquote>
+<p>This does two things: it automates checkpointing so I don't have to babysit the session, and it captures perfect snapshots in time, turning the git history into an undo stack for the entire collaboration.</p>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="4-collaborate-with-confidence">4. Collaborate with Confidence<a href="https://block.github.io/goose/blog/2025/12/10/stop-ai-agent-unwanted-changes#4-collaborate-with-confidence" class="hash-link" aria-label="Direct link to 4. Collaborate with Confidence" title="Direct link to 4. Collaborate with Confidence" translate="no">​</a></h3>
+<p>Now I can prompt goose to build, fix, or refactor. If it veers off course or makes a design choice I dislike, I can instantly review the git log or simply say:</p>
+<blockquote>
+<p><em>"Revert to commit abc123."</em></p>
+</blockquote>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="the-result">The Result<a href="https://block.github.io/goose/blog/2025/12/10/stop-ai-agent-unwanted-changes#the-result" class="hash-link" aria-label="Direct link to The Result" title="Direct link to The Result" translate="no">​</a></h2>
+<p>Then, when I'm happy with the final changes, I can push my code to remote. By integrating this basic software practice, I replace anxiety with awareness. goose gets to be brilliantly helpful, and I get to stay in control.</p>
+<p>Try out this method with <a class="" href="https://block.github.io/goose/">goose</a> to help you build your next project. Your future self (and your git history) will thank you.</p>
+]]></content:encoded>
+        </item>
         <item>
             <title><![CDATA[MCP Sampling: When Your Tools Need to Think]]></title>
             <link>https://block.github.io/goose/blog/2025/12/04/mcp-sampling</link>
@@ -1391,62 +1421,6 @@ If not, you’ll either need to wait for more SDKs to drop or build your own bin
 <p>The <a href="https://block.github.io/goose/docs/tutorials/lead-worker" target="_blank" rel="noopener noreferrer" class="">Lead/Worker model</a> splits work between two models. The lead model handles high-level planning and decision-making, while the worker model executes the detailed implementation. This optimizes costs by using expensive models for strategic thinking and cheaper models for routine execution tasks.</p>
 <hr>
 <p>The next time your AI agent seems to 'forget' something important or goes off track, check your context window usage first. The solution might be a better prompt or a cleaner context window. Often, the difference between flaky and focused is just a few tokens.</p>
-]]></content:encoded>
-        </item>
-        <item>
-            <title><![CDATA[Agents, Subagents, and Multi Agents: What They Are and When to Use Them]]></title>
-            <link>https://block.github.io/goose/blog/2025/08/14/agent-coordination-patterns</link>
-            <guid>https://block.github.io/goose/blog/2025/08/14/agent-coordination-patterns</guid>
-            <pubDate>Thu, 14 Aug 2025 00:00:00 GMT</pubDate>
-            <description><![CDATA[A straightforward explanation of how agents are organized to work together]]></description>
-            <content:encoded><![CDATA[<p><img decoding="async" loading="lazy" alt="blog banner" src="https://block.github.io/goose/assets/images/agent-coordination-52282acab8107e9503b17e471465ffa5.png" width="1200" height="630" class="img_ev3q"></p>
-<p>I taught a <a class="" href="https://block.github.io/goose/blog/2025/08/10/vibe-coding-with-goose-building-apps-with-ai-agents">vibe coding workshop at UC Berkeley</a> and informed the students that we'd be spinning up 7 subagents. Someone quickly raised their hand and asked "what is a subagent?". At that moment, I realized we're just throwing out terms like <strong>agent</strong>, <strong>multi agent</strong>, and <strong>subagent</strong>, and not really taking the time to explain what these are. So, here goes... a 101 breaking down these various coordination patterns and when to use them.</p>
-<div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>TL;DR</div><div class="admonitionContent_BuS1"><ul>
-<li class="">
-<p><strong>agent</strong> – one autonomous actor that takes your goal and runs with it end to end</p>
-</li>
-<li class="">
-<p><strong>subagents</strong> - a setup where a main agent acts as orchestrator, delegating work to other agents it controls. The main agent owns the flow, order, and coordination.</p>
-</li>
-<li class="">
-<p><strong>multi agents</strong> – two or more main agents, each acting independently but able to collaborate, negotiate, or exchange results. No single agent is "the boss".</p>
-</li>
-</ul></div></div>
-<p>These terms sound fancy, but at the end of the day, these are just different ways to get stuff done with AI. Kind of like deciding if you want to work solo, pair program, or lead a squad.</p>
-<p><strong>Let me illustrate this with a simple new feature: adding dark mode to our company’s web app.</strong></p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="the-agent-solo-hero-mode">The Agent: Solo Hero Mode<a href="https://block.github.io/goose/blog/2025/08/14/agent-coordination-patterns#the-agent-solo-hero-mode" class="hash-link" aria-label="Direct link to The Agent: Solo Hero Mode" title="Direct link to The Agent: Solo Hero Mode" translate="no">​</a></h2>
-<p>You give the task to one AI agent, such as <a class="" href="https://block.github.io/goose/">Goose</a>. The agent is an autonomous actor, essentially your army of one.</p>
-<p>You tell your agent, "Add dark mode to the app." It reads the repo, updates the CSS and themes, runs tests, and opens a PR. It handles the whole thing start to finish. No teammates, no handoffs.</p>
-<p>If the agent messes up on one of these steps (e.g. say it forgets to update the toggle in the settings menu), it has to backtrack and fix it itself.</p>
-<p>Think lone developer grinding through the ticket.</p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="the-subagent-setup-orchestrator-with-a-crew">The Subagent Setup: Orchestrator With a Crew<a href="https://block.github.io/goose/blog/2025/08/14/agent-coordination-patterns#the-subagent-setup-orchestrator-with-a-crew" class="hash-link" aria-label="Direct link to The Subagent Setup: Orchestrator With a Crew" title="Direct link to The Subagent Setup: Orchestrator With a Crew" translate="no">​</a></h2>
-<p>With <a class="" href="https://block.github.io/goose/docs/guides/subagents">subagents</a>, you still have one "main" agent, but instead of doing everything, it plays tech lead and delegates pieces of the work to other specialized agents.</p>
-<p>The main agent says:</p>
-<ul>
-<li class=""><em>"Designer agent, create the dark mode color palette."</em></li>
-<li class=""><em>"Frontend agent, apply it to all UI components."</em></li>
-<li class=""><em>"QA agent, run visual regression tests."</em></li>
-</ul>
-<p>These subagents may work in parallel (e.g. while Designer is doing the palette, Frontend is updating styles) or sequentially (e.g. Frontend waits until Designer is done).</p>
-<p>The main agent keeps everything on track, collects the results, and stitches them together.</p>
-<p>Think of this as a tech lead breaking the feature into subtasks, assigning them, and merging the work.</p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="the-multi-agent-scenario-two-main-brains-talking-it-out">The Multi Agent Scenario: Two Main Brains Talking It Out<a href="https://block.github.io/goose/blog/2025/08/14/agent-coordination-patterns#the-multi-agent-scenario-two-main-brains-talking-it-out" class="hash-link" aria-label="Direct link to The Multi Agent Scenario: Two Main Brains Talking It Out" title="Direct link to The Multi Agent Scenario: Two Main Brains Talking It Out" translate="no">​</a></h2>
-<p>With multi agents, there's no single orchestrator. You've got multiple main agents that talk to each other, each with its own goals or perspective.</p>
-<p>For our dark mode feature, imagine:</p>
-<ul>
-<li class="">The dev agent knows the codebase and can implement the UI changes.</li>
-<li class="">The UX research agent knows how users interact with themes and what accessibility needs to be considered.</li>
-</ul>
-<p>They work together. The UX agent explains the best practices, edge cases, and user pain points, while the dev agent implements and checks back for feedback. They might even run on different systems, like your dev agent calling an external design agent hosted somewhere else.</p>
-<p>It's worth noting that multi agent setups don't have to be working on the exact same task. Sometimes they’re just operating in the same environment and will collaborate when their work overlaps.</p>
-<p>Think of this as two peers hashing it out over Slack until they've got something solid.</p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="when-to-use-which">When to Use Which<a href="https://block.github.io/goose/blog/2025/08/14/agent-coordination-patterns#when-to-use-which" class="hash-link" aria-label="Direct link to When to Use Which" title="Direct link to When to Use Which" translate="no">​</a></h2>
-<ul>
-<li class=""><strong>agent</strong>: small, self-contained tasks you trust one AI to own</li>
-<li class=""><strong>subagents</strong>: complex tasks that benefit from dividing and conquering with oversight</li>
-<li class=""><strong>multi agents</strong>: requires multiple brains or perspectives that can negotiate and collaborate</li>
-</ul>
-<p>These setups are just different ways to organize work, whether it's human work or AI work. The trick is picking the structure that gets you the best balance of speed and accuracy.</p>
 ]]></content:encoded>
         </item>
     </channel>
