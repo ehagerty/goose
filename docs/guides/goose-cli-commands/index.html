@@ -20,7 +20,7 @@
 
 
 <link rel="alternate" type="text/plain" title="LLM context" href="/goose/llms.txt"><link rel="stylesheet" href="/goose/assets/css/styles.b8c10110.css">
-<script src="/goose/assets/js/runtime~main.a881050d.js" defer="defer"></script>
+<script src="/goose/assets/js/runtime~main.5b1d6d98.js" defer="defer"></script>
 <script src="/goose/assets/js/main.abacfd89.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -328,12 +328,13 @@ Your existing sessions are automatically imported to the database. Legacy <code>
 <li class=""><strong><code>/prompt &lt;n&gt; [--info] [key=value...]</code></strong> - Get prompt info or execute a prompt</li>
 <li class=""><strong><code>/prompts [--extension &lt;name&gt;]</code></strong> - List all available prompts, optionally filtered by extension</li>
 <li class=""><strong><code>/recipe [filepath]</code></strong> - Generate a recipe from the current conversation and save it to the specified filepath (must end with .yaml). If no filepath is provided, it will be saved to ./recipe.yaml</li>
-<li class=""><strong><code>/summarize</code></strong> - Summarize the current conversation to reduce context length while preserving key information</li>
+<li class=""><strong><code>/compact</code></strong> - Compact and summarize the current conversation to reduce context length while preserving key information</li>
 <li class=""><strong><code>/t</code></strong> - Toggle between <code>light</code>, <code>dark</code>, and <code>ansi</code> themes. <a href="#themes" class="">More info</a>.</li>
 <li class=""><strong><code>/t &lt;name&gt;</code></strong> - Set theme directly (light, dark, ansi)</li>
 </ul>
 <p><strong>Examples:</strong></p>
 <div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#393A34;--prism-background-color:#f6f8fa"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#393A34;background-color:#f6f8fa"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#393A34"><span class="token plain"># Create a plan for triaging test failures</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">/plan let&#x27;s create a plan for triaging test failures</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"># List all prompts from the developer extension</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">/prompts --extension developer</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"># Switch to chat mode</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">/mode chat</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"># Add a builtin extension during the session</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">/builtin developer</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain" style="display:inline-block"></span><br></span><span class="token-line" style="color:#393A34"><span class="token plain"># Clear the current conversation history</span><br></span><span class="token-line" style="color:#393A34"><span class="token plain">/clear</span><br></span></code></pre></div></div>
+<p>You can also create <a class="" href="/goose/docs/guides/recipes/session-recipes#custom-recipe-commands">custom slash commands for running recipes</a> in goose Desktop or the CLI.</p>
 <hr>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="themes">Themes<a href="#themes" class="hash-link" aria-label="Direct link to Themes" title="Direct link to Themes" translate="no">​</a></h3>
 <p>The <code>/t</code> command controls the syntax highlighting theme for markdown content in goose CLI responses. This affects the styles used for headers, code blocks, bold/italic text, and other markdown elements in the response output.</p>
