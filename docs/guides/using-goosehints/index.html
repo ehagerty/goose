@@ -20,8 +20,8 @@
 
 
 <link rel="alternate" type="text/plain" title="LLM context" href="/goose/llms.txt"><link rel="stylesheet" href="/goose/assets/css/styles.b8c10110.css">
-<script src="/goose/assets/js/runtime~main.27e8062d.js" defer="defer"></script>
-<script src="/goose/assets/js/main.8db6bf53.js" defer="defer"></script>
+<script src="/goose/assets/js/runtime~main.35fed047.js" defer="defer"></script>
+<script src="/goose/assets/js/main.ec83372b.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <svg style="display: none;"><defs>
@@ -41,14 +41,17 @@
 <p>You can use both global and local hints at the same time. When both exist, goose will consider both your global preferences and project-specific requirements. If the instructions in your local hints file conflict with your global preferences, goose will prioritize the local hints.</p>
 <div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>Custom Context Files</div><div class="admonitionContent_BuS1"><p>You can use other agent rule files with goose by using the <a href="#custom-context-files" class=""><code>CONTEXT_FILE_NAMES</code> environment variable</a>.</p></div></div>
 <div class="theme-tabs-container tabs-container tabList__CuJ"><ul role="tablist" aria-orientation="horizontal" class="tabs"><li role="tab" tabindex="0" aria-selected="true" class="tabs__item tabItem_LNqP tabs__item--active">goose Desktop</li><li role="tab" tabindex="-1" aria-selected="false" class="tabs__item tabItem_LNqP">Manual</li></ul><div class="margin-top--md"><div role="tabpanel" class="tabItem_Ymn6"><h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="global-hints-file">Global hints file<a href="#global-hints-file" class="hash-link" aria-label="Direct link to Global hints file" title="Direct link to Global hints file" translate="no">​</a></h4><ol>
-<li class="">Create a <code>.goosehints</code> file in <code>~/.config/goose</code>.</li>
+<li class="">Create a <code>.goosehints</code> file in <code>~/.config/goose</code></li>
 </ol><h4 class="anchor anchorTargetStickyNavbar_Vzrq" id="local-hints-file">Local hints file<a href="#local-hints-file" class="hash-link" aria-label="Direct link to Local hints file" title="Direct link to Local hints file" translate="no">​</a></h4><ol>
-<li class="">Change the directory to where you&#x27;d like to set up the file. You can do this by clicking the directory path on the bottom of the goose window.</li>
-<li class="">Click the <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder-key"><circle cx="16" cy="20" r="2"></circle><path d="M10 20H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H20a2 2 0 0 1 2 2v2"></path><path d="m22 14-4.5 4.5"></path><path d="m21 15 1 1"></path></svg> icon on the bottom right of the goose window.</li>
-<li class="">Enter your local tips into the text area.</li>
-<li class="">Click <code>Save</code>.</li>
-<li class="">Restart your session so goose can read the updated <code>.goosehints</code>.</li>
-</ol><p>If a <code>.goosehints</code> file already exists in the given directory, you can edit or add to it from this screen.</p><div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>tip</div><div class="admonitionContent_BuS1"><p>You may have to scroll or adjust the screen size to fully see the <code>Save</code> and <code>Cancel</code> buttons.</p></div></div></div><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
+<li class="">Click the directory path at the bottom of the app and open the directory where you want to create the file</li>
+<li class="">Click the <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-panel-left inline"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path></svg> button in the top-left to open the sidebar</li>
+<li class="">Click <code>Settings</code> in the sidebar</li>
+<li class="">Click <code>Chat</code></li>
+<li class="">Scroll down to the <code>Project Hints (.goosehints)</code> section and click <code>Configure</code></li>
+<li class="">Enter your local hints in the text area</li>
+<li class="">Click <code>Save</code></li>
+<li class="">Restart your session so goose can read the updated <code>.goosehints</code></li>
+</ol><p>If a <code>.goosehints</code> file already exists in the given directory, you can edit your existing hints.</p></div><div role="tabpanel" class="tabItem_Ymn6" hidden=""><ul>
 <li class=""><strong>Global hints file</strong> - Create a <code>.goosehints</code> file in <code>~/.config/goose</code>.</li>
 <li class=""><strong>Local hints file</strong> -  Create a <code>.goosehints</code> file at the root of your project and/or in any directory in the hierarchy.</li>
 </ul></div></div></div>
