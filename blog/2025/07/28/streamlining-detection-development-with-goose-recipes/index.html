@@ -20,8 +20,8 @@
 
 
 <link rel="alternate" type="text/plain" title="LLM context" href="/goose/llms.txt"><link rel="stylesheet" href="/goose/assets/css/styles.b8c10110.css">
-<script src="/goose/assets/js/runtime~main.35fed047.js" defer="defer"></script>
-<script src="/goose/assets/js/main.ec83372b.js" defer="defer"></script>
+<script src="/goose/assets/js/runtime~main.64c9754e.js" defer="defer"></script>
+<script src="/goose/assets/js/main.35c85bd7.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <svg style="display: none;"><defs>
@@ -48,7 +48,7 @@
 <li class=""><a href="#6-pr_creator-automated-pull-request-pipeline" class=""><strong>pr_creator</strong></a> - Pull request creation with proper formatting</li>
 </ol>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="what-about-goosehints">What about .goosehints?<a href="#what-about-goosehints" class="hash-link" aria-label="Direct link to What about .goosehints?" title="Direct link to What about .goosehints?" translate="no">​</a></h3>
-<p>In our <a href="https://block.github.io/goose/blog/2025/06/02/goose-panther-mcp" target="_blank" rel="noopener noreferrer" class="">previous post</a>, we discussed using <a href="https://block.github.io/goose/docs/guides/using-goosehints/" target="_blank" rel="noopener noreferrer" class="">.goosehints</a> to provide persistent context to the Large Language Model (LLM). We continue to use <code>.goosehints</code> to define coding standards and universal preferences that guide LLM behavior.</p>
+<p>In our <a href="https://block.github.io/goose/blog/2025/06/02/goose-panther-mcp" target="_blank" rel="noopener noreferrer" class="">previous post</a>, we discussed using <a class="" href="/goose/docs/guides/context-engineering/using-goosehints/">.goosehints</a> to provide persistent context to the Large Language Model (LLM). We continue to use <code>.goosehints</code> to define coding standards and universal preferences that guide LLM behavior.</p>
 <p>However, to minimize redundancy and avoid conflicting guidance, we adopted a single reference file, <code>AGENTS.md</code>, as the source of truth for all agents. Each agent is directed to consult this file, while still supporting agent-specific instructions through their default context files (e.g. <code>.goosehints</code>, <code>CLAUDE.md</code> etc.) or rules (e.g. <code>.cursor/rules/</code>).</p>
 <p>While these context files are important, they also come with some trade offs and limitations:</p>
 <table><thead><tr><th>Aspect</th><th>Context Files</th><th>Recipes</th></tr></thead><tbody><tr><td><strong>Context window pollution</strong></td><td>The entire file is sent with each request, cluttering the context window</td><td>Only task-relevant instructions, keeping prompts clear and focused</td></tr><tr><td><strong>Signal-to-noise ratio</strong></td><td>General preferences dilute focus and may create conflicting guidance</td><td>Every instruction is workflow-specific, eliminating noise</td></tr><tr><td><strong>Cost and performance impact</strong></td><td>May lead to higher token costs and slower processing from unnecessary context</td><td>Pay only for relevant tokens with faster response times</td></tr><tr><td><strong>Cognitive load on the AI</strong></td><td>Conflicting instructions cause decision paralysis</td><td>Clear, unified guidance enables decisive action</td></tr><tr><td><strong>Task-specific optimization</strong></td><td>Generic instructions lack specialized tools and parameters</td><td>Purpose-built with pre-configured tools for specific workflows</td></tr></tbody></table>
