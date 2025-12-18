@@ -16,7 +16,7 @@
           2. Run the executable file to launch the goose Desktop application.
 
           :::tip Updating goose
-          It's best to keep goose updated by periodically running the installation steps again.
+          It's best to periodically [update goose](/docs/guides/updating-goose).
           :::
         </div>
         <h3>Option 2: Install via Homebrew</h3>
@@ -86,7 +86,7 @@
           4. Launch goose from the app menu
 
           :::tip Updating goose
-          It's best to keep goose updated by periodically running the installation steps again.
+          It's best to periodically [update goose](/docs/guides/updating-goose).
           :::
         </div>
       </TabItem>
@@ -129,7 +129,7 @@
           2. Run the executable file to launch the goose Desktop application.
 
           :::tip Updating goose
-          It's best to keep goose updated by periodically running the installation steps again.
+          It's best to periodically [update goose](/docs/guides/updating-goose).
           :::
         </div>
       </TabItem>

@@ -4,10 +4,57 @@
         <title>goose Blog</title>
         <link>https://block.github.io/goose/blog</link>
         <description>goose Blog</description>
-        <lastBuildDate>Wed, 10 Dec 2025 00:00:00 GMT</lastBuildDate>
+        <lastBuildDate>Mon, 15 Dec 2025 00:00:00 GMT</lastBuildDate>
         <docs>https://validator.w3.org/feed/docs/rss2.html</docs>
         <generator>https://github.com/jpmonette/feed</generator>
         <language>en</language>
+        <item>
+            <title><![CDATA[Code Mode MCP in goose]]></title>
+            <link>https://block.github.io/goose/blog/2025/12/15/code-mode-mcp</link>
+            <guid>https://block.github.io/goose/blog/2025/12/15/code-mode-mcp</guid>
+            <pubDate>Mon, 15 Dec 2025 00:00:00 GMT</pubDate>
+            <description><![CDATA[An emerging approach to MCP tool calling gets an open source implementation in goose]]></description>
+            <content:encoded><![CDATA[<p><img decoding="async" loading="lazy" alt="code mode MCP in goose!" src="https://block.github.io/goose/assets/images/header-image-1fa39f1d26aea7722e2c10fc424804f5.jpg" width="1600" height="896" class="img_ev3q"></p>
+<p>There is an emerging approach to MCP tool calling referred to as "sandbox mode" or "code mode". These ideas were initially
+presented by Cloudflare in their <a href="https://blog.cloudflare.com/code-mode/" target="_blank" rel="noopener noreferrer" class="">Code Mode: the better way to use MCP</a> post and Anthropic
+in their <a href="https://www.anthropic.com/engineering/code-execution-with-mcp" target="_blank" rel="noopener noreferrer" class="">Code execution with MCP: Building more efficient agents</a>
+posts. Since the approach and the benefits are clearly laid out in those posts I will summarize them here.</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="the-approach">The approach<a href="https://block.github.io/goose/blog/2025/12/15/code-mode-mcp#the-approach" class="hash-link" aria-label="Direct link to The approach" title="Direct link to The approach" translate="no">​</a></h2>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="summary">Summary<a href="https://block.github.io/goose/blog/2025/12/15/code-mode-mcp#summary" class="hash-link" aria-label="Direct link to Summary" title="Direct link to Summary" translate="no">​</a></h3>
+<ul>
+<li class="">Instead of exposing the tools directly to the model an MCP client application can:<!-- -->
+<ul>
+<li class="">Generate a programmatic interface to these same tools (typically JS or TS powered)</li>
+<li class="">Provide a limited set of tools to the model (search available modules/tool source code, read the source code for a tool, and then a tool to execute some code)</li>
+<li class="">Run the code the model generates to call the programmatic API in a sandboxed environment for safety</li>
+</ul>
+</li>
+</ul>
+<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="benefits">Benefits<a href="https://block.github.io/goose/blog/2025/12/15/code-mode-mcp#benefits" class="hash-link" aria-label="Direct link to Benefits" title="Direct link to Benefits" translate="no">​</a></h3>
+<ul>
+<li class="">The model can progressively discover relevant tools, without all server and tool definitions in the context window from the beginning</li>
+<li class="">The model can chain tool call results into inputs to further tool calls without the intermediate results needing to flow back to the model - this saves on tokens and avoids exposing potentially sensitive data to the model unnecessarily</li>
+<li class="">The models pre-training datasets have made them very efficient at analyzing large programmatic APIs and writing code to call them, as compared to having been trained only on contrived examples of MCP tool calling</li>
+</ul>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="in-goose">In goose<a href="https://block.github.io/goose/blog/2025/12/15/code-mode-mcp#in-goose" class="hash-link" aria-label="Direct link to In goose" title="Direct link to In goose" translate="no">​</a></h2>
+<p>In v1.17.0 of goose, we've introduced an open source implementation of this idea in a new platform extension called: Code Execution.
+Our implementation generates a JavaScript interface representing the connected MCP tools and then lets the model write code to run
+against it in <a href="https://github.com/boa-dev/boa" target="_blank" rel="noopener noreferrer" class="">boa</a> which is an embeddable Javascript engine. One neat feature of boa we were able
+to take advantage of was the concept of <a href="https://docs.rs/boa_engine/latest/boa_engine/native_function/struct.NativeFunction.html" target="_blank" rel="noopener noreferrer" class="">NativeFunction</a>.</p>
+<p>In boa, a <code>NativeFunction</code> is something which exposes a function in the embedded JavaScript environment which calls back into a
+natively implemented rust function. This is perfect for the calls originating in JS and then routing the tool call to the underlying
+MCP server with ease!</p>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="help-us-evaluate-it">Help us evaluate it<a href="https://block.github.io/goose/blog/2025/12/15/code-mode-mcp#help-us-evaluate-it" class="hash-link" aria-label="Direct link to Help us evaluate it" title="Direct link to Help us evaluate it" translate="no">​</a></h2>
+<p>Our hope is that we improve tool calling performance and handling of large numbers of tools in goose, but
+also provide an open source implementation of this emerging approach.</p>
+<ul>
+<li class="">Try out the feature by enabling the "Code Execution" extension in v1.17.0 or later of goose by clicking extensions on the left side of the desktop app or running <code>goose configure</code> on cli</li>
+<li class="">Please give us feedback on how it works for you by joining our <a href="https://discord.gg/goose-oss" target="_blank" rel="noopener noreferrer" class="">discord</a>.</li>
+<li class="">The source code is <a href="https://github.com/block/goose/blob/main/crates/goose/src/agents/code_execution_extension.rs" target="_blank" rel="noopener noreferrer" class="">here</a></li>
+</ul>
+<p>Kudos to my colleague <a href="https://github.com/michaelneale" target="_blank" rel="noopener noreferrer" class="">Mic Neale</a> for collaborating with me on the implementation!</p>
+]]></content:encoded>
+        </item>
         <item>
             <title><![CDATA[How to Stop Your AI Agent From Making Unwanted Code Changes]]></title>
             <link>https://block.github.io/goose/blog/2025/12/10/stop-ai-agent-unwanted-changes</link>
@@ -1361,66 +1408,6 @@ If not, you’ll either need to wait for more SDKs to drop or build your own bin
 <p>The early results suggest this approach resonates with developers who want to grow, not just get things done. As AI becomes more prevalent in software development, tools like Goose Mentor Mode point toward a future where AI enhances human capability rather than replacing human thinking.</p>
 <hr>
 <p><em>Goose Mentor Mode is open source and available on <a href="https://pypi.org/project/goose-mentor-mode/" target="_blank" rel="noopener noreferrer" class="">PyPI</a>. Join the conversation on <a href="https://github.com/joeeuston-dev/goose-mentor-mode" target="_blank" rel="noopener noreferrer" class="">GitHub</a> and help shape the future of educational AI assistance.</em></p>
-]]></content:encoded>
-        </item>
-        <item>
-            <title><![CDATA[The AI Skeptic’s Guide to Context Windows]]></title>
-            <link>https://block.github.io/goose/blog/2025/08/18/understanding-context-windows</link>
-            <guid>https://block.github.io/goose/blog/2025/08/18/understanding-context-windows</guid>
-            <pubDate>Mon, 18 Aug 2025 00:00:00 GMT</pubDate>
-            <description><![CDATA[Why do AI agents forget? Learn how context windows, tokens, and Goose help you manage memory and long conversations.]]></description>
-            <content:encoded><![CDATA[<p><img decoding="async" loading="lazy" alt="Context Windows" src="https://block.github.io/goose/assets/images/contextwindow-fa46f7a54cfb23a538d62f0e4502e19e.png" width="1600" height="840" class="img_ev3q"></p>
-<p>Working with AI tools can feel like working with a flaky, chaotic, but overconfident coworker. You know, the kind who forgets tasks, lies unprovoked, starts new projects without telling you, then quits halfway through. It's enough to make you say: "Forget it. I'll do it myself." But before we write off AI entirely, it's worth understanding what's actually happening under the hood so we can avoid common pitfalls and make AI tools worth using.</p>
-<p>The root of this behavior stems from how AI tools handle working memory. Similarly, as a human, you can only juggle so much information at once. For example, when I'm reading a really long research paper, I might forget key details from the introduction by the time I reach the conclusion, even though those early points were important for understanding the whole argument.</p>
-<p>The technical term for AI assistants' working memory is <strong>context window</strong>.</p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="what-is-a-context-window">What is a context window?<a href="https://block.github.io/goose/blog/2025/08/18/understanding-context-windows#what-is-a-context-window" class="hash-link" aria-label="Direct link to What is a context window?" title="Direct link to What is a context window?" translate="no">​</a></h2>
-<p>A context window is the maximum amount of information an AI model can process in a single session. It's measured in "tokens."</p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="what-are-tokens">What are tokens?<a href="https://block.github.io/goose/blog/2025/08/18/understanding-context-windows#what-are-tokens" class="hash-link" aria-label="Direct link to What are tokens?" title="Direct link to What are tokens?" translate="no">​</a></h2>
-<p>Tokens are how AI models break down text for processing. They're roughly equivalent to words or word fragments, though different models vary in how they tokenize text based on their training data and design choices.</p>
-<p><strong>For example:</strong><br>
-<!-- -->"Hello" = 1 token<br>
-<!-- -->"Understanding" = 2 tokens ("Under" + "standing")<br>
-<!-- -->"AI" = 1 token<br>
-<!-- -->"Tokenization" = 3 tokens</p>
-<p>Test it yourself: paste any text into <a href="https://platform.openai.com/tokenizer" target="_blank" rel="noopener noreferrer" class="">OpenAI’s tokenizer tool</a> and explore how tokens are counted across models.</p>
-<h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="how-goose-uses-tokens">How Goose uses tokens<a href="https://block.github.io/goose/blog/2025/08/18/understanding-context-windows#how-goose-uses-tokens" class="hash-link" aria-label="Direct link to How Goose uses tokens" title="Direct link to How Goose uses tokens" translate="no">​</a></h3>
-<p>Let's talk about how this works in practice. When you use an AI agent like Goose, you start a session and choose a model like Claude Sonnet 3.7. This model has a context window of 128,000 tokens. This means every session (or conversation) can handle up to 128,000 tokens. If you message "hey" to Goose, you would have used one token. And when Goose responds back, you would have used several more tokens. Now you've used a small portion of your 128,000 tokens, and you have the remainder left.</p>
-<div class="theme-admonition theme-admonition-note admonition_xJq3 alert alert--secondary"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 14 16"><path fill-rule="evenodd" d="M6.3 5.69a.942.942 0 0 1-.28-.7c0-.28.09-.52.28-.7.19-.18.42-.28.7-.28.28 0 .52.09.7.28.18.19.28.42.28.7 0 .28-.09.52-.28.7a1 1 0 0 1-.7.3c-.28 0-.52-.11-.7-.3zM8 7.99c-.02-.25-.11-.48-.31-.69-.2-.19-.42-.3-.69-.31H6c-.27.02-.48.13-.69.31-.2.2-.3.44-.31.69h1v3c.02.27.11.5.31.69.2.2.42.31.69.31h1c.27 0 .48-.11.69-.31.2-.19.3-.42.31-.69H8V7.98v.01zM7 2.3c-3.14 0-5.7 2.54-5.7 5.68 0 3.14 2.56 5.7 5.7 5.7s5.7-2.55 5.7-5.7c0-3.15-2.56-5.69-5.7-5.69v.01zM7 .98c3.86 0 7 3.14 7 7s-3.14 7-7 7-7-3.12-7-7 3.14-7 7-7z"></path></svg></span>note</div><div class="admonitionContent_BuS1"><p>Context windows vary per LLM.</p></div></div>
-<p>Once the conversation goes past 128,000 tokens or gets close to it, your agent may start to forget key details from earlier in the conversation, and it might prioritize the most recent information.</p>
-<p>But your conversation isn't the only thing using your tokens. Here are other things within Goose that consume your token budget:</p>
-<ul>
-<li class=""><strong>System prompt:</strong> A built-in prompt that instructs your agent on how to behave and defines its identity<!-- -->
-<ul>
-<li class="">The system prompt defines Goose’s name, creator (Block), current date/time, task and extension handling, and response format.</li>
-</ul>
-</li>
-<li class=""><strong>Extensions and their tool definitions</strong> - Many extensions have more than one tool built in. For example, a Google Drive extension may include tools like read file, create file, and comment on file. In addition, each tool comes with instructions on how to use it and an explanation of what the tool does.</li>
-<li class=""><strong>Tool response</strong> - The response that the tool returns. For example, the tool could respond with "Here's the entire contents of your 500-line code file."</li>
-<li class="">In addition to your conversation history, Goose keeps metadata about your conversation, such as timestamps.</li>
-</ul>
-<p>This is a lot of data, and it can easily consume your context window. In addition to impacting performance, token usage affects costs. The more tokens you use, the more money you pay, and you may feel frustrated wasting your tokens on your agent misinterpreting your request.</p>
-<p>Luckily, Goose has an intelligent design for helping you save your context window.</p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="how-goose-automatically-manages-your-context-window">How Goose automatically manages your context window<a href="https://block.github.io/goose/blog/2025/08/18/understanding-context-windows#how-goose-automatically-manages-your-context-window" class="hash-link" aria-label="Direct link to How Goose automatically manages your context window" title="Direct link to How Goose automatically manages your context window" translate="no">​</a></h2>
-<p>Goose has a method that auto-compacts (or summarizes) your conversation once it reaches a certain threshold. By default, when you reach 80% of your context window, Goose summarizes the conversation, preserving key parts while compressing the rest, reducing context window usage so you can stay in your session without starting a new one.</p>
-<p>You actually have the ability to customize the threshold. If you think 80% is too little or too much for your workflow, you can set the environment variable <code>GOOSE_AUTO_COMPACT_THRESHOLD</code> to your preferred threshold.</p>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="how-to-manage-your-context-window">How to manage your context window<a href="https://block.github.io/goose/blog/2025/08/18/understanding-context-windows#how-to-manage-your-context-window" class="hash-link" aria-label="Direct link to How to manage your context window" title="Direct link to How to manage your context window" translate="no">​</a></h2>
-<p>While Goose is adept at helping you manage your context window, you can proactively manage it, too. Here are some tips for efficiently managing your context window and your wallet.</p>
-<p><strong>1. Manual summarization</strong></p>
-<p>When your conversation gets too long, you can summarize the key points and start a new session. Copy important decisions, code snippets, or project requirements into the fresh session. This way, you keep the essential context without carrying over the full conversation history.</p>
-<p><strong>2. <code>.goosehints</code></strong></p>
-<p>Use <a class="" href="https://block.github.io/goose/docs/guides/context-engineering/using-goosehints/">.goosehints</a> files to avoid repeating the same instructions. Instead of typing out your project context, coding standards, and preferences in every conversation, define them once in a .goosehints file. This prevents wasting tokens on repetitive explanations and helps Goose understand your requirements more quickly.</p>
-<p><strong>3. Memory extension</strong></p>
-<p>The <a href="https://block.github.io/goose/docs/mcp/memory-mcp" target="_blank" rel="noopener noreferrer" class="">Memory extension</a> stores important information across sessions. Instead of re-explaining your project background, past decisions, or important context every time you start a new conversation, you can reference stored information. This keeps your prompts focused on the current task rather than repeating historical context.</p>
-<p><strong>4. Recipes</strong></p>
-<p><a href="https://block.github.io/goose/docs/guides/recipes/" target="_blank" rel="noopener noreferrer" class="">Recipes</a> package complete task setups into reusable configurations, eliminating the need to provide lengthy instructions repeatedly. Instead of consuming tokens explaining complex workflows in every session, recipes contain all necessary instructions, extensions, and parameters upfront. This is particularly valuable for repetitive tasks where you'd otherwise spend significant tokens on setup and explanation. And if your recipe starts to feel overly lengthy, you can break the tasks up into <a href="https://block.github.io/goose/docs/guides/recipes/subrecipes" target="_blank" rel="noopener noreferrer" class="">subrecipes</a>.</p>
-<p><strong>5. Subagents</strong></p>
-<p><a href="https://block.github.io/goose/docs/guides/subagents" target="_blank" rel="noopener noreferrer" class="">Subagents</a> handle specific tasks in their own isolated sessions. This prevents your main conversation from getting cluttered with implementation details and tool outputs. You delegate work to subagents and only see the final results, keeping your primary context window clean and focused.</p>
-<p><strong>6. Short sessions</strong></p>
-<p>Keep individual sessions focused on specific tasks. When you complete a task or reach a natural stopping point, start a new session. This prevents context window bloat from accumulated conversation history and ensures your tokens are spent on current, relevant work.</p>
-<p><strong>7. Lead/worker model</strong></p>
-<p>The <a href="https://block.github.io/goose/docs/tutorials/lead-worker" target="_blank" rel="noopener noreferrer" class="">Lead/Worker model</a> splits work between two models. The lead model handles high-level planning and decision-making, while the worker model executes the detailed implementation. This optimizes costs by using expensive models for strategic thinking and cheaper models for routine execution tasks.</p>
-<hr>
-<p>The next time your AI agent seems to 'forget' something important or goes off track, check your context window usage first. The solution might be a better prompt or a cleaner context window. Often, the difference between flaky and focused is just a few tokens.</p>
 ]]></content:encoded>
         </item>
     </channel>
