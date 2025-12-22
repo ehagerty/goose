@@ -1,3 +1,5 @@
+<YouTubeShortEmbed videoUrl="https://www.youtube.com/embed/I9FwKbPvgvU" />
+
 This tutorial covers how to add the Chrome DevTools MCP Server as a goose extension to enable browser automation, web performance testing, and interactive web application debugging in a Chrome browser.
 
 :::tip TLDR
