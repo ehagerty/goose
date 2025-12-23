@@ -12,11 +12,6 @@
       link="/docs/guides/managing-tools/tool-permissions"
     />
     <Card 
-      title="Tool Selection Strategy"
-      description="Optimize tool selection with dynamic routing that loads only the tools you need, reducing context overhead and improving performance."
-      link="/docs/guides/managing-tools/tool-router"
-    />
-    <Card 
       title="Adjust Tool Output"
       description="Customize how tool interactions are displayed, from detailed verbose output to clean concise summaries."
       link="/docs/guides/managing-tools/adjust-tool-output"
