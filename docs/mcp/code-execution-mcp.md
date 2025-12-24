@@ -1,4 +1,4 @@
-The Code Execution extension enables [Code Mode](/docs/guides/code-mode), a programmatic approach for interacting with MCP tools.
+The Code Execution extension enables [Code Mode](/docs/guides/managing-tools/code-mode), a programmatic approach for interacting with MCP tools.
 
 In Code Mode, the LLM discovers which tools are available from your enabled extensions and writes JavaScript code that goose runs in one execution instead of calling tools directly and one at a time. This helps manage context window usage more efficiently when multiple extensions are enabled and when performing workflows with multiple tool calls.
 
