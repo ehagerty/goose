@@ -1,4 +1,4 @@
-# goose Recipes
+# Recipes
 
 goose recipes are files that contain all the details to allow goose to do one specific task. Since they are contained in just one file, they are easy to share through all the normal ways we share files, including version management systems like git. Let's get started with the simplest recipe possible.
 
