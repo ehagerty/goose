@@ -254,3 +254,19 @@ Always verify webhook signatures. See `src/webhooks/square.js` for our handler p
 - **Keep skills focused** — One skill per workflow or domain. If a skill is getting long, consider splitting it.
 - **Write for clarity** — Skills are instructions for goose. Use clear, direct language and numbered steps.
 - **Include verification steps** — Help goose confirm the workflow completed successfully.
+
+## Additional Resources
+
+<ContentCardCarousel
+  items={[
+    {
+      type: 'blog',
+      title: 'Did Skills Kill MCP?',
+      description: 'An overview of Agent Skills vs MCP',
+      thumbnailUrl: skillsvsmcp,
+      linkUrl: '/goose/blog/2025/12/22/agent-skills-vs-mcp',
+      date: '2025-12-22',
+      duration: '4 min read'
+    }
+  ]}
+/>
