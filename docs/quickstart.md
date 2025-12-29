@@ -144,7 +144,8 @@ goose works with [supported LLM providers](/docs/getting-started/providers) that
    │  ○ Anthropic
    │  ○ Azure OpenAI 
    │  ○ Amazon Bedrock 
-   │  ○ Claude Code 
+   │  ○ Claude Code
+   │  ○ Codex CLI
    │  ○ Databricks 
    │  ○ Gemini CLI
    |  ● Tetrate Agent Router Service (Enterprise router for AI models)
