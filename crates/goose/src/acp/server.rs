@@ -74,7 +74,6 @@ mod dispatch;
 mod extensions;
 mod providers;
 mod resources;
-mod secrets;
 mod sessions;
 mod sources;
 mod tools;
