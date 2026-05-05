@@ -194,7 +194,6 @@ describe("useChatSessionController", () => {
         "session-1",
         "anthropic",
         "/tmp/project",
-        { personaId: undefined },
       );
     });
 
@@ -342,7 +341,6 @@ describe("useChatSessionController", () => {
         "session-2",
         "anthropic",
         "/tmp/project",
-        { personaId: undefined },
       );
     });
 

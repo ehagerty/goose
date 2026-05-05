@@ -28,7 +28,6 @@ describe("ACP session info updates", () => {
   it("applies generated session info updates to non-user-named sessions", async () => {
     useChatSessionStore.getState().addSession({
       id: "goose-session-title",
-      acpSessionId: "goose-session-title",
       title: "New Chat",
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-01-01T00:00:00.000Z",
@@ -62,7 +61,6 @@ describe("ACP session info updates", () => {
   it("ignores generated titles for user-named sessions", async () => {
     useChatSessionStore.getState().addSession({
       id: "goose-session-user-title",
-      acpSessionId: "goose-session-user-title",
       title: "My Custom Title",
       createdAt: "2026-01-01T00:00:00.000Z",
       updatedAt: "2026-01-01T00:00:00.000Z",
