@@ -5,20 +5,35 @@ import type {
   ProviderInventoryEntryDto,
   ProviderInventoryModelDto,
 } from "@aaif/goose-sdk";
-import { getModelProviders } from "../providerCatalog";
+import { getModelProvidersFromEntries } from "../providerCatalog";
 import { useDistroStore } from "@/features/settings/stores/distroStore";
-import { filterModelProvidersForDistro } from "../distroProviderConstraints";
+import {
+  filterModelProvidersForDistro,
+  isProviderAllowedByAllowlist,
+  parseProviderAllowlist,
+} from "../distroProviderConstraints";
+import { useProviderCatalogStore } from "../stores/providerCatalogStore";
 
 function isConfiguredGooseModelProvider(
   entry: ProviderInventoryEntryDto,
   modelProviderIds: Set<string>,
+  providerAllowlist: Set<string> | null,
+  catalogLoaded: boolean,
 ): boolean {
   if (!entry.configured) {
     return false;
   }
 
+  if (entry.category === "agent") {
+    return false;
+  }
+
   if (entry.providerType === "Custom") {
     return entry.providerId.startsWith("custom_");
+  }
+
+  if (!catalogLoaded) {
+    return isProviderAllowedByAllowlist(entry.providerId, providerAllowlist);
   }
 
   return modelProviderIds.has(entry.providerId);
@@ -44,6 +59,12 @@ export function useProviderInventory() {
   const entries = useProviderInventoryStore((s) => s.entries);
   const loading = useProviderInventoryStore((s) => s.loading);
   const distro = useDistroStore((s) => s.manifest);
+  const catalogEntries = useProviderCatalogStore((s) => s.entries);
+  const catalogLoaded = useProviderCatalogStore((s) => s.loaded);
+  const providerAllowlist = useMemo(
+    () => parseProviderAllowlist(distro),
+    [distro],
+  );
 
   const getEntry = useCallback(
     (providerId: string) => entries.get(providerId),
@@ -62,19 +83,25 @@ export function useProviderInventory() {
   const modelProviderIds = useMemo(
     () =>
       new Set(
-        filterModelProvidersForDistro(getModelProviders(), distro).map(
-          (provider) => provider.id,
-        ),
+        filterModelProvidersForDistro(
+          getModelProvidersFromEntries(catalogEntries),
+          distro,
+        ).map((provider) => provider.id),
       ),
-    [distro],
+    [catalogEntries, distro],
   );
 
   const configuredModelProviderEntries = useMemo(
     () =>
       [...entries.values()].filter((entry) =>
-        isConfiguredGooseModelProvider(entry, modelProviderIds),
+        isConfiguredGooseModelProvider(
+          entry,
+          modelProviderIds,
+          providerAllowlist,
+          catalogLoaded,
+        ),
       ),
-    [entries, modelProviderIds],
+    [catalogLoaded, entries, modelProviderIds, providerAllowlist],
   );
 
   const getModelsForAgent = useCallback(
