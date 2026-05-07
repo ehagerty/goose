@@ -33,11 +33,8 @@ import { loadStoredHomeSessionId } from "./lib/homeSessionStorage";
 import { resolveSupportedSessionModelPreference } from "./lib/resolveSupportedSessionModelPreference";
 import { useCreatePersonaNavigation } from "./hooks/useCreatePersonaNavigation";
 import { AppShellContent } from "./ui/AppShellContent";
-import { acpPrepareSession, acpSetModel } from "@/shared/api/acp";
-import {
-  updateSessionProject,
-  updateSessionTitle,
-} from "@/features/chat/stores/chatSessionOperations";
+import { applyLatestSessionConfig } from "@/features/chat/lib/sessionConfigRequests";
+import { updateSessionTitle } from "@/features/chat/stores/chatSessionOperations";
 import {
   clearReplayBuffer,
   getAndDeleteReplayBuffer,
@@ -244,14 +241,32 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
     }
 
     const request = (async () => {
+      const currentProvider = () =>
+        useAgentStore.getState().selectedProvider ?? "goose";
+
+      // Resolve the provider to use after an async gap. If the user changed
+      // their selection while we were awaiting (liveProvider differs from what
+      // it was before the await), prefer the live value; otherwise use the
+      // model-preference resolution result.
+      const resolveProviderAfterAwait = (
+        providerAtStart: string,
+        sessionModelPreference: { providerId: string },
+      ): string => {
+        const liveProvider = currentProvider();
+        return liveProvider !== providerAtStart
+          ? liveProvider
+          : sessionModelPreference.providerId;
+      };
+
       if (
         homeSession &&
         !homeSession.archivedAt &&
         homeSession.messageCount === 0
       ) {
+        const providerAtStart = currentProvider();
         const sessionModelPreference =
           await resolveSupportedSessionModelPreference(
-            selectedProvider ?? "goose",
+            providerAtStart,
             providerInventoryEntries,
           );
         const project = homeSession.projectId
@@ -260,41 +275,67 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
             ) ?? null)
           : null;
         const workingDir = await resolveSessionCwd(project);
-        await acpPrepareSession(
-          homeSession.id,
-          sessionModelPreference.providerId,
-          workingDir,
+        const resolvedProviderId = resolveProviderAfterAwait(
+          providerAtStart,
+          sessionModelPreference,
         );
-        const shouldClearHomeModel =
-          sessionModelPreference.providerId !== homeSession.providerId ||
-          !sessionModelPreference.modelId;
-        patchSession(homeSession.id, {
-          providerId: sessionModelPreference.providerId,
-          modelId: shouldClearHomeModel ? undefined : homeSession.modelId,
-          modelName: shouldClearHomeModel ? undefined : homeSession.modelName,
+        const modelIdToApply =
+          resolvedProviderId === sessionModelPreference.providerId
+            ? sessionModelPreference.modelId
+            : undefined;
+        const result = await applyLatestSessionConfig({
+          sessionId: homeSession.id,
+          providerId: resolvedProviderId,
+          workingDir,
+          modelId: modelIdToApply,
         });
-        if (sessionModelPreference.modelId) {
-          await acpSetModel(homeSession.id, sessionModelPreference.modelId);
-          patchSession(homeSession.id, {
-            modelId: sessionModelPreference.modelId,
-            modelName: sessionModelPreference.modelName,
-          });
+        if (!result.applied) {
+          return homeSession;
         }
-        return homeSession;
+
+        const shouldClearHomeModel =
+          resolvedProviderId !== homeSession.providerId || !modelIdToApply;
+        patchSession(homeSession.id, {
+          providerId: resolvedProviderId,
+          modelId:
+            modelIdToApply ??
+            (shouldClearHomeModel ? undefined : homeSession.modelId),
+          modelName:
+            modelIdToApply != null
+              ? sessionModelPreference.modelName
+              : shouldClearHomeModel
+                ? undefined
+                : homeSession.modelName,
+        });
+        return (
+          useChatSessionStore.getState().getSession(homeSession.id) ??
+          homeSession
+        );
       }
 
+      const providerAtStart = currentProvider();
       const workingDir = await resolveSessionCwd(null);
       const sessionModelPreference =
         await resolveSupportedSessionModelPreference(
-          selectedProvider ?? "goose",
+          providerAtStart,
           providerInventoryEntries,
         );
+      const resolvedProviderId = resolveProviderAfterAwait(
+        providerAtStart,
+        sessionModelPreference,
+      );
       const session = await createSession({
         title: DEFAULT_CHAT_TITLE,
-        providerId: sessionModelPreference.providerId,
+        providerId: resolvedProviderId,
         workingDir,
-        modelId: sessionModelPreference.modelId,
-        modelName: sessionModelPreference.modelName,
+        modelId:
+          resolvedProviderId === sessionModelPreference.providerId
+            ? sessionModelPreference.modelId
+            : undefined,
+        modelName:
+          resolvedProviderId === sessionModelPreference.providerId
+            ? sessionModelPreference.modelName
+            : undefined,
       });
       setHomeSessionId(session.id);
       return session;
@@ -309,7 +350,6 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
       }
     }
   }, [
-    selectedProvider,
     createSession,
     hasHydratedSessions,
     homeSession,
@@ -512,14 +552,14 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
 
   const handleMoveToProject = useCallback(
     (sessionId: string, projectId: string | null) => {
+      useChatSessionStore.getState().patchSession(sessionId, { projectId });
+
       const session = useChatSessionStore.getState().getSession(sessionId);
       if (!session) {
         return;
       }
 
       void (async () => {
-        await updateSessionProject(sessionId, projectId);
-
         const nextProject =
           projectId == null
             ? null
@@ -530,17 +570,20 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
         if (!workingDir) {
           return;
         }
-        await acpPrepareSession(
+        await applyLatestSessionConfig({
           sessionId,
-          session.providerId ?? selectedProvider ?? "goose",
+          providerId: session.providerId ?? selectedProvider ?? "goose",
           workingDir,
-        );
+          modelId: session.modelId,
+        });
       })().catch((error) => {
-        console.error("Failed to move chat to project:", error);
-        toast.error(t("notifications.moveError"));
+        console.error(
+          "Failed to update ACP session project working directory:",
+          error,
+        );
       });
     },
-    [selectedProvider, t],
+    [selectedProvider],
   );
 
   const handleRenameChat = useCallback(
