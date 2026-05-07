@@ -310,7 +310,7 @@ export function useResolvedAgentModelPicker({
         setGlobalSelectedProvider(nextProviderId);
       }
 
-      useChatSessionStore.getState().updateSession(sessionId, {
+      useChatSessionStore.getState().patchSession(sessionId, {
         modelId,
         modelName,
       });
@@ -335,7 +335,7 @@ export function useResolvedAgentModelPicker({
           } else {
             clearStoredModelPreference(selectedAgentId);
           }
-          useChatSessionStore.getState().updateSession(sessionId, {
+          useChatSessionStore.getState().patchSession(sessionId, {
             providerId: previousProviderId,
             modelId: previousModelId,
             modelName: previousModelName,
