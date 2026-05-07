@@ -3150,7 +3150,7 @@ impl GooseAcpAgent {
             })
     }
 
-    async fn update_thread_metadata(
+    pub(super) async fn update_thread_metadata(
         &self,
         thread_id: &str,
         f: impl FnOnce(&mut crate::session::ThreadMetadata),
