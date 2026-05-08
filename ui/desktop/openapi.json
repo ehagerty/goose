@@ -7720,6 +7720,11 @@
             "format": "int32",
             "nullable": true
           },
+          "archived_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
           "conversation": {
             "allOf": [
               {
@@ -7766,6 +7771,10 @@
             "format": "int32",
             "nullable": true
           },
+          "project_id": {
+            "type": "string",
+            "nullable": true
+          },
           "provider_name": {
             "type": "string",
             "nullable": true
@@ -7784,10 +7793,6 @@
           },
           "session_type": {
             "$ref": "#/components/schemas/SessionType"
-          },
-          "thread_id": {
-            "type": "string",
-            "nullable": true
           },
           "total_tokens": {
             "type": "integer",
