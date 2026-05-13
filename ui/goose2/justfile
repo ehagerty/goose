@@ -79,7 +79,7 @@ test-e2e-all:
 # ── Run ──────────────────────────────────────────────────────
 
 # Start the desktop app in dev mode
-dev: setup
+dev: build-core
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -137,7 +137,7 @@ dev: setup
     pnpm tauri dev --features app-test-driver --config src-tauri/tauri.dev.conf.json "${EXTRA_CONFIG_ARGS[@]}"
 
 # Start the desktop app with dev config
-dev-debug: setup
+dev-debug: build-core
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -281,3 +281,6 @@ clean:
     cd src-tauri && cargo clean
     rm -rf dist
     rm -rf node_modules
+
+build-core:
+    cargo build -p goose-cli --bin goose
