@@ -149,6 +149,9 @@
   "chatInput.failedToReadImage": {
     "defaultMessage": "Failed to read image file"
   },
+  "chatInput.navigationShortcut": {
+    "defaultMessage": "{prefix}↑/{prefix}↓ to navigate messages"
+  },
   "chatInput.processingDroppedFiles": {
     "defaultMessage": "Processing dropped files..."
   },
@@ -2425,6 +2428,9 @@
   },
   "navigationCustomization.itemSettings": {
     "defaultMessage": "Settings"
+  },
+  "navigationCustomization.itemSkills": {
+    "defaultMessage": "Skills"
   },
   "navigationCustomization.resetToDefaults": {
     "defaultMessage": "Reset to defaults"
