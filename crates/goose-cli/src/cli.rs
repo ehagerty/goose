@@ -543,6 +543,28 @@ enum SessionCommand {
             default_value = "markdown"
         )]
         format: String,
+
+        #[arg(
+            long = "nostr",
+            help = "Publish the JSON session export as an encrypted Nostr event and print a Goose share link"
+        )]
+        nostr: bool,
+
+        #[arg(
+            long = "relay",
+            value_name = "RELAY",
+            help = "Nostr relay URL to publish to (can be specified multiple times)",
+            action = clap::ArgAction::Append
+        )]
+        relays: Vec<String>,
+    },
+    #[command(about = "Import a session from JSON or an encrypted Nostr share link")]
+    Import {
+        #[arg(help = "Path to a JSON session export, or a goose://sessions/nostr share link")]
+        input: String,
+
+        #[arg(long = "nostr", help = "Treat input as an encrypted Nostr share link")]
+        nostr: bool,
     },
     #[command(name = "diagnostics")]
     Diagnostics {
@@ -1227,6 +1249,8 @@ async fn handle_session_subcommand(command: SessionCommand) -> Result<()> {
             identifier,
             output,
             format,
+            nostr,
+            relays,
         } => {
             let session_manager = SessionManager::instance();
             let session_identifier = if let Some(id) = identifier {
@@ -1244,8 +1268,17 @@ async fn handle_session_subcommand(command: SessionCommand) -> Result<()> {
                     }
                 }
             };
-            crate::commands::session::handle_session_export(session_identifier, output, format)
-                .await?;
+            crate::commands::session::handle_session_export(
+                session_identifier,
+                output,
+                format,
+                nostr,
+                relays,
+            )
+            .await?;
+        }
+        SessionCommand::Import { input, nostr } => {
+            crate::commands::session::handle_session_import(input, nostr).await?;
         }
         SessionCommand::Diagnostics { identifier, output } => {
             let session_manager = SessionManager::instance();
