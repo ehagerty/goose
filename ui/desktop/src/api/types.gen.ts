@@ -1272,6 +1272,7 @@ export type ScheduledJob = {
 };
 
 export type Session = {
+    accumulated_cost?: number | null;
     accumulated_input_tokens?: number | null;
     accumulated_output_tokens?: number | null;
     accumulated_total_tokens?: number | null;
@@ -1480,6 +1481,7 @@ export type ThinkingContent = {
 };
 
 export type TokenState = {
+    accumulatedCost?: number | null;
     accumulatedInputTokens: number;
     accumulatedOutputTokens: number;
     accumulatedTotalTokens: number;

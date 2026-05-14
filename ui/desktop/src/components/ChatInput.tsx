@@ -167,14 +167,8 @@ interface ChatInputProps {
   totalTokens?: number;
   accumulatedInputTokens?: number;
   accumulatedOutputTokens?: number;
+  accumulatedCost?: number | null;
   messages?: Message[];
-  sessionCosts?: {
-    [key: string]: {
-      inputTokens: number;
-      outputTokens: number;
-      totalCost: number;
-    };
-  };
   disableAnimation?: boolean;
   recipe?: Recipe | null;
   recipeId?: string | null;
@@ -203,9 +197,9 @@ export default function ChatInput({
   totalTokens,
   accumulatedInputTokens,
   accumulatedOutputTokens,
+  accumulatedCost,
   messages = [],
   disableAnimation = false,
-  sessionCosts,
   recipe,
   recipeId,
   recipeAccepted,
@@ -1690,7 +1684,7 @@ export default function ChatInput({
                 <CostTracker
                   inputTokens={accumulatedInputTokens}
                   outputTokens={accumulatedOutputTokens}
-                  sessionCosts={sessionCosts}
+                  accumulatedCost={accumulatedCost}
                   model={effectiveModel}
                   provider={effectiveProvider}
                 />
