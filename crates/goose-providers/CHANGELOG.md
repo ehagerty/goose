@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.10](https://github.com/ehagerty/goose/compare/gdk-v0.1.0-alpha.9...gdk-v0.1.0-alpha.10) - 2026-09-10
+
+### Added
+
+- *(acp)* scope Toolshim to custom providers ([#11414](https://github.com/ehagerty/goose/pull/11414))
+
+### Fixed
+
+- send session ID header for OpenCode Go ([#11944](https://github.com/ehagerty/goose/pull/11944))
+
 ## [0.1.0-alpha.9](https://github.com/aaif-goose/goose/compare/gdk-v0.1.0-alpha.8...gdk-v0.1.0-alpha.9) - 2026-09-08
 
 ### Fixed

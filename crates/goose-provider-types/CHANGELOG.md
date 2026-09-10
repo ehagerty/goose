@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.0-alpha.10](https://github.com/ehagerty/goose/compare/gdk-v0.1.0-alpha.9...gdk-v0.1.0-alpha.10) - 2026-09-10
+
+### Fixed
+
+- stop mapping Astra Off to reasoning.effort none ([#11976](https://github.com/ehagerty/goose/pull/11976))
+- *(google)* pair functionResponse names with the preceding request ([#11888](https://github.com/ehagerty/goose/pull/11888))
+
 ## [0.1.0-alpha.9](https://github.com/aaif-goose/goose/compare/gdk-v0.1.0-alpha.8...gdk-v0.1.0-alpha.9) - 2026-09-08
 
 ### Other
